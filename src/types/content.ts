@@ -11,17 +11,20 @@ export type ExerciseType =
 
 export interface Program {
   id: string;
-  name: string;
+  title: string;
   description: string | null;
-  display_order: number;
+  sort_order: number;
   created_at: string;
 }
 
 export interface Level {
   id: string;
   program_id: string;
-  name: string;
-  display_order: number;
+  title: string;
+  cefr_level: string | null;
+  description: string | null;
+  is_published: boolean;
+  sort_order: number;
   created_at: string;
 }
 
@@ -29,7 +32,8 @@ export interface Unit {
   id: string;
   level_id: string;
   title: string;
-  display_order: number;
+  description: string | null;
+  sort_order: number;
   created_at: string;
 }
 
@@ -38,7 +42,7 @@ export interface Lesson {
   unit_id: string;
   title: string;
   description: string | null;
-  display_order: number;
+  sort_order: number;
   created_at: string;
 }
 
@@ -48,17 +52,16 @@ export interface Exercise {
   type: ExerciseType;
   prompt: string;
   content: Record<string, unknown> | null;
-  display_order: number;
+  sort_order: number;
   created_at: string;
 }
 
 export interface VocabularyItem {
   id: string;
-  lesson_id: string;
-  term: string;
+  level_id: string;
+  word: string;
   definition: string;
   example_sentence: string | null;
   audio_url: string | null;
-  display_order: number;
   created_at: string;
 }
