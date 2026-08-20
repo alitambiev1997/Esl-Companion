@@ -1,49 +1,21 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { supabase } from '@/src/lib/supabase';
-
-type LoadState = 'loading' | 'error' | 'ready';
+import { useAuth } from '@/src/features/auth/useAuth';
 
 export default function Home() {
   const router = useRouter();
-  const [state, setState] = useState<LoadState>('loading');
-  const [email, setEmail] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { user, loading, signOut } = useAuth();
+  const [signOutError, setSignOutError] = useState<string | null>(null);
   const [signingOut, setSigningOut] = useState(false);
 
   useEffect(() => {
-    let mounted = true;
-
-    (async () => {
-      const { data, error } = await supabase.auth.getUser();
-      if (!mounted) return;
-      if (error || !data.user) {
-        setState('error');
-        setErrorMessage(error?.message ?? 'Not signed in');
-        return;
-      }
-      setEmail(data.user.email ?? null);
-      setState('ready');
-    })();
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  const onSignOut = async () => {
-    setSigningOut(true);
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      setErrorMessage(error.message);
-      setSigningOut(false);
-      return;
+    if (!loading && !user) {
+      router.replace('/login');
     }
-    router.replace('/login');
-  };
+  }, [loading, user, router]);
 
-  if (state === 'loading') {
+  if (loading) {
     return (
       <View style={styles.container}>
         <Text>Loading...</Text>
@@ -51,18 +23,27 @@ export default function Home() {
     );
   }
 
-  if (state === 'error') {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.error}>{errorMessage}</Text>
-      </View>
-    );
+  if (!user) {
+    return null;
   }
+
+  const onSignOut = async () => {
+    setSigningOut(true);
+    setSignOutError(null);
+    try {
+      await signOut();
+      router.replace('/login');
+    } catch (error) {
+      setSignOutError(error instanceof Error ? error.message : 'Sign out failed');
+      setSigningOut(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Welcome</Text>
-      <Text style={styles.email}>{email}</Text>
+      <Text style={styles.email}>{user.email ?? 'No email on file'}</Text>
+      {signOutError && <Text style={styles.error}>{signOutError}</Text>}
       <Pressable
         style={[styles.button, signingOut && styles.buttonDisabled]}
         onPress={onSignOut}
@@ -93,6 +74,7 @@ const styles = StyleSheet.create({
   error: {
     color: '#d32f2f',
     fontSize: 14,
+    marginBottom: 8,
   },
   button: {
     backgroundColor: '#2196f3',
