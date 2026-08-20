@@ -5,12 +5,18 @@ import { useAuth } from '@/src/features/auth/useAuth';
 
 export default function Index() {
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
 
   useEffect(() => {
     if (loading) return;
-    router.replace(user ? '/home' : '/login');
-  }, [loading, user, router]);
+    if (!user) {
+      router.replace('/login');
+    } else if (!profile?.onboarding_completed) {
+      router.replace('/onboarding');
+    } else {
+      router.replace('/home');
+    }
+  }, [loading, user, profile, router]);
 
   return (
     <View style={styles.container}>
