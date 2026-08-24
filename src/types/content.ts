@@ -44,7 +44,19 @@ export interface Lesson {
   title: string;
   description: string | null;
   is_published: boolean;
+  pass_score: number | null;
   sort_order: number;
+  created_at: string;
+}
+
+export interface ExerciseAttempt {
+  id: string;
+  user_id: string;
+  lesson_id: string;
+  exercise_id: string;
+  user_answer: Record<string, unknown> | null;
+  is_correct: boolean;
+  time_spent_seconds: number | null;
   created_at: string;
 }
 
