@@ -46,7 +46,7 @@ type SessionState =
   | { status: 'error'; message: string }
   | { status: 'empty' }
   | { status: 'ready'; cards: ReviewCard[] }
-  | { status: 'end'; reviewed: number; xp: number };
+  | { status: 'end'; reviewed: number };
 
 export default function Review() {
   const router = useRouter();
@@ -138,20 +138,11 @@ export default function Review() {
       const { error } = await supabase.from('review_items').update(next).eq('id', card.id);
       if (error) throw new Error(error.message);
 
-      const { previous } = await addDailyActivity(user!.id, { reviewsCompleted: 1 });
-      const oldReviews = previous?.reviews_completed ?? 0;
-      const xpEarned = oldReviews < 4 ? 5 : 0;
-      if (xpEarned > 0) {
-        await addDailyActivity(user!.id, { xp: xpEarned });
-      }
+      await addDailyActivity(user!.id, { reviewsCompleted: 1 });
 
       const reviewed = index + 1;
       if (reviewed >= session.cards.length) {
-        setSession({
-          status: 'end',
-          reviewed: reviewed,
-          xp: xpEarned,
-        });
+        setSession({ status: 'end', reviewed });
       } else {
         setIndex(reviewed);
         setFlipped(false);
@@ -195,7 +186,6 @@ export default function Review() {
       <View style={styles.container}>
         <Text style={styles.title}>Session complete</Text>
         <Text style={styles.stateText}>Reviewed: {session.reviewed}</Text>
-        <Text style={styles.xpText}>+{session.xp} XP</Text>
         <Pressable style={styles.buttonPrimary} onPress={() => router.replace('/home')}>
           <Text style={styles.buttonPrimaryText}>Back to home</Text>
         </Pressable>
@@ -355,12 +345,6 @@ const styles = StyleSheet.create({
     color: colors.ink,
     opacity: 0.7,
     textAlign: 'center',
-  },
-  xpText: {
-    fontFamily: fonts.display,
-    fontSize: 24,
-    color: colors.leaf,
-    marginVertical: 8,
   },
   errorText: {
     fontFamily: fonts.body,

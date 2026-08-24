@@ -25,7 +25,7 @@ type DashState =
   | {
       status: 'ready';
       streak: number;
-      todayXp: number;
+      medalCount: number;
       reviewDue: number;
       nextLesson: NextLesson | null;
     };
@@ -102,7 +102,7 @@ export default function Home() {
       setDash({
         status: 'ready',
         streak: 0,
-        todayXp: 0,
+        medalCount: 0,
         reviewDue: 0,
         nextLesson: null,
       });
@@ -114,7 +114,6 @@ export default function Home() {
 
     (async () => {
       const now = new Date();
-      const todayKey = toDateKey(now);
       const levelId = profile.current_level_id as string;
 
       try {
@@ -128,8 +127,15 @@ export default function Home() {
         return;
       }
 
-      const [activityRes, reviewRes, unitsRes, lessonsRes, progressRes] = await Promise.all([
-        supabase.from('daily_activity').select('activity_date,xp').eq('user_id', user.id),
+      const [activityRes, progressRes, reviewRes, unitsRes, lessonsRes] = await Promise.all([
+        supabase
+          .from('daily_activity')
+          .select('activity_date')
+          .eq('user_id', user.id),
+        supabase
+          .from('lesson_progress')
+          .select('lesson_id,status')
+          .eq('user_id', user.id),
         supabase
           .from('review_items')
           .select('id')
@@ -146,34 +152,30 @@ export default function Home() {
           .select('*')
           .eq('is_published', true)
           .order('sort_order'),
-        supabase
-          .from('lesson_progress')
-          .select('lesson_id,status')
-          .eq('user_id', user.id),
       ]);
 
       if (!mounted) return;
 
       const firstError =
         activityRes.error ??
+        progressRes.error ??
         reviewRes.error ??
         unitsRes.error ??
-        lessonsRes.error ??
-        progressRes.error;
+        lessonsRes.error;
 
       if (firstError) {
         setDash({ status: 'error', message: firstError.message });
         return;
       }
 
-      const activity = (activityRes.data ?? []) as { activity_date: string; xp: number }[];
+      const activity = (activityRes.data ?? []) as { activity_date: string }[];
       const streak = computeStreak(activity.map((a) => a.activity_date));
-      const todayXp = activity.find((a) => a.activity_date === todayKey)?.xp ?? 0;
       const reviewDue = (reviewRes.data ?? []).length;
 
       const units = unitsRes.data as Unit[];
       const lessons = lessonsRes.data as Lesson[];
       const progress = progressRes.data as Pick<LessonProgress, 'lesson_id' | 'status'>[];
+      const medalCount = progress.filter((p) => p.status === 'completed').length;
       const completed = new Set(
         progress.filter((p) => p.status === 'completed').map((p) => p.lesson_id)
       );
@@ -198,7 +200,7 @@ export default function Home() {
         if (nextLesson) break;
       }
 
-      setDash({ status: 'ready', streak, todayXp, reviewDue, nextLesson });
+      setDash({ status: 'ready', streak, medalCount, reviewDue, nextLesson });
     })();
 
     return () => {
@@ -260,8 +262,8 @@ export default function Home() {
                 <Text style={styles.statLabel}>Day streak</Text>
               </View>
               <View style={styles.statCard}>
-                <Text style={styles.statValue}>{dash.todayXp}</Text>
-                <Text style={styles.statLabel}>Today XP</Text>
+                <Text style={styles.statValue}>{dash.medalCount}</Text>
+                <Text style={styles.statLabel}>Medals</Text>
               </View>
             </View>
 

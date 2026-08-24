@@ -35,7 +35,7 @@ create table if not exists public.lessons (
   title text not null,
   description text,
   estimated_minutes int not null default 5,
-  pass_score numeric not null default 70,
+  pass_score numeric not null default 60,
   is_published boolean not null default false,
   sort_order int not null default 0,
   created_at timestamptz not null default now()

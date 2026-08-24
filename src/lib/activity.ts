@@ -11,7 +11,6 @@ export interface DailyActivity {
 }
 
 export interface ActivityDeltas {
-  xp?: number;
   lessonsCompleted?: number;
   reviewsCompleted?: number;
   minutesPracticed?: number;
@@ -33,7 +32,6 @@ export async function addDailyActivity(
   const row = {
     user_id: userId,
     activity_date: today,
-    xp: (previous?.xp ?? 0) + (deltas.xp ?? 0),
     lessons_completed: (previous?.lessons_completed ?? 0) + (deltas.lessonsCompleted ?? 0),
     reviews_completed: (previous?.reviews_completed ?? 0) + (deltas.reviewsCompleted ?? 0),
     minutes_practiced: (previous?.minutes_practiced ?? 0) + (deltas.minutesPracticed ?? 0),

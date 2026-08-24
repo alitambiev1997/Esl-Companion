@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import { useAuth } from '@/src/features/auth/useAuth';
+import { medalColor, medalForScore } from '@/src/lib/medals';
 import { supabase } from '@/src/lib/supabase';
 import { colors, fonts, radius } from '@/src/theme/tokens';
 import type { Lesson, LessonProgress, Unit } from '@/src/types/content';
@@ -18,6 +19,7 @@ type LessonStatus = 'completed' | 'current' | 'unlocked' | 'locked';
 
 interface LessonRow extends Lesson {
   status: LessonStatus;
+  medalColor: string | null;
 }
 
 interface UnitRow extends Unit {
@@ -73,7 +75,7 @@ export default function Course() {
         .order('sort_order');
       const progressQuery = supabase
         .from('lesson_progress')
-        .select('lesson_id,status')
+        .select('lesson_id,status,score')
         .eq('user_id', user.id);
 
       const [unitsRes, lessonsRes, progressRes] = await Promise.all([
@@ -95,7 +97,10 @@ export default function Course() {
 
       const units = unitsRes.data as Unit[];
       const lessons = lessonsRes.data as Lesson[];
-      const progress = progressRes.data as Pick<LessonProgress, 'lesson_id' | 'status'>[];
+      const progress = progressRes.data as Pick<
+        LessonProgress,
+        'lesson_id' | 'status' | 'score'
+      >[];
 
       if (units.length === 0) {
         setLoadState({ status: 'empty', message: 'No units available yet.' });
@@ -104,6 +109,9 @@ export default function Course() {
 
       const completed = new Set(
         progress.filter((p) => p.status === 'completed').map((p) => p.lesson_id)
+      );
+      const scoreByLesson = new Map(
+        progress.filter((p) => p.score !== null).map((p) => [p.lesson_id, p.score as number])
       );
 
       let currentAssigned = false;
@@ -124,8 +132,10 @@ export default function Course() {
           }
 
           let status: LessonStatus;
+          let medal: string | null = null;
           if (isCompleted) {
             status = 'completed';
+            medal = medalColor(medalForScore(scoreByLesson.get(lesson.id) ?? 0)) ?? colors.leaf;
           } else if (unlocked && !currentAssigned) {
             status = 'current';
             currentAssigned = true;
@@ -135,7 +145,7 @@ export default function Course() {
             status = 'locked';
           }
 
-          return { ...lesson, status };
+          return { ...lesson, status, medalColor: medal };
         });
 
         return { ...unit, lessons: rows };
@@ -189,7 +199,13 @@ export default function Course() {
         <View key={unit.id} style={styles.unitSection}>
           <Text style={styles.unitTitle}>{unit.title}</Text>
           {unit.lessons.map((lesson) => {
-            const icon = STATUS_ICON[lesson.status];
+            const icon =
+              lesson.status === 'completed'
+                ? {
+                    name: 'checkmark-circle' as const,
+                    color: lesson.medalColor ?? colors.leaf,
+                  }
+                : STATUS_ICON[lesson.status];
             return (
               <Pressable
                 key={lesson.id}

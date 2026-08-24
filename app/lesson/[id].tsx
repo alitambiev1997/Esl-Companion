@@ -11,6 +11,8 @@ import {
 import { useAuth } from '@/src/features/auth/useAuth';
 import { addDailyActivity } from '@/src/lib/activity';
 import { ContinueButton } from '@/src/features/lesson/flow-buttons';
+import { medalColor, medalForScore, type Medal } from '@/src/lib/medals';
+import { Ionicons } from '@expo/vector-icons';
 import type { ExerciseRendererProps } from '@/src/features/lesson/content';
 import { FillBlankRenderer } from '@/src/features/lesson/renderers/fill-blank';
 import { MatchingRenderer } from '@/src/features/lesson/renderers/matching';
@@ -23,8 +25,7 @@ import type { Exercise, Lesson } from '@/src/types/content';
 interface Result {
   score: number;
   passed: boolean;
-  xpGained: number;
-  xpMax: number;
+  medal: Medal | null;
 }
 
 type Phase = 'answering' | 'checked';
@@ -152,26 +153,23 @@ export default function LessonPlayer() {
   const finishLesson = async (exercises: Exercise[]) => {
     if (!user || loadState.status !== 'ready') return;
 
-    const passScore = loadState.lesson.pass_score ?? 70;
+    const passScore = loadState.lesson.pass_score ?? 60;
     const total = exercises.length;
     const score = total === 0 ? 0 : Math.round((correctCount / total) * 100);
     const passed = score >= passScore;
-    const runXp = passed ? correctCount * 10 + 20 : 0;
+    const medal = medalForScore(score);
 
     setBusy(true);
     setSaveError(null);
 
     const { data: existing } = await supabase
       .from('lesson_progress')
-      .select('score,xp_earned,completed_at')
+      .select('score,completed_at')
       .eq('user_id', user.id)
       .eq('lesson_id', id)
       .maybeSingle();
 
     const bestScore = Math.max(existing?.score ?? 0, score);
-    const oldBestXp = existing?.xp_earned ?? 0;
-    const newBestXp = Math.max(oldBestXp, runXp);
-    const xpGained = Math.max(newBestXp - oldBestXp, 0);
     const status = bestScore >= passScore ? 'completed' : 'attempted';
     const completedAt =
       existing?.completed_at ?? (status === 'completed' ? new Date().toISOString() : null);
@@ -181,7 +179,6 @@ export default function LessonPlayer() {
         user_id: user.id,
         lesson_id: id,
         score: bestScore,
-        xp_earned: newBestXp,
         status,
         completed_at: completedAt,
       },
@@ -197,7 +194,6 @@ export default function LessonPlayer() {
     if (passed) {
       try {
         await addDailyActivity(user.id, {
-          xp: xpGained,
           lessonsCompleted: 1,
           minutesPracticed: loadState.lesson.estimated_minutes ?? 0,
         });
@@ -206,7 +202,7 @@ export default function LessonPlayer() {
       }
     }
 
-    setResult({ score, passed, xpGained, xpMax: total * 10 + 20 });
+    setResult({ score, passed, medal });
     setBusy(false);
   };
 
@@ -238,10 +234,18 @@ export default function LessonPlayer() {
           }}
         />
         <View style={styles.resultCard}>
-          <Text style={styles.title}>{result.passed ? 'Passed!' : 'Not passed yet'}</Text>
+          <Text style={styles.title}>{result.passed ? 'Lesson complete!' : 'Not passed yet'}</Text>
           <Text style={styles.scoreText}>Score: {result.score}%</Text>
-          <Text style={styles.resultText}>+{result.xpGained} XP</Text>
-          <Text style={styles.resultSubtext}>Lesson max: {result.xpMax}</Text>
+          {result.medal ? (
+            <>
+              <Ionicons name="medal" size={72} color={medalColor(result.medal) ?? colors.sky} />
+              <Text style={[styles.medalName, { color: medalColor(result.medal) ?? colors.sky }]}>
+                {result.medal.charAt(0).toUpperCase() + result.medal.slice(1)}
+              </Text>
+            </>
+          ) : (
+            <Text style={styles.noMedalText}>No medal yet - retry</Text>
+          )}
           <Pressable style={styles.buttonPrimary} onPress={() => router.replace('/course')}>
             <Text style={styles.buttonPrimaryText}>Back to course</Text>
           </Pressable>
@@ -438,15 +442,15 @@ const styles = StyleSheet.create({
     color: colors.ink,
     marginVertical: 16,
   },
-  resultText: {
+  medalName: {
     fontFamily: fonts.display,
-    fontSize: 24,
-    color: colors.leaf,
-    marginBottom: 4,
+    fontSize: 28,
+    marginTop: 8,
+    marginBottom: 16,
   },
-  resultSubtext: {
+  noMedalText: {
     fontFamily: fonts.body,
-    fontSize: 14,
+    fontSize: 16,
     color: colors.ink,
     opacity: 0.7,
     marginBottom: 8,

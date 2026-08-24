@@ -46,6 +46,13 @@ Do not build monetization, social features, AI conversation tools, or speech sco
 
 Onboarding is localized (cs/en) via a small dictionary; the rest of the app stays English for now. No i18n library.
 
+## Mastery medals (no XP)
+
+- Lessons award a medal from the best score: bronze 60-79, silver 80-89, gold 90-99, platinum 100.
+- Below 60 = no medal and the lesson is not completed.
+- Streaks stay. Reviews grant no currency.
+- No XP anywhere in the app or UI.
+
 
 ## Current milestone
 
