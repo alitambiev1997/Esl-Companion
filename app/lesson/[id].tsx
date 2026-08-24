@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -206,7 +206,7 @@ export default function LessonPlayer() {
       }
     }
 
-    setResult({ score, passed, xpGained, xpMax: newBestXp });
+    setResult({ score, passed, xpGained, xpMax: total * 10 + 20 });
     setBusy(false);
   };
 
@@ -232,13 +232,20 @@ export default function LessonPlayer() {
   if (result) {
     return (
       <View style={styles.container}>
-        <Text style={styles.title}>{result.passed ? 'Passed!' : 'Not passed yet'}</Text>
-        <Text style={styles.scoreText}>Score: {result.score}%</Text>
-        <Text style={styles.resultText}>+{result.xpGained} XP</Text>
-        <Text style={styles.resultSubtext}>Lesson max: {result.xpMax}</Text>
-        <Pressable style={styles.buttonPrimary} onPress={() => router.replace('/course')}>
-          <Text style={styles.buttonPrimaryText}>Back to course</Text>
-        </Pressable>
+        <Stack.Screen
+          options={{
+            title: loadState.status === 'ready' ? loadState.lesson.title : 'Lesson',
+          }}
+        />
+        <View style={styles.resultCard}>
+          <Text style={styles.title}>{result.passed ? 'Passed!' : 'Not passed yet'}</Text>
+          <Text style={styles.scoreText}>Score: {result.score}%</Text>
+          <Text style={styles.resultText}>+{result.xpGained} XP</Text>
+          <Text style={styles.resultSubtext}>Lesson max: {result.xpMax}</Text>
+          <Pressable style={styles.buttonPrimary} onPress={() => router.replace('/course')}>
+            <Text style={styles.buttonPrimaryText}>Back to course</Text>
+          </Pressable>
+        </View>
       </View>
     );
   }
@@ -257,6 +264,7 @@ export default function LessonPlayer() {
 
   return (
     <View style={styles.container}>
+      <Stack.Screen options={{ title: lesson.title }} />
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.title}>{lesson.title}</Text>
 
@@ -426,7 +434,7 @@ const styles = StyleSheet.create({
   },
   scoreText: {
     fontFamily: fonts.display,
-    fontSize: 40,
+    fontSize: 36,
     color: colors.ink,
     marginVertical: 16,
   },
@@ -442,5 +450,14 @@ const styles = StyleSheet.create({
     color: colors.ink,
     opacity: 0.7,
     marginBottom: 8,
+  },
+  resultCard: {
+    width: '100%',
+    backgroundColor: colors.white,
+    borderWidth: 2,
+    borderColor: colors.grey,
+    borderRadius: radius.card,
+    padding: 24,
+    alignItems: 'center',
   },
 });

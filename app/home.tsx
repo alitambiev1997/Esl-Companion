@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native';
 import { supabase } from '@/src/lib/supabase';
+import { ensureReviewItems } from '@/src/lib/review';
 import { colors, fonts, radius } from '@/src/theme/tokens';
 import { useAuth } from '@/src/features/auth/useAuth';
 import type { Lesson, LessonProgress, Unit } from '@/src/types/content';
@@ -115,6 +116,17 @@ export default function Home() {
       const now = new Date();
       const todayKey = toDateKey(now);
       const levelId = profile.current_level_id as string;
+
+      try {
+        await ensureReviewItems(user.id, levelId);
+      } catch (error) {
+        if (!mounted) return;
+        setDash({
+          status: 'error',
+          message: error instanceof Error ? error.message : 'Failed to load dashboard',
+        });
+        return;
+      }
 
       const [activityRes, reviewRes, unitsRes, lessonsRes, progressRes] = await Promise.all([
         supabase.from('daily_activity').select('activity_date,xp').eq('user_id', user.id),

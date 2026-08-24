@@ -88,11 +88,13 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   chip: {
+    flexGrow: 0,
+    flexShrink: 0,
     borderWidth: 2,
     borderColor: colors.grey,
     borderRadius: radius.bubble,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
     margin: 4,
     backgroundColor: colors.paper,
   },
@@ -100,5 +102,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     fontSize: 16,
     color: colors.ink,
+    includeFontPadding: false,
   },
 });

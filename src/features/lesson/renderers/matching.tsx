@@ -64,6 +64,8 @@ export function MatchingRenderer({
     const expected = content.pairs.find((c) => c.left === p.left);
     return !expected || expected.right !== p.right;
   });
+  const wrongLefts = checked ? new Set(wrongPairs.map((p) => p.left)) : new Set<string>();
+  const wrongRights = checked ? new Set(wrongPairs.map((p) => p.right)) : new Set<string>();
 
   return (
     <>
@@ -75,7 +77,8 @@ export function MatchingRenderer({
               style={[
                 styles.item,
                 selectedLeft === pair.left && styles.itemSelected,
-                paired && styles.itemPaired,
+                paired &&
+                  (wrongLefts.has(pair.left) ? styles.itemWrong : styles.itemPaired),
               ]}
               onPress={() => tapLeft(pair.left)}
             >
@@ -86,7 +89,10 @@ export function MatchingRenderer({
                 return right === paired.right ? (
                   <Pressable
                     key={right}
-                    style={[styles.item, styles.itemPaired]}
+                    style={[
+                      styles.item,
+                      wrongRights.has(right) ? styles.itemWrong : styles.itemPaired,
+                    ]}
                     onPress={() => tapRight(right)}
                   >
                     <Text style={styles.itemText}>{right}</Text>
@@ -156,6 +162,10 @@ const styles = StyleSheet.create({
   },
   itemPaired: {
     borderColor: colors.leaf,
+  },
+  itemWrong: {
+    borderColor: colors.coral,
+    backgroundColor: colors.coralTint,
   },
   itemDisabled: {
     opacity: 0.4,

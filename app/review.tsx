@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useAuth } from '@/src/features/auth/useAuth';
 import { addDailyActivity } from '@/src/lib/activity';
+import { ensureReviewItems } from '@/src/lib/review';
 import { supabase } from '@/src/lib/supabase';
 import { applyGrade, type SrsGrade } from '@/src/lib/srs';
 import { colors, fonts, radius } from '@/src/theme/tokens';
@@ -77,32 +78,8 @@ export default function Review() {
       const levelId = profile.current_level_id as string;
 
       try {
-        const { data: vocabRows, error: vocabError } = await supabase
-          .from('vocabulary_items')
-          .select('id')
-          .eq('level_id', levelId)
-          .eq('is_published', true);
-        if (vocabError) throw new Error(vocabError.message);
+        await ensureReviewItems(user.id, levelId);
         if (!mounted) return;
-
-        if (!vocabRows || vocabRows.length === 0) {
-          setSession({ status: 'empty' });
-          return;
-        }
-
-        const { error: insertError } = await supabase.from('review_items').upsert(
-          vocabRows.map((row) => ({
-            user_id: user.id,
-            vocabulary_item_id: row.id,
-            state: 'new',
-            interval_days: 0,
-            ease_factor: 2.5,
-            due_at: now,
-            repetition_count: 0,
-          })),
-          { onConflict: 'user_id,vocabulary_item_id', ignoreDuplicates: true }
-        );
-        if (insertError) throw new Error(insertError.message);
 
         const { data, error } = await supabase
           .from('review_items')

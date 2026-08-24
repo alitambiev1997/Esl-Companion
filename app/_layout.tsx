@@ -18,14 +18,14 @@ export default function RootLayout() {
   return (
     <>
       <Stack>
-        <Stack.Screen name="index" />
-        <Stack.Screen name="(auth)/login" />
-        <Stack.Screen name="(auth)/signup" />
-        <Stack.Screen name="home" />
-        <Stack.Screen name="onboarding" />
-        <Stack.Screen name="course" />
-        <Stack.Screen name="lesson/[id]" />
-        <Stack.Screen name="review" />
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="(auth)/login" options={{ title: 'Log in' }} />
+        <Stack.Screen name="(auth)/signup" options={{ title: 'Sign up' }} />
+        <Stack.Screen name="home" options={{ headerShown: false }} />
+        <Stack.Screen name="onboarding" options={{ title: 'Setup' }} />
+        <Stack.Screen name="course" options={{ headerShown: false }} />
+        <Stack.Screen name="lesson/[id]" options={{ title: 'Lesson' }} />
+        <Stack.Screen name="review" options={{ title: 'Review' }} />
       </Stack>
       <StatusBar style="auto" />
     </>
