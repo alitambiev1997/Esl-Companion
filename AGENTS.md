@@ -48,6 +48,8 @@ Onboarding is localized (cs/en) via a small dictionary; the rest of the app stay
 
 Review sessions are objectively tested (auto-generated multiple choice; no self-grading). SRS uses Again/Good only.
 
+Speaking exercises are ungraded practice for now (record and compare with the model; no scoring).
+
 ## Mastery medals (no XP)
 
 - Lessons award a medal from the best score: bronze 60-79, silver 80-89, gold 90-99, platinum 100.

@@ -76,6 +76,7 @@ export interface Exercise {
   type: ExerciseType;
   prompt: string;
   content: Record<string, unknown> | null;
+  is_required: boolean | null;
   sort_order: number;
   created_at: string;
 }

@@ -15,7 +15,10 @@ import { medalColor, medalForScore, type Medal } from '@/src/lib/medals';
 import { Ionicons } from '@expo/vector-icons';
 import type { ExerciseRendererProps } from '@/src/features/lesson/content';
 import { FillBlankRenderer } from '@/src/features/lesson/renderers/fill-blank';
+import { ListeningDictationRenderer } from '@/src/features/lesson/renderers/listening-dictation';
+import { ListeningMultipleChoiceRenderer } from '@/src/features/lesson/renderers/listening-multiple-choice';
 import { MatchingRenderer } from '@/src/features/lesson/renderers/matching';
+import { SpeakingRecordingRenderer } from '@/src/features/lesson/renderers/speaking-recording';
 import { MultipleChoiceRenderer } from '@/src/features/lesson/renderers/multiple-choice';
 import { WordOrderRenderer } from '@/src/features/lesson/renderers/word-order';
 import { supabase } from '@/src/lib/supabase';
@@ -154,7 +157,7 @@ export default function LessonPlayer() {
     if (!user || loadState.status !== 'ready') return;
 
     const passScore = loadState.lesson.pass_score ?? 60;
-    const total = exercises.length;
+    const total = exercises.filter((e) => e.is_required !== false).length;
     const score = total === 0 ? 0 : Math.round((correctCount / total) * 100);
     const passed = score >= passScore;
     const medal = medalForScore(score);
@@ -310,7 +313,16 @@ export default function LessonPlayer() {
             {exercise.type === 'matching' && (
               <MatchingRenderer key={exercise.id} {...rendererProps(exercise)} />
             )}
-            {!['multiple_choice', 'fill_blank', 'word_order', 'matching'].includes(
+            {exercise.type === 'listening_multiple_choice' && (
+              <ListeningMultipleChoiceRenderer key={exercise.id} {...rendererProps(exercise)} />
+            )}
+            {exercise.type === 'listening_dictation' && (
+              <ListeningDictationRenderer key={exercise.id} {...rendererProps(exercise)} />
+            )}
+            {exercise.type === 'speaking_recording' && (
+              <SpeakingRecordingRenderer key={exercise.id} {...rendererProps(exercise)} />
+            )}
+            {!['multiple_choice', 'fill_blank', 'word_order', 'matching', 'listening_multiple_choice', 'listening_dictation', 'speaking_recording'].includes(
               exercise.type
             ) && (
               <View style={styles.placeholderCard}>

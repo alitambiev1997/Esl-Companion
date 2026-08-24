@@ -27,6 +27,19 @@ export interface MatchingContent {
   explanation: string | null;
 }
 
+export interface ListeningMultipleChoiceContent {
+  text_to_speak: string;
+  options: string[];
+  correct_index: number;
+  explanation: string | null;
+}
+
+export interface ListeningDictationContent {
+  text_to_speak: string;
+  accepted: string[];
+  explanation: string | null;
+}
+
 export interface ExerciseRendererProps {
   exercise: Exercise;
   checked: boolean;

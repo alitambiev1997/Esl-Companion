@@ -148,6 +148,7 @@ function toExercise(card: ReviewCard, exercise: ObjectiveExercise): Exercise {
     },
     sort_order: 0,
     created_at: '',
+    is_required: true,
   };
 }
 
