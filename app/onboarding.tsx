@@ -9,30 +9,19 @@ import {
   View,
 } from 'react-native';
 import { useAuth } from '@/src/features/auth/useAuth';
+import {
+  getOnboardingCopy,
+  goalKeys,
+  languageStepCopy,
+  levelCopyByCefr,
+  type GoalKey,
+  type OnboardingLocale,
+} from '@/src/i18n/onboarding';
 import { supabase } from '@/src/lib/supabase';
 import { colors, fonts, radius } from '@/src/theme/tokens';
 import type { Level } from '@/src/types/content';
 
-const GOALS = [
-  {
-    label: 'General English',
-    description: 'Improve everyday English for conversations and daily life.',
-  },
-  {
-    label: 'Work',
-    description: 'English for your job, interviews, and professional communication.',
-  },
-  {
-    label: 'Travel',
-    description: 'English for trips, directions, and travel situations.',
-  },
-  {
-    label: 'Exam preparation',
-    description: 'Prepare for exams such as IELTS, TOEFL, or Cambridge.',
-  },
-];
-
-type Step = 'goal' | 'level';
+type Step = 'language' | 'goal' | 'level';
 
 type LevelsState =
   | { status: 'idle' }
@@ -40,17 +29,22 @@ type LevelsState =
   | { status: 'error'; message: string }
   | { status: 'success'; levels: Level[] };
 
+const STEP_NUMBER: Record<Step, number> = { language: 1, goal: 2, level: 3 };
+
 export default function Onboarding() {
   const router = useRouter();
   const { user, loading } = useAuth();
 
-  const [step, setStep] = useState<Step>('goal');
-  const [selectedGoal, setSelectedGoal] = useState<string | null>(null);
+  const [step, setStep] = useState<Step>('language');
+  const [locale, setLocale] = useState<OnboardingLocale>('en');
+  const [selectedGoal, setSelectedGoal] = useState<GoalKey | null>(null);
   const [selectedLevelId, setSelectedLevelId] = useState<string | null>(null);
   const [levelsState, setLevelsState] = useState<LevelsState>({ status: 'idle' });
   const [levelsRetry, setLevelsRetry] = useState(0);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  const copy = getOnboardingCopy(locale);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -83,6 +77,11 @@ export default function Onboarding() {
     };
   }, [step, levelsRetry]);
 
+  const chooseLanguage = (chosen: OnboardingLocale) => {
+    setLocale(chosen);
+    setStep('goal');
+  };
+
   const goToLevels = () => {
     if (!selectedGoal) return;
     setStep('level');
@@ -97,6 +96,7 @@ export default function Onboarding() {
     const { error } = await supabase
       .from('profiles')
       .update({
+        locale,
         goal: selectedGoal,
         current_level_id: selectedLevelId,
         onboarding_completed: true,
@@ -110,6 +110,14 @@ export default function Onboarding() {
     }
 
     router.replace('/home');
+  };
+
+  const levelDisplay = (level: Level) => {
+    if (locale === 'cs' && level.cefr_level) {
+      const csCopy = levelCopyByCefr.cs[level.cefr_level];
+      if (csCopy) return csCopy;
+    }
+    return { title: level.title, description: level.description ?? '' };
   };
 
   if (loading) {
@@ -127,44 +135,60 @@ export default function Onboarding() {
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Let&apos;s get you set up</Text>
+        <Text style={styles.title}>{languageStepCopy.titleLine1}</Text>
+        <Text style={styles.subtitle}>{languageStepCopy.titleLine2}</Text>
 
         <View style={styles.progressRow}>
-          <Text style={styles.progressText}>Step {step === 'goal' ? '1' : '2'} of 2</Text>
+          <Text style={styles.progressText}>Step {STEP_NUMBER[step]} of 3</Text>
           <View style={styles.progressTrack}>
             <View
               style={[
                 styles.progressFill,
-                { width: step === 'goal' ? '50%' : '100%' },
+                { width: `${(STEP_NUMBER[step] / 3) * 100}%` },
               ]}
             />
           </View>
         </View>
 
-        {step === 'goal' ? (
+        {step === 'language' && (
           <>
-            <Text style={styles.sectionTitle}>What is your main goal?</Text>
-            {GOALS.map((goal) => (
+            <Pressable style={styles.card} onPress={() => chooseLanguage('cs')}>
+              <Text style={styles.cardTitle}>Čeština</Text>
+            </Pressable>
+            <Pressable style={styles.card} onPress={() => chooseLanguage('en')}>
+              <Text style={styles.cardTitle}>English</Text>
+            </Pressable>
+          </>
+        )}
+
+        {step === 'goal' && (
+          <>
+            <Text style={styles.sectionTitle}>{copy.titleGoal}</Text>
+            {goalKeys.map((key) => (
               <Pressable
-                key={goal.label}
-                style={[styles.card, selectedGoal === goal.label && styles.cardSelected]}
-                onPress={() => setSelectedGoal(goal.label)}
+                key={key}
+                style={[styles.card, selectedGoal === key && styles.cardSelected]}
+                onPress={() => setSelectedGoal(key)}
               >
-                <Text style={styles.cardTitle}>{goal.label}</Text>
-                <Text style={styles.cardDescription}>{goal.description}</Text>
+                <Text style={styles.cardTitle}>{copy.goals[key]}</Text>
               </Pressable>
             ))}
+            <Pressable style={styles.buttonGhost} onPress={() => setStep('language')}>
+              <Text style={styles.buttonGhostText}>{copy.back}</Text>
+            </Pressable>
             <Pressable
               style={[styles.button, !selectedGoal && styles.buttonDisabled]}
               onPress={goToLevels}
               disabled={!selectedGoal}
             >
-              <Text style={styles.buttonText}>Continue</Text>
+              <Text style={styles.buttonText}>{copy.continue}</Text>
             </Pressable>
           </>
-        ) : (
+        )}
+
+        {step === 'level' && (
           <>
-            <Text style={styles.sectionTitle}>What level are you at?</Text>
+            <Text style={styles.sectionTitle}>{copy.titleLevel}</Text>
 
             {levelsState.status === 'loading' && (
               <View style={styles.stateBox}>
@@ -189,27 +213,34 @@ export default function Onboarding() {
             )}
 
             {levelsState.status === 'success' &&
-              levelsState.levels.map((level) => (
-                <Pressable
-                  key={level.id}
-                  style={[styles.card, selectedLevelId === level.id && styles.cardSelected]}
-                  onPress={() => setSelectedLevelId(level.id)}
-                >
-                  <View style={styles.levelHeader}>
-                    <Text style={styles.cardTitle}>{level.title}</Text>
-                    {level.cefr_level && (
-                      <View style={styles.cefrChip}>
-                        <Text style={styles.cefrText}>{level.cefr_level}</Text>
-                      </View>
+              levelsState.levels.map((level) => {
+                const display = levelDisplay(level);
+                return (
+                  <Pressable
+                    key={level.id}
+                    style={[styles.card, selectedLevelId === level.id && styles.cardSelected]}
+                    onPress={() => setSelectedLevelId(level.id)}
+                  >
+                    <View style={styles.levelHeader}>
+                      <Text style={styles.cardTitle}>{display.title}</Text>
+                      {level.cefr_level && (
+                        <View style={styles.cefrChip}>
+                          <Text style={styles.cefrText}>{level.cefr_level}</Text>
+                        </View>
+                      )}
+                    </View>
+                    {display.description && (
+                      <Text style={styles.cardDescription}>{display.description}</Text>
                     )}
-                  </View>
-                  {level.description && (
-                    <Text style={styles.cardDescription}>{level.description}</Text>
-                  )}
-                </Pressable>
-              ))}
+                  </Pressable>
+                );
+              })}
 
             {saveError && <Text style={styles.errorText}>{saveError}</Text>}
+
+            <Pressable style={styles.buttonGhost} onPress={() => setStep('goal')}>
+              <Text style={styles.buttonGhostText}>{copy.back}</Text>
+            </Pressable>
 
             {levelsState.status === 'success' && (
               <Pressable
@@ -217,9 +248,7 @@ export default function Onboarding() {
                 onPress={finish}
                 disabled={!selectedLevelId || saving}
               >
-                <Text style={styles.buttonText}>
-                  {saving ? 'Saving...' : 'Finish'}
-                </Text>
+                <Text style={styles.buttonText}>{saving ? 'Saving...' : copy.finish}</Text>
               </Pressable>
             )}
           </>
@@ -242,6 +271,12 @@ const styles = StyleSheet.create({
     fontFamily: fonts.display,
     fontSize: 28,
     color: colors.ink,
+  },
+  subtitle: {
+    fontFamily: fonts.display,
+    fontSize: 20,
+    color: colors.ink,
+    opacity: 0.7,
     marginBottom: 16,
   },
   progressRow: {
@@ -339,6 +374,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 16,
   },
+  buttonGhost: {
+    borderRadius: radius.button,
+    padding: 12,
+    alignItems: 'center',
+    marginTop: 12,
+  },
   buttonDisabled: {
     opacity: 0.5,
   },
@@ -347,5 +388,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#fff',
+  },
+  buttonGhostText: {
+    fontFamily: fonts.body,
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.sky,
   },
 });

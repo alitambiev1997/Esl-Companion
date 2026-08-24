@@ -42,6 +42,11 @@ Do not build monetization, social features, AI conversation tools, or speech sco
 - Trigger auto-creates a profile on signup
 - Email confirmation is OFF for development
 
+## Misc
+
+Onboarding is localized (cs/en) via a small dictionary; the rest of the app stays English for now. No i18n library.
+
+
 ## Current milestone
 
 Authentication only:
