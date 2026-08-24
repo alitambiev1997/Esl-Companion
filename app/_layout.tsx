@@ -25,6 +25,7 @@ export default function RootLayout() {
         <Stack.Screen name="onboarding" />
         <Stack.Screen name="course" />
         <Stack.Screen name="lesson/[id]" />
+        <Stack.Screen name="review" />
       </Stack>
       <StatusBar style="auto" />
     </>
