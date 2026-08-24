@@ -9,15 +9,15 @@ import {
   View,
 } from 'react-native';
 import { useAuth } from '@/src/features/auth/useAuth';
+import { ContinueButton } from '@/src/features/lesson/flow-buttons';
+import type { ExerciseRendererProps } from '@/src/features/lesson/content';
+import { FillBlankRenderer } from '@/src/features/lesson/renderers/fill-blank';
+import { MatchingRenderer } from '@/src/features/lesson/renderers/matching';
+import { MultipleChoiceRenderer } from '@/src/features/lesson/renderers/multiple-choice';
+import { WordOrderRenderer } from '@/src/features/lesson/renderers/word-order';
 import { supabase } from '@/src/lib/supabase';
 import { colors, fonts, radius } from '@/src/theme/tokens';
 import type { Exercise, Lesson } from '@/src/types/content';
-
-interface MultipleChoiceContent {
-  options: string[];
-  correct_index: number;
-  explanation: string;
-}
 
 interface Result {
   score: number;
@@ -40,11 +40,10 @@ export default function LessonPlayer() {
   const [loadState, setLoadState] = useState<LoadState>({ status: 'loading' });
   const [retry, setRetry] = useState(0);
   const [index, setIndex] = useState(0);
-  const [selected, setSelected] = useState<number | null>(null);
   const [phase, setPhase] = useState<Phase>('answering');
   const [correctCount, setCorrectCount] = useState(0);
   const [attemptError, setAttemptError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [result, setResult] = useState<Result | null>(null);
 
@@ -98,24 +97,25 @@ export default function LessonPlayer() {
     };
   }, [authLoading, user, id, router, retry]);
 
-  const mcContent = (exercise: Exercise): MultipleChoiceContent | null => {
-    if (exercise.type !== 'multiple_choice' || !exercise.content) return null;
-    return exercise.content as unknown as MultipleChoiceContent;
-  };
+  const handleCheck = async (
+    exercise: Exercise,
+    userAnswer: Record<string, unknown>,
+    isCorrect: boolean
+  ) => {
+    if (!user) return;
 
-  const onCheck = async (exercise: Exercise, content: MultipleChoiceContent) => {
-    if (selected === null || !user) return;
-
-    const isCorrect = selected === content.correct_index;
+    setBusy(true);
     setAttemptError(null);
 
     const { error } = await supabase.from('exercise_attempts').insert({
       user_id: user.id,
       lesson_id: exercise.lesson_id,
       exercise_id: exercise.id,
-      user_answer: { selected_index: selected },
+      user_answer: userAnswer,
       is_correct: isCorrect,
     });
+
+    setBusy(false);
 
     if (error) {
       setAttemptError(error.message);
@@ -128,21 +128,19 @@ export default function LessonPlayer() {
     setPhase('checked');
   };
 
-  const onContinue = async () => {
+  const handleContinue = async () => {
     if (loadState.status !== 'ready') return;
 
-    const exercises = loadState.exercises;
     const next = index + 1;
 
-    if (next < exercises.length) {
+    if (next < loadState.exercises.length) {
       setIndex(next);
-      setSelected(null);
       setPhase('answering');
       setAttemptError(null);
       return;
     }
 
-    await finishLesson(exercises);
+    await finishLesson(loadState.exercises);
   };
 
   const finishLesson = async (exercises: Exercise[]) => {
@@ -154,7 +152,7 @@ export default function LessonPlayer() {
     const passed = score >= passScore;
     const xp = correctCount * 10 + (passed ? 20 : 0);
 
-    setSaving(true);
+    setBusy(true);
     setSaveError(null);
 
     const { data: existing } = await supabase
@@ -184,12 +182,12 @@ export default function LessonPlayer() {
 
     if (error) {
       setSaveError(error.message);
-      setSaving(false);
+      setBusy(false);
       return;
     }
 
-    setResult({ score: bestScore, passed: status === 'completed', xp: bestXp });
-    setSaving(false);
+    setResult({ score, passed, xp });
+    setBusy(false);
   };
 
   if (authLoading || loadState.status === 'loading') {
@@ -226,9 +224,15 @@ export default function LessonPlayer() {
 
   const { lesson, exercises } = loadState;
   const exercise = exercises[index];
-  const content = exercise ? mcContent(exercise) : null;
-  const isCorrect =
-    content !== null && phase === 'checked' && selected === content.correct_index;
+
+  const rendererProps = (current: Exercise): ExerciseRendererProps => ({
+    exercise: current,
+    checked: phase === 'checked',
+    busy,
+    isLast: index === exercises.length - 1,
+    onCheck: (userAnswer, isCorrect) => handleCheck(current, userAnswer, isCorrect),
+    onContinue: handleContinue,
+  });
 
   return (
     <View style={styles.container}>
@@ -257,78 +261,39 @@ export default function LessonPlayer() {
           </View>
         )}
 
-        {exercise && !content && (
-          <View style={styles.placeholderCard}>
-            <Text style={styles.placeholderText}>Exercise type coming next</Text>
-            <Pressable style={styles.button} onPress={onContinue}>
-              <Text style={styles.buttonText}>Continue</Text>
-            </Pressable>
-          </View>
-        )}
-
-        {exercise && content && (
+        {exercise && (
           <>
             <Text style={styles.prompt}>{exercise.prompt}</Text>
 
-            {content.options.map((option, i) => {
-              const isSelected = selected === i;
-              const showResult = phase === 'checked';
-              const isThisCorrect = i === content.correct_index;
-              const isThisWrongPick = isSelected && !isThisCorrect;
-
-              return (
-                <Pressable
-                  key={i}
-                  style={[
-                    styles.option,
-                    isSelected && styles.optionSelected,
-                    showResult && isThisCorrect && styles.optionCorrect,
-                    showResult && isThisWrongPick && styles.optionWrong,
-                  ]}
-                  onPress={() => {
-                    if (phase === 'answering') setSelected(i);
-                  }}
-                  disabled={phase !== 'answering'}
-                >
-                  <Text style={styles.optionText}>{option}</Text>
-                </Pressable>
-              );
-            })}
-
-            {phase === 'answering' && (
-              <Pressable
-                style={[styles.button, selected === null && styles.buttonDisabled]}
-                onPress={() => onCheck(exercise, content)}
-                disabled={selected === null}
-              >
-                <Text style={styles.buttonText}>Check</Text>
-              </Pressable>
+            {exercise.type === 'multiple_choice' && (
+              <MultipleChoiceRenderer key={exercise.id} {...rendererProps(exercise)} />
+            )}
+            {exercise.type === 'fill_blank' && (
+              <FillBlankRenderer key={exercise.id} {...rendererProps(exercise)} />
+            )}
+            {exercise.type === 'word_order' && (
+              <WordOrderRenderer key={exercise.id} {...rendererProps(exercise)} />
+            )}
+            {exercise.type === 'matching' && (
+              <MatchingRenderer key={exercise.id} {...rendererProps(exercise)} />
+            )}
+            {!['multiple_choice', 'fill_blank', 'word_order', 'matching'].includes(
+              exercise.type
+            ) && (
+              <View style={styles.placeholderCard}>
+                <Text style={styles.placeholderText}>Exercise type coming next</Text>
+                <ContinueButton
+                  isLast={index === exercises.length - 1}
+                  onPress={handleContinue}
+                  disabled={busy}
+                />
+              </View>
             )}
 
-            {phase === 'checked' && (
-              <>
-                <View style={[styles.feedback, isCorrect ? styles.feedbackCorrect : styles.feedbackWrong]}>
-                  <Text style={styles.feedbackTitle}>
-                    {isCorrect ? 'Correct!' : 'Not quite'}
-                  </Text>
-                  <Text style={styles.feedbackText}>{content.explanation}</Text>
-                </View>
-                {attemptError && <Text style={styles.errorText}>{attemptError}</Text>}
-                <Pressable
-                  style={styles.button}
-                  onPress={onContinue}
-                  disabled={saving}
-                >
-                  <Text style={styles.buttonText}>
-                    {index === exercises.length - 1 ? 'Finish' : 'Continue'}
-                  </Text>
-                </Pressable>
-              </>
-            )}
+            {attemptError && <Text style={styles.errorText}>{attemptError}</Text>}
+            {saveError && <Text style={styles.errorText}>{saveError}</Text>}
           </>
         )}
-
-        {saveError && <Text style={styles.errorText}>{saveError}</Text>}
       </ScrollView>
     </View>
   );
@@ -378,53 +343,6 @@ const styles = StyleSheet.create({
     color: colors.ink,
     marginBottom: 16,
   },
-  option: {
-    borderWidth: 2,
-    borderColor: colors.grey,
-    borderRadius: radius.card,
-    padding: 14,
-    marginBottom: 8,
-    backgroundColor: colors.paper,
-  },
-  optionSelected: {
-    borderColor: colors.sky,
-  },
-  optionCorrect: {
-    borderColor: colors.leaf,
-    backgroundColor: '#F0F9E8',
-  },
-  optionWrong: {
-    borderColor: colors.coral,
-    backgroundColor: '#FDEFEA',
-  },
-  optionText: {
-    fontFamily: fonts.body,
-    fontSize: 16,
-    color: colors.ink,
-  },
-  feedback: {
-    borderRadius: radius.card,
-    padding: 16,
-    marginTop: 8,
-    marginBottom: 8,
-  },
-  feedbackCorrect: {
-    backgroundColor: '#F0F9E8',
-  },
-  feedbackWrong: {
-    backgroundColor: '#FDEFEA',
-  },
-  feedbackTitle: {
-    fontFamily: fonts.display,
-    fontSize: 18,
-    color: colors.ink,
-    marginBottom: 4,
-  },
-  feedbackText: {
-    fontFamily: fonts.body,
-    fontSize: 14,
-    color: colors.ink,
-  },
   placeholderCard: {
     borderWidth: 2,
     borderColor: colors.grey,
@@ -461,9 +379,6 @@ const styles = StyleSheet.create({
     padding: 14,
     alignItems: 'center',
     marginTop: 16,
-  },
-  buttonDisabled: {
-    opacity: 0.5,
   },
   buttonText: {
     fontFamily: fonts.body,
