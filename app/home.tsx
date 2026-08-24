@@ -72,6 +72,9 @@ export default function Home() {
       <Text style={styles.email}>{user.email ?? 'No email on file'}</Text>
       {levelTitle && <Text style={styles.level}>Level: {levelTitle}</Text>}
       {signOutError && <Text style={styles.error}>{signOutError}</Text>}
+      <Pressable style={styles.courseButton} onPress={() => router.push('/course')}>
+        <Text style={styles.courseButtonText}>Your course</Text>
+      </Pressable>
       <Pressable
         style={[styles.button, signingOut && styles.buttonDisabled]}
         onPress={onSignOut}
@@ -101,7 +104,19 @@ const styles = StyleSheet.create({
   level: {
     fontSize: 16,
     marginTop: 4,
+    marginBottom: 8,
+  },
+  courseButton: {
+    backgroundColor: '#2196f3',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 32,
     marginBottom: 24,
+  },
+  courseButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   error: {
     color: '#d32f2f',

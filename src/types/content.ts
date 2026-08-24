@@ -33,6 +33,7 @@ export interface Unit {
   level_id: string;
   title: string;
   description: string | null;
+  is_published: boolean;
   sort_order: number;
   created_at: string;
 }
@@ -42,8 +43,18 @@ export interface Lesson {
   unit_id: string;
   title: string;
   description: string | null;
+  is_published: boolean;
   sort_order: number;
   created_at: string;
+}
+
+export interface LessonProgress {
+  id: string;
+  user_id: string;
+  lesson_id: string;
+  status: string;
+  score: number | null;
+  completed_at: string | null;
 }
 
 export interface Exercise {
