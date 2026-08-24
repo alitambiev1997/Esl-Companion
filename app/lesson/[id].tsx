@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native';
 import { useAuth } from '@/src/features/auth/useAuth';
+import { addDailyActivity } from '@/src/lib/activity';
 import { ContinueButton } from '@/src/features/lesson/flow-buttons';
 import type { ExerciseRendererProps } from '@/src/features/lesson/content';
 import { FillBlankRenderer } from '@/src/features/lesson/renderers/fill-blank';
@@ -60,7 +61,11 @@ export default function LessonPlayer() {
 
     (async () => {
       const [lessonRes, exercisesRes] = await Promise.all([
-        supabase.from('lessons').select('id,title,pass_score').eq('id', id).maybeSingle(),
+        supabase
+          .from('lessons')
+          .select('id,title,pass_score,estimated_minutes')
+          .eq('id', id)
+          .maybeSingle(),
         supabase
           .from('exercises')
           .select('*')
@@ -187,6 +192,18 @@ export default function LessonPlayer() {
       setSaveError(error.message);
       setBusy(false);
       return;
+    }
+
+    if (passed) {
+      try {
+        await addDailyActivity(user.id, {
+          xp: xpGained,
+          lessonsCompleted: 1,
+          minutesPracticed: loadState.lesson.estimated_minutes ?? 0,
+        });
+      } catch {
+        // no-op
+      }
     }
 
     setResult({ score, passed, xpGained, xpMax: newBestXp });

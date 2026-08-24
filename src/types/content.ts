@@ -45,6 +45,7 @@ export interface Lesson {
   description: string | null;
   is_published: boolean;
   pass_score: number | null;
+  estimated_minutes: number | null;
   sort_order: number;
   created_at: string;
 }
