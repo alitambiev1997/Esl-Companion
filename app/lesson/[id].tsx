@@ -22,7 +22,8 @@ import type { Exercise, Lesson } from '@/src/types/content';
 interface Result {
   score: number;
   passed: boolean;
-  xp: number;
+  xpGained: number;
+  xpMax: number;
 }
 
 type Phase = 'answering' | 'checked';
@@ -150,7 +151,7 @@ export default function LessonPlayer() {
     const total = exercises.length;
     const score = total === 0 ? 0 : Math.round((correctCount / total) * 100);
     const passed = score >= passScore;
-    const xp = correctCount * 10 + (passed ? 20 : 0);
+    const runXp = passed ? correctCount * 10 + 20 : 0;
 
     setBusy(true);
     setSaveError(null);
@@ -163,7 +164,9 @@ export default function LessonPlayer() {
       .maybeSingle();
 
     const bestScore = Math.max(existing?.score ?? 0, score);
-    const bestXp = Math.max(existing?.xp_earned ?? 0, xp);
+    const oldBestXp = existing?.xp_earned ?? 0;
+    const newBestXp = Math.max(oldBestXp, runXp);
+    const xpGained = Math.max(newBestXp - oldBestXp, 0);
     const status = bestScore >= passScore ? 'completed' : 'attempted';
     const completedAt =
       existing?.completed_at ?? (status === 'completed' ? new Date().toISOString() : null);
@@ -173,7 +176,7 @@ export default function LessonPlayer() {
         user_id: user.id,
         lesson_id: id,
         score: bestScore,
-        xp_earned: bestXp,
+        xp_earned: newBestXp,
         status,
         completed_at: completedAt,
       },
@@ -186,7 +189,7 @@ export default function LessonPlayer() {
       return;
     }
 
-    setResult({ score, passed, xp });
+    setResult({ score, passed, xpGained, xpMax: newBestXp });
     setBusy(false);
   };
 
@@ -214,7 +217,8 @@ export default function LessonPlayer() {
       <View style={styles.container}>
         <Text style={styles.title}>{result.passed ? 'Passed!' : 'Not passed yet'}</Text>
         <Text style={styles.scoreText}>Score: {result.score}%</Text>
-        <Text style={styles.resultText}>XP earned: {result.xp}</Text>
+        <Text style={styles.resultText}>+{result.xpGained} XP</Text>
+        <Text style={styles.resultSubtext}>Lesson max: {result.xpMax}</Text>
         <Pressable style={styles.button} onPress={() => router.replace('/course')}>
           <Text style={styles.buttonText}>Back to course</Text>
         </Pressable>
@@ -393,9 +397,16 @@ const styles = StyleSheet.create({
     marginVertical: 16,
   },
   resultText: {
+    fontFamily: fonts.display,
+    fontSize: 24,
+    color: colors.leaf,
+    marginBottom: 4,
+  },
+  resultSubtext: {
     fontFamily: fonts.body,
-    fontSize: 16,
+    fontSize: 14,
     color: colors.ink,
+    opacity: 0.7,
     marginBottom: 8,
   },
 });
