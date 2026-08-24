@@ -25,10 +25,10 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   correct: {
-    backgroundColor: '#F0F9E8',
+    backgroundColor: colors.leafTint,
   },
   wrong: {
-    backgroundColor: '#FDEFEA',
+    backgroundColor: colors.coralTint,
   },
   title: {
     fontFamily: fonts.display,

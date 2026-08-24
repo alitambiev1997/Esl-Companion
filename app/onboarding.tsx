@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
   progressFill: {
     height: '100%',
     borderRadius: radius.button,
-    backgroundColor: colors.sun,
+    backgroundColor: colors.sky,
   },
   sectionTitle: {
     fontFamily: fonts.display,
@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
   },
   cardSelected: {
     borderColor: colors.sky,
-    backgroundColor: '#EAF6FC',
+    backgroundColor: colors.skyTint,
   },
   cardTitle: {
     fontFamily: fonts.display,
@@ -347,7 +347,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     fontSize: 12,
     fontWeight: '600',
-    color: '#fff',
+    color: colors.white,
   },
   stateBox: {
     alignItems: 'center',
@@ -368,10 +368,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   button: {
-    backgroundColor: colors.sky,
+    backgroundColor: colors.sun,
     borderRadius: radius.button,
-    padding: 14,
+    paddingVertical: 14,
+    minHeight: 52,
     alignItems: 'center',
+    justifyContent: 'center',
     marginTop: 16,
   },
   buttonGhost: {
@@ -387,7 +389,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     fontSize: 16,
     fontWeight: '600',
-    color: '#fff',
+    color: colors.ink,
   },
   buttonGhostText: {
     fontFamily: fonts.body,

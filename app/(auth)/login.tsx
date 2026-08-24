@@ -6,6 +6,7 @@ import { Pressable, StyleSheet, Text, TextInput } from 'react-native';
 import { z } from 'zod';
 import { KeyboardFormWrapper } from '@/components/keyboard-form-wrapper';
 import { supabase } from '@/src/lib/supabase';
+import { colors, fonts, radius } from '@/src/theme/tokens';
 
 const loginSchema = z.object({
   email: z.email('Enter a valid email'),
@@ -97,51 +98,64 @@ export default function Login() {
 
 const styles = StyleSheet.create({
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontFamily: fonts.display,
+    fontSize: 28,
+    color: colors.ink,
     marginBottom: 24,
   },
   label: {
+    fontFamily: fonts.body,
     fontSize: 14,
+    color: colors.ink,
     marginBottom: 4,
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
+    backgroundColor: colors.white,
+    borderWidth: 2,
+    borderColor: colors.grey,
+    borderRadius: 14,
     padding: 12,
     fontSize: 16,
+    fontFamily: fonts.body,
+    color: colors.ink,
     marginBottom: 4,
   },
   fieldError: {
-    color: '#d32f2f',
+    fontFamily: fonts.body,
+    color: colors.coral,
     fontSize: 12,
     marginBottom: 4,
   },
   formError: {
-    color: '#d32f2f',
+    fontFamily: fonts.body,
+    color: colors.coral,
     fontSize: 14,
     marginTop: 8,
   },
   button: {
-    backgroundColor: '#2196f3',
-    borderRadius: 8,
-    padding: 14,
+    backgroundColor: colors.sun,
+    borderRadius: radius.button,
+    paddingVertical: 14,
+    minHeight: 52,
     alignItems: 'center',
+    justifyContent: 'center',
     marginTop: 16,
   },
   buttonDisabled: {
-    opacity: 0.6,
+    opacity: 0.5,
   },
   buttonText: {
-    color: '#fff',
+    fontFamily: fonts.body,
     fontSize: 16,
     fontWeight: '600',
+    color: colors.ink,
   },
   link: {
     marginTop: 16,
-    color: '#2196f3',
-    textAlign: 'center',
+    fontFamily: fonts.body,
     fontSize: 14,
+    fontWeight: '600',
+    color: colors.sky,
+    textAlign: 'center',
   },
 });

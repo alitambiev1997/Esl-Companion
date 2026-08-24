@@ -6,6 +6,10 @@ export const colors = {
   ink: '#16324F',
   paper: '#FFFDF7',
   grey: '#E8E8E8',
+  white: '#FFFFFF',
+  skyTint: '#EAF6FC',
+  leafTint: '#F0F9E8',
+  coralTint: '#FDEFEA',
 } as const;
 
 export const radius = {

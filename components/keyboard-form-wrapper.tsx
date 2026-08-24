@@ -1,5 +1,6 @@
 import { PropsWithChildren } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from 'react-native';
+import { colors } from '@/src/theme/tokens';
 
 export function KeyboardFormWrapper({ children }: PropsWithChildren) {
   return (
@@ -20,6 +21,7 @@ export function KeyboardFormWrapper({ children }: PropsWithChildren) {
 const styles = StyleSheet.create({
   avoidingView: {
     flex: 1,
+    backgroundColor: colors.paper,
   },
   content: {
     flexGrow: 1,

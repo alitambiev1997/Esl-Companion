@@ -82,11 +82,11 @@ const styles = StyleSheet.create({
   },
   optionCorrect: {
     borderColor: colors.leaf,
-    backgroundColor: '#F0F9E8',
+    backgroundColor: colors.leafTint,
   },
   optionWrong: {
     borderColor: colors.coral,
-    backgroundColor: '#FDEFEA',
+    backgroundColor: colors.coralTint,
   },
   optionText: {
     fontFamily: fonts.body,

@@ -33,10 +33,12 @@ export function ContinueButton({
 
 const styles = StyleSheet.create({
   button: {
-    backgroundColor: colors.sky,
+    backgroundColor: colors.sun,
     borderRadius: radius.button,
-    padding: 14,
+    paddingVertical: 14,
+    minHeight: 52,
     alignItems: 'center',
+    justifyContent: 'center',
     marginTop: 16,
   },
   buttonDisabled: {
@@ -46,6 +48,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     fontSize: 16,
     fontWeight: '600',
-    color: '#fff',
+    color: colors.ink,
   },
 });

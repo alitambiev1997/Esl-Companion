@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { supabase } from '@/src/lib/supabase';
+import { colors, fonts, radius } from '@/src/theme/tokens';
 import { useAuth } from '@/src/features/auth/useAuth';
 
 export default function Home() {
@@ -92,49 +93,62 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
+    backgroundColor: colors.paper,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontFamily: fonts.display,
+    fontSize: 28,
+    color: colors.ink,
   },
   email: {
+    fontFamily: fonts.body,
     fontSize: 16,
+    color: colors.ink,
     marginTop: 8,
   },
   level: {
+    fontFamily: fonts.body,
     fontSize: 16,
+    color: colors.ink,
     marginTop: 4,
     marginBottom: 8,
   },
   courseButton: {
-    backgroundColor: '#2196f3',
-    borderRadius: 8,
-    paddingVertical: 12,
+    backgroundColor: colors.sky,
+    borderRadius: radius.button,
+    paddingVertical: 14,
+    minHeight: 52,
+    justifyContent: 'center',
     paddingHorizontal: 32,
-    marginBottom: 24,
+    marginBottom: 12,
   },
   courseButtonText: {
-    color: '#fff',
+    fontFamily: fonts.body,
     fontSize: 16,
     fontWeight: '600',
+    color: colors.white,
   },
   error: {
-    color: '#d32f2f',
+    fontFamily: fonts.body,
+    color: colors.coral,
     fontSize: 14,
     marginBottom: 8,
   },
   button: {
-    backgroundColor: '#2196f3',
-    borderRadius: 8,
-    paddingVertical: 12,
+    backgroundColor: colors.sun,
+    borderRadius: radius.button,
+    paddingVertical: 14,
+    minHeight: 52,
+    justifyContent: 'center',
     paddingHorizontal: 32,
   },
   buttonDisabled: {
-    opacity: 0.6,
+    opacity: 0.5,
   },
   buttonText: {
-    color: '#fff',
+    fontFamily: fonts.body,
     fontSize: 16,
     fontWeight: '600',
+    color: colors.ink,
   },
 });

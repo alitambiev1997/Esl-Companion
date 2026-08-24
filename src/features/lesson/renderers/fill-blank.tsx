@@ -3,7 +3,7 @@ import { StyleSheet, TextInput } from 'react-native';
 import type { ExerciseRendererProps, FillBlankContent } from '@/src/features/lesson/content';
 import { FeedbackPanel } from '@/src/features/lesson/feedback-panel';
 import { ContinueButton, PrimaryButton } from '@/src/features/lesson/flow-buttons';
-import { colors, fonts, radius } from '@/src/theme/tokens';
+import { colors, fonts } from '@/src/theme/tokens';
 
 export function FillBlankRenderer({
   exercise,
@@ -54,13 +54,13 @@ export function FillBlankRenderer({
 
 const styles = StyleSheet.create({
   input: {
+    backgroundColor: colors.white,
     borderWidth: 2,
     borderColor: colors.grey,
-    borderRadius: radius.card,
-    padding: 14,
+    borderRadius: 14,
+    padding: 12,
     fontSize: 16,
     fontFamily: fonts.body,
     color: colors.ink,
-    backgroundColor: colors.paper,
   },
 });

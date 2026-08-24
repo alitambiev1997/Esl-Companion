@@ -205,8 +205,8 @@ export default function LessonPlayer() {
     return (
       <View style={styles.container}>
         <Text style={styles.errorText}>{loadState.message}</Text>
-        <Pressable style={styles.button} onPress={() => setRetry((n) => n + 1)}>
-          <Text style={styles.buttonText}>Try again</Text>
+        <Pressable style={styles.buttonSecondary} onPress={() => setRetry((n) => n + 1)}>
+          <Text style={styles.buttonSecondaryText}>Try again</Text>
         </Pressable>
       </View>
     );
@@ -219,8 +219,8 @@ export default function LessonPlayer() {
         <Text style={styles.scoreText}>Score: {result.score}%</Text>
         <Text style={styles.resultText}>+{result.xpGained} XP</Text>
         <Text style={styles.resultSubtext}>Lesson max: {result.xpMax}</Text>
-        <Pressable style={styles.button} onPress={() => router.replace('/course')}>
-          <Text style={styles.buttonText}>Back to course</Text>
+        <Pressable style={styles.buttonPrimary} onPress={() => router.replace('/course')}>
+          <Text style={styles.buttonPrimaryText}>Back to course</Text>
         </Pressable>
       </View>
     );
@@ -377,18 +377,35 @@ const styles = StyleSheet.create({
     marginTop: 8,
     textAlign: 'center',
   },
-  button: {
+  buttonSecondary: {
     backgroundColor: colors.sky,
     borderRadius: radius.button,
-    padding: 14,
+    paddingVertical: 14,
+    minHeight: 52,
     alignItems: 'center',
+    justifyContent: 'center',
     marginTop: 16,
   },
-  buttonText: {
+  buttonSecondaryText: {
     fontFamily: fonts.body,
     fontSize: 16,
     fontWeight: '600',
-    color: '#fff',
+    color: colors.white,
+  },
+  buttonPrimary: {
+    backgroundColor: colors.sun,
+    borderRadius: radius.button,
+    paddingVertical: 14,
+    minHeight: 52,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 16,
+  },
+  buttonPrimaryText: {
+    fontFamily: fonts.body,
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.ink,
   },
   scoreText: {
     fontFamily: fonts.display,
