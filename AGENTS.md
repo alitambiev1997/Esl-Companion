@@ -46,6 +46,8 @@ Do not build monetization, social features, AI conversation tools, or speech sco
 
 Onboarding is localized (cs/en) via a small dictionary; the rest of the app stays English for now. No i18n library.
 
+Review sessions are objectively tested (auto-generated multiple choice; no self-grading). SRS uses Again/Good only.
+
 ## Mastery medals (no XP)
 
 - Lessons award a medal from the best score: bronze 60-79, silver 80-89, gold 90-99, platinum 100.
