@@ -198,11 +198,23 @@ export const MatchingRenderer = forwardRef<ExerciseRendererHandle, ExerciseRende
           />
           <Animated.View
             pointerEvents="none"
-            style={[styles.flash, { backgroundColor: colors.leafTint, opacity: a.leafFlash }]}
+            style={[
+              styles.flash,
+              {
+                backgroundColor: colors.leafTint,
+                opacity: a.leafFlash.interpolate({ inputRange: [0, 1], outputRange: [0, 0.55] }),
+              },
+            ]}
           />
           <Animated.View
             pointerEvents="none"
-            style={[styles.flash, { backgroundColor: colors.coralTint, opacity: a.coralFlash }]}
+            style={[
+              styles.flash,
+              {
+                backgroundColor: colors.coralTint,
+                opacity: a.coralFlash.interpolate({ inputRange: [0, 1], outputRange: [0, 0.55] }),
+              },
+            ]}
           />
         </Animated.View>
       );
