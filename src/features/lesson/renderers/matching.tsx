@@ -1,13 +1,12 @@
-import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { forwardRef, Fragment, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import { Animated, StyleSheet, View } from 'react-native';
+import { Chip } from '@/src/components/ui/chip';
 import type {
+  ExerciseRendererHandle,
   ExerciseRendererProps,
   MatchingContent,
-  MatchingPair,
 } from '@/src/features/lesson/content';
-import { FeedbackPanel } from '@/src/features/lesson/feedback-panel';
-import { ContinueButton, PrimaryButton } from '@/src/features/lesson/flow-buttons';
-import { colors, fonts, radius } from '@/src/theme/tokens';
+import { colors, radius } from '@/src/theme/tokens';
 
 function shuffle<T>(items: T[]): T[] {
   const result = [...items];
@@ -18,167 +17,238 @@ function shuffle<T>(items: T[]): T[] {
   return result;
 }
 
-export function MatchingRenderer({
-  exercise,
-  checked,
-  busy,
-  isLast,
-  onCheck,
-  onContinue,
-}: ExerciseRendererProps) {
-  const content = exercise.content as unknown as MatchingContent;
-  const rightItems = useMemo(() => shuffle(content.pairs.map((p) => p.right)), [content]);
-
-  const [selectedLeft, setSelectedLeft] = useState<string | null>(null);
-  const [pairs, setPairs] = useState<MatchingPair[]>([]);
-  const [lastCorrect, setLastCorrect] = useState<boolean | null>(null);
-
-  const tapLeft = (left: string) => {
-    if (checked) return;
-    if (pairs.some((p) => p.left === left)) return;
-    setSelectedLeft((prev) => (prev === left ? null : left));
-  };
-
-  const tapRight = (right: string) => {
-    if (checked) return;
-    if (pairs.some((p) => p.right === right)) {
-      setPairs((prev) => prev.filter((p) => p.right !== right));
-      return;
-    }
-    if (!selectedLeft) return;
-    setPairs((prev) => [...prev, { left: selectedLeft, right }]);
-    setSelectedLeft(null);
-  };
-
-  const check = () => {
-    const wrongPairs = pairs.filter((p) => {
-      const expected = content.pairs.find((c) => c.left === p.left);
-      return !expected || expected.right !== p.right;
-    });
-    const isCorrect = pairs.length === content.pairs.length && wrongPairs.length === 0;
-    setLastCorrect(isCorrect);
-    onCheck({ pairs }, isCorrect);
-  };
-
-  const wrongPairs = pairs.filter((p) => {
-    const expected = content.pairs.find((c) => c.left === p.left);
-    return !expected || expected.right !== p.right;
-  });
-  const wrongLefts = checked ? new Set(wrongPairs.map((p) => p.left)) : new Set<string>();
-  const wrongRights = checked ? new Set(wrongPairs.map((p) => p.right)) : new Set<string>();
-
-  return (
-    <>
-      {content.pairs.map((pair) => {
-        const paired = pairs.find((p) => p.left === pair.left);
-        return (
-          <View key={pair.left} style={styles.row}>
-            <Pressable
-              style={[
-                styles.item,
-                selectedLeft === pair.left && styles.itemSelected,
-                paired &&
-                  (wrongLefts.has(pair.left) ? styles.itemWrong : styles.itemPaired),
-              ]}
-              onPress={() => tapLeft(pair.left)}
-            >
-              <Text style={styles.itemText}>{pair.left}</Text>
-            </Pressable>
-            {rightItems.map((right) => {
-              if (paired) {
-                return right === paired.right ? (
-                  <Pressable
-                    key={right}
-                    style={[
-                      styles.item,
-                      wrongRights.has(right) ? styles.itemWrong : styles.itemPaired,
-                    ]}
-                    onPress={() => tapRight(right)}
-                  >
-                    <Text style={styles.itemText}>{right}</Text>
-                  </Pressable>
-                ) : null;
-              }
-              const used = pairs.some((p) => p.right === right);
-              return (
-                <Pressable
-                  key={right}
-                  style={[styles.item, used && styles.itemDisabled]}
-                  onPress={() => tapRight(right)}
-                >
-                  <Text style={styles.itemText}>{right}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        );
-      })}
-
-      {!checked && (
-        <PrimaryButton
-          label="Check"
-          onPress={check}
-          disabled={pairs.length !== content.pairs.length || busy}
-        />
-      )}
-
-      {checked && (
-        <>
-          <FeedbackPanel
-            isCorrect={lastCorrect === true}
-            explanation={content.explanation}
-            extra={
-              wrongPairs.length > 0 ? (
-                <Text style={styles.wrongList}>
-                  Wrong pairs:{' '}
-                  {wrongPairs.map((p) => `${p.left} – ${p.right}`).join(', ')}
-                </Text>
-              ) : null
-            }
-          />
-          <ContinueButton isLast={isLast} onPress={onContinue} disabled={busy} />
-        </>
-      )}
-    </>
-  );
+interface PillAnims {
+  scale: Animated.Value;
+  opacity: Animated.Value;
+  shakeX: Animated.Value;
+  leafFlash: Animated.Value;
+  coralFlash: Animated.Value;
 }
 
+function makeAnims(): PillAnims {
+  return {
+    scale: new Animated.Value(1),
+    opacity: new Animated.Value(1),
+    shakeX: new Animated.Value(0),
+    leafFlash: new Animated.Value(0),
+    coralFlash: new Animated.Value(0),
+  };
+}
+
+const SHAKE_VALUES = [-6, 6, -6, 6, -6, 6, 0];
+const CORRECT_LOCK_MS = 750;
+const WRONG_LOCK_MS = 500;
+
+export const MatchingRenderer = forwardRef<ExerciseRendererHandle, ExerciseRendererProps>(
+  function MatchingRenderer({ exercise, checked, onCheck, onProgressChange }, ref) {
+    const content = exercise.content as unknown as MatchingContent;
+    const rightItems = useMemo(() => shuffle(content.pairs.map((p) => p.right)), [content]);
+    const anims = useMemo(() => {
+      const map = new Map<string, PillAnims>();
+      for (const pair of content.pairs) {
+        map.set(pair.left, makeAnims());
+        map.set(pair.right, makeAnims());
+      }
+      return map;
+    }, [content]);
+
+    const [selectedLeft, setSelectedLeft] = useState<string | null>(null);
+    const [matchedLefts, setMatchedLefts] = useState<Set<string>>(new Set());
+    const [mistakes, setMistakes] = useState(0);
+    const [locked, setLocked] = useState(false);
+    const reportedRef = useRef(false);
+
+    const matchedRights = new Set(
+      content.pairs.filter((p) => matchedLefts.has(p.left)).map((p) => p.right)
+    );
+    const remaining = content.pairs.length - matchedLefts.size;
+
+    useEffect(() => {
+      onProgressChange?.(remaining);
+    }, [remaining, onProgressChange]);
+
+    useImperativeHandle(ref, () => ({ check: () => {} }));
+
+    const animateMatched = (left: string, right: string) => {
+      const l = anims.get(left)!;
+      const r = anims.get(right)!;
+      Animated.parallel([
+        Animated.sequence([
+          Animated.timing(l.leafFlash, { toValue: 1, duration: 100, useNativeDriver: true }),
+          Animated.delay(350),
+          Animated.timing(l.leafFlash, { toValue: 0, duration: 0, useNativeDriver: true }),
+        ]),
+        Animated.sequence([
+          Animated.timing(r.leafFlash, { toValue: 1, duration: 100, useNativeDriver: true }),
+          Animated.delay(350),
+          Animated.timing(r.leafFlash, { toValue: 0, duration: 0, useNativeDriver: true }),
+        ]),
+        Animated.sequence([
+          Animated.delay(450),
+          Animated.parallel([
+            Animated.timing(l.opacity, { toValue: 0, duration: 300, useNativeDriver: true }),
+            Animated.timing(l.scale, { toValue: 0.7, duration: 300, useNativeDriver: true }),
+            Animated.timing(r.opacity, { toValue: 0, duration: 300, useNativeDriver: true }),
+            Animated.timing(r.scale, { toValue: 0.7, duration: 300, useNativeDriver: true }),
+          ]),
+        ]),
+      ]).start();
+    };
+
+    const animateWrong = (left: string, right: string) => {
+      const l = anims.get(left)!;
+      const r = anims.get(right)!;
+      Animated.parallel([
+        Animated.sequence(
+          SHAKE_VALUES.map((v) =>
+            Animated.timing(l.shakeX, { toValue: v, duration: 70, useNativeDriver: true })
+          )
+        ),
+        Animated.sequence(
+          SHAKE_VALUES.map((v) =>
+            Animated.timing(r.shakeX, { toValue: v, duration: 70, useNativeDriver: true })
+          )
+        ),
+        Animated.sequence([
+          Animated.timing(l.coralFlash, { toValue: 1, duration: 100, useNativeDriver: true }),
+          Animated.delay(300),
+          Animated.timing(l.coralFlash, { toValue: 0, duration: 100, useNativeDriver: true }),
+        ]),
+        Animated.sequence([
+          Animated.timing(r.coralFlash, { toValue: 1, duration: 100, useNativeDriver: true }),
+          Animated.delay(300),
+          Animated.timing(r.coralFlash, { toValue: 0, duration: 100, useNativeDriver: true }),
+        ]),
+      ]).start();
+    };
+
+    const reportIfDone = (nextMatched: Set<string>, nextMistakes: number) => {
+      if (nextMatched.size === content.pairs.length && !reportedRef.current) {
+        reportedRef.current = true;
+        const correct = nextMistakes === 0;
+        onCheck(
+          { pairs: content.pairs },
+          correct,
+          {
+            correct,
+            title: correct ? 'Perfect!' : `Done with ${nextMistakes} mistakes`,
+            explanation: content.pairs.map((p) => `${p.left} – ${p.right}`).join(', '),
+            correctAnswer: null,
+          }
+        );
+      }
+    };
+
+    const tapLeft = (left: string) => {
+      if (checked || locked || matchedLefts.has(left)) return;
+      setSelectedLeft((prev) => (prev === left ? null : left));
+    };
+
+    const tapRight = (right: string) => {
+      if (checked || locked || !selectedLeft || matchedRights.has(right)) return;
+      const expected = content.pairs.find((p) => p.left === selectedLeft);
+      if (expected && expected.right === right) {
+        const left = selectedLeft;
+        const currentMistakes = mistakes;
+        setSelectedLeft(null);
+        animateMatched(left, right);
+        setLocked(true);
+        setTimeout(() => {
+          const nextMatched = new Set(matchedLefts).add(left);
+          setMatchedLefts(nextMatched);
+          setLocked(false);
+          reportIfDone(nextMatched, currentMistakes);
+        }, CORRECT_LOCK_MS);
+      } else {
+        const left = selectedLeft;
+        animateWrong(left, right);
+        setLocked(true);
+        setTimeout(() => {
+          setSelectedLeft(null);
+          setMistakes((m) => m + 1);
+          setLocked(false);
+        }, WRONG_LOCK_MS);
+      }
+    };
+
+    const renderPill = (
+      label: string,
+      matched: boolean,
+      selected: boolean,
+      onPress: () => void,
+      word: string
+    ) => {
+      const a = anims.get(word)!;
+      return (
+        <Animated.View
+          style={[
+            styles.pillWrap,
+            {
+              opacity: a.opacity,
+              transform: [{ scale: a.scale }, { translateX: a.shakeX }],
+            },
+          ]}
+        >
+          <Chip
+            label={label}
+            centered
+            selected={selected}
+            disabled={checked || matched}
+            onPress={onPress}
+          />
+          <Animated.View
+            pointerEvents="none"
+            style={[styles.flash, { backgroundColor: colors.leafTint, opacity: a.leafFlash }]}
+          />
+          <Animated.View
+            pointerEvents="none"
+            style={[styles.flash, { backgroundColor: colors.coralTint, opacity: a.coralFlash }]}
+          />
+        </Animated.View>
+      );
+    };
+
+    return (
+      <View style={styles.columns}>
+        <View style={styles.column}>
+          {content.pairs.map((pair) => (
+            <Fragment key={pair.left}>
+              {renderPill(
+                pair.left,
+                matchedLefts.has(pair.left),
+                selectedLeft === pair.left,
+                () => tapLeft(pair.left),
+                pair.left
+              )}
+            </Fragment>
+          ))}
+        </View>
+        <View style={styles.column}>
+          {rightItems.map((right) => (
+            <Fragment key={right}>
+              {renderPill(right, matchedRights.has(right), false, () => tapRight(right), right)}
+            </Fragment>
+          ))}
+        </View>
+      </View>
+    );
+  }
+);
+
 const styles = StyleSheet.create({
-  row: {
+  columns: {
     flexDirection: 'row',
-    marginBottom: 8,
   },
-  item: {
+  column: {
     flex: 1,
-    borderWidth: 2,
-    borderColor: colors.grey,
-    borderRadius: radius.card,
-    padding: 12,
-    backgroundColor: colors.paper,
     marginRight: 8,
   },
-  itemSelected: {
-    borderColor: colors.sky,
+  pillWrap: {
+    position: 'relative',
+    marginBottom: 8,
   },
-  itemPaired: {
-    borderColor: colors.leaf,
-  },
-  itemWrong: {
-    borderColor: colors.coral,
-    backgroundColor: colors.coralTint,
-  },
-  itemDisabled: {
-    opacity: 0.4,
-  },
-  itemText: {
-    fontFamily: fonts.body,
-    fontSize: 15,
-    color: colors.ink,
-  },
-  wrongList: {
-    fontFamily: fonts.body,
-    fontSize: 14,
-    color: colors.coral,
-    marginBottom: 4,
+  flash: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: radius.button,
   },
 });

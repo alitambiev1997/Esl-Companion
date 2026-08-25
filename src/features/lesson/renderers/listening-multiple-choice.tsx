@@ -1,13 +1,74 @@
-import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+import { OptionCard } from '@/src/components/ui/option-card';
+import { SlowButton, SpeakerButton } from '@/src/components/ui/speaker-button';
 import type {
+  ExerciseRendererHandle,
   ExerciseRendererProps,
   ListeningMultipleChoiceContent,
 } from '@/src/features/lesson/content';
-import { FeedbackPanel } from '@/src/features/lesson/feedback-panel';
-import { ContinueButton, PrimaryButton } from '@/src/features/lesson/flow-buttons';
 import { speak, stopSpeech } from '@/src/lib/tts';
-import { colors, fonts, radius } from '@/src/theme/tokens';
+
+export const ListeningMultipleChoiceRenderer = forwardRef<
+  ExerciseRendererHandle,
+  ExerciseRendererProps
+>(function ListeningMultipleChoiceRenderer({ exercise, checked, onCheck, onCanCheckChange }, ref) {
+  const content = exercise.content as unknown as ListeningMultipleChoiceContent;
+
+  const [order] = useState(() => {
+    const options = shuffle(content.options);
+    const correct = options.indexOf(content.options[content.correct_index]);
+    return { options, correctIndex: correct === -1 ? content.correct_index : correct };
+  });
+  const [selected, setSelected] = useState<number | null>(null);
+
+  useEffect(() => {
+    speak(content.text_to_speak);
+    return () => stopSpeech();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useImperativeHandle(ref, () => ({
+    check: () => {
+      if (selected === null) return;
+      const isCorrect = selected === order.correctIndex;
+      onCheck(
+        { selected_index: selected },
+        isCorrect,
+        {
+          correct: isCorrect,
+          explanation: content.explanation ?? content.text_to_speak,
+          correctAnswer: order.options[order.correctIndex] ?? null,
+        }
+      );
+    },
+  }));
+
+  useEffect(() => {
+    onCanCheckChange(selected !== null);
+  }, [selected, onCanCheckChange]);
+
+  return (
+    <>
+      <View style={styles.audioRow}>
+        <SpeakerButton onPress={() => speak(content.text_to_speak)} />
+        <SlowButton onPress={() => speak(content.text_to_speak, 0.6)} />
+      </View>
+      {order.options.map((option, i) => (
+        <View key={i} style={styles.spacing}>
+          <OptionCard
+            label={option}
+            selected={selected === i}
+            disabled={checked}
+            onPress={() => {
+              if (!checked) setSelected(i);
+            }}
+          />
+        </View>
+      ))}
+    </>
+  );
+});
 
 function shuffle<T>(items: T[]): T[] {
   const result = [...items];
@@ -18,125 +79,14 @@ function shuffle<T>(items: T[]): T[] {
   return result;
 }
 
-export function ListeningMultipleChoiceRenderer({
-  exercise,
-  checked,
-  busy,
-  isLast,
-  onCheck,
-  onContinue,
-}: ExerciseRendererProps) {
-  const content = exercise.content as unknown as ListeningMultipleChoiceContent;
-
-  const [order] = useState(() => {
-    const options = shuffle(content.options);
-    const correct = options.indexOf(content.options[content.correct_index]);
-    return { options, correctIndex: correct === -1 ? content.correct_index : correct };
-  });
-  const [selected, setSelected] = useState<number | null>(null);
-  const [lastCorrect, setLastCorrect] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    speak(content.text_to_speak);
-    return () => stopSpeech();
-  }, [content.text_to_speak]);
-
-  const check = () => {
-    if (selected === null) return;
-    const isCorrect = selected === order.correctIndex;
-    setLastCorrect(isCorrect);
-    onCheck({ selected_index: selected }, isCorrect);
-  };
-
-  return (
-    <>
-      <View style={styles.audioRow}>
-        <Pressable style={styles.audioButton} onPress={() => speak(content.text_to_speak)}>
-          <Text style={styles.audioButtonText}>Play</Text>
-        </Pressable>
-        <Pressable style={styles.audioButton} onPress={() => speak(content.text_to_speak, 0.6)}>
-          <Text style={styles.audioButtonText}>Slow</Text>
-        </Pressable>
-      </View>
-
-      {order.options.map((option, i) => {
-        const isSelected = selected === i;
-        const isThisCorrect = i === order.correctIndex;
-        const isThisWrongPick = checked && isSelected && !isThisCorrect;
-
-        return (
-          <Pressable
-            key={i}
-            style={[
-              styles.option,
-              isSelected && styles.optionSelected,
-              checked && isThisCorrect && styles.optionCorrect,
-              checked && isThisWrongPick && styles.optionWrong,
-            ]}
-            onPress={() => {
-              if (!checked) setSelected(i);
-            }}
-            disabled={checked}
-          >
-            <Text style={styles.optionText}>{option}</Text>
-          </Pressable>
-        );
-      })}
-
-      {!checked && (
-        <PrimaryButton label="Check" onPress={check} disabled={selected === null || busy} />
-      )}
-
-      {checked && (
-        <>
-          <FeedbackPanel isCorrect={lastCorrect === true} explanation={content.text_to_speak} />
-          <ContinueButton isLast={isLast} onPress={onContinue} disabled={busy} />
-        </>
-      )}
-    </>
-  );
-}
-
 const styles = StyleSheet.create({
   audioRow: {
     flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 16,
   },
-  audioButton: {
-    backgroundColor: colors.sky,
-    borderRadius: radius.button,
-    paddingHorizontal: 24,
-    paddingVertical: 10,
-    marginRight: 8,
-  },
-  audioButtonText: {
-    fontFamily: fonts.body,
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.white,
-  },
-  option: {
-    borderWidth: 2,
-    borderColor: colors.grey,
-    borderRadius: radius.card,
-    padding: 14,
-    marginBottom: 8,
-    backgroundColor: colors.paper,
-  },
-  optionSelected: {
-    borderColor: colors.sky,
-  },
-  optionCorrect: {
-    borderColor: colors.leaf,
-    backgroundColor: colors.leafTint,
-  },
-  optionWrong: {
-    borderColor: colors.coral,
-    backgroundColor: colors.coralTint,
-  },
-  optionText: {
-    fontFamily: fonts.body,
-    fontSize: 16,
-    color: colors.ink,
+  spacing: {
+    marginBottom: 12,
   },
 });

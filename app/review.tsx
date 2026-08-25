@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -9,7 +9,14 @@ import {
   View,
 } from 'react-native';
 import { useAuth } from '@/src/features/auth/useAuth';
+import { BottomBar } from '@/src/components/ui/bottom-bar';
+import { FeedbackBanner } from '@/src/components/ui/feedback-banner';
 import { MultipleChoiceRenderer } from '@/src/features/lesson/renderers/multiple-choice';
+import type {
+  ExerciseRendererHandle,
+  FeedbackBannerInfo,
+} from '@/src/features/lesson/content';
+import { PrimaryButton } from '@/src/features/lesson/flow-buttons';
 import { addDailyActivity } from '@/src/lib/activity';
 import { ensureReviewItems } from '@/src/lib/review';
 import { supabase } from '@/src/lib/supabase';
@@ -163,6 +170,9 @@ export default function Review() {
   const [correctCount, setCorrectCount] = useState(0);
   const [busy, setBusy] = useState(false);
   const [gradeError, setGradeError] = useState<string | null>(null);
+  const rendererRef = useRef<ExerciseRendererHandle>(null);
+  const [canCheck, setCanCheck] = useState(false);
+  const [banner, setBanner] = useState<FeedbackBannerInfo | null>(null);
 
   const readySession = session.status === 'ready' ? session : null;
   const card = readySession?.cards[index] ?? null;
@@ -279,6 +289,8 @@ export default function Review() {
       setIndex(next);
       setPhase('answering');
       setGradeError(null);
+      setBanner(null);
+      setCanCheck(false);
       return;
     }
 
@@ -342,16 +354,38 @@ export default function Review() {
 
         <MultipleChoiceRenderer
           key={card.id}
+          ref={rendererRef}
           exercise={toExercise(card, exercise)}
           checked={phase === 'checked'}
           busy={busy}
           isLast={index === session.cards.length - 1}
-          onCheck={(_, isCorrect) => handleCheck(isCorrect)}
+          onCheck={(_, isCorrect, info) => {
+            setBanner(info);
+            handleCheck(isCorrect);
+          }}
+          onCanCheckChange={setCanCheck}
           onContinue={handleContinue}
         />
 
         {gradeError && <Text style={styles.errorText}>{gradeError}</Text>}
       </ScrollView>
+      {phase === 'checked' && banner ? (
+        <FeedbackBanner
+          correct={banner.correct}
+          explanation={banner.explanation}
+          correctAnswer={banner.correctAnswer}
+          chips={banner.chips ?? undefined}
+          onContinue={handleContinue}
+        />
+      ) : (
+        <BottomBar>
+          <PrimaryButton
+            label="Check"
+            onPress={() => rendererRef.current?.check()}
+            disabled={!canCheck || busy}
+          />
+        </BottomBar>
+      )}
     </View>
   );
 }
@@ -363,7 +397,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 24,
-    paddingBottom: 48,
+    paddingBottom: 160,
   },
   title: {
     fontFamily: fonts.display,

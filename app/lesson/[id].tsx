@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -10,17 +10,25 @@ import {
 } from 'react-native';
 import { useAuth } from '@/src/features/auth/useAuth';
 import { MascotBadge } from '@/components/mascot-badge';
+import { BottomBar } from '@/src/components/ui/bottom-bar';
+import { FeedbackBanner } from '@/src/components/ui/feedback-banner';
+import { TopBar } from '@/src/components/ui/top-bar';
 import { addDailyActivity } from '@/src/lib/activity';
-import { ContinueButton } from '@/src/features/lesson/flow-buttons';
+import { PrimaryButton } from '@/src/features/lesson/flow-buttons';
 import { Confetti, MedalStamp } from '@/src/features/lesson/celebration';
+import type {
+  ExerciseRendererHandle,
+  ExerciseRendererProps,
+  FeedbackBannerInfo,
+} from '@/src/features/lesson/content';
 import { medalColor, medalForScore, type Medal } from '@/src/lib/medals';
-import type { ExerciseRendererProps } from '@/src/features/lesson/content';
 import { FillBlankRenderer } from '@/src/features/lesson/renderers/fill-blank';
 import { ListeningDictationRenderer } from '@/src/features/lesson/renderers/listening-dictation';
 import { ListeningMultipleChoiceRenderer } from '@/src/features/lesson/renderers/listening-multiple-choice';
 import { MatchingRenderer } from '@/src/features/lesson/renderers/matching';
 import { SpeakingRecordingRenderer } from '@/src/features/lesson/renderers/speaking-recording';
 import { MultipleChoiceRenderer } from '@/src/features/lesson/renderers/multiple-choice';
+import { ReadingComprehensionRenderer } from '@/src/features/lesson/renderers/reading-comprehension';
 import { WordOrderRenderer } from '@/src/features/lesson/renderers/word-order';
 import { supabase } from '@/src/lib/supabase';
 import { colors, fonts, radius } from '@/src/theme/tokens';
@@ -59,6 +67,10 @@ export default function LessonPlayer() {
   } | null>(null);
   const [blockLayout, setBlockLayout] = useState<{ y: number; height: number } | null>(null);
   const [stampLayout, setStampLayout] = useState<{ y: number; height: number } | null>(null);
+  const rendererRef = useRef<ExerciseRendererHandle>(null);
+  const [canCheck, setCanCheck] = useState(false);
+  const [banner, setBanner] = useState<FeedbackBannerInfo | null>(null);
+  const [pairsLeft, setPairsLeft] = useState(0);
 
   useEffect(() => {
     if (authLoading) return;
@@ -117,7 +129,8 @@ export default function LessonPlayer() {
   const handleCheck = async (
     exercise: Exercise,
     userAnswer: Record<string, unknown>,
-    isCorrect: boolean
+    isCorrect: boolean,
+    info: FeedbackBannerInfo
   ) => {
     if (!user) return;
 
@@ -141,6 +154,7 @@ export default function LessonPlayer() {
       if (isCorrect && exercise.is_required !== false) {
         setCorrectCount((n) => n + 1);
       }
+      setBanner(info);
       setPhase('checked');
     } catch (error) {
       setAttemptError(error instanceof Error ? error.message : 'Failed to save answer');
@@ -186,6 +200,9 @@ export default function LessonPlayer() {
       setIndex(next);
       setPhase('answering');
       setAttemptError(null);
+      setBanner(null);
+      setCanCheck(false);
+      setPairsLeft(0);
       return;
     }
 
@@ -343,38 +360,88 @@ export default function LessonPlayer() {
 
   const { lesson, exercises } = loadState;
   const exercise = exercises[index];
+  const isPlaceholder =
+    exercise &&
+    !['multiple_choice', 'fill_blank', 'word_order', 'matching', 'listening_multiple_choice', 'listening_dictation', 'reading_comprehension', 'speaking_recording'].includes(
+      exercise.type
+    );
+  const isUngraded = exercise?.type === 'speaking_recording';
+  const isMatching = exercise?.type === 'matching';
 
   const rendererProps = (current: Exercise): ExerciseRendererProps => ({
     exercise: current,
     checked: phase === 'checked',
     busy,
     isLast: index === exercises.length - 1,
-    onCheck: (userAnswer, isCorrect) => handleCheck(current, userAnswer, isCorrect),
+    onCheck: (userAnswer, isCorrect, info) => handleCheck(current, userAnswer, isCorrect, info),
+    onCanCheckChange: setCanCheck,
+    onProgressChange: setPairsLeft,
     onContinue: handleContinue,
     onUngradedContinue: handleUngradedContinue,
   });
 
+  const bottomArea = () => {
+    if (isPlaceholder || isUngraded) {
+      return (
+        <BottomBar>
+          <PrimaryButton
+            label={isUngraded ? 'I said it out loud' : index === exercises.length - 1 ? 'Finish' : 'Continue'}
+            onPress={() => (isUngraded ? handleUngradedContinue(exercise) : handleContinue())}
+            disabled={busy}
+          />
+        </BottomBar>
+      );
+    }
+    if (isMatching) {
+      if (phase === 'checked' && banner) {
+        return (
+          <FeedbackBanner
+            correct={banner.correct}
+            title={banner.title ?? undefined}
+            explanation={banner.explanation}
+            correctAnswer={banner.correctAnswer}
+            onContinue={handleContinue}
+          />
+        );
+      }
+      return (
+        <BottomBar>
+          <Text style={styles.pairsLeft}>Pairs left: {pairsLeft}</Text>
+        </BottomBar>
+      );
+    }
+    if (phase === 'checked' && banner) {
+      return (
+        <FeedbackBanner
+          correct={banner.correct}
+          title={banner.title ?? undefined}
+          explanation={banner.explanation}
+          correctAnswer={banner.correctAnswer}
+          chips={banner.chips ?? undefined}
+          onContinue={handleContinue}
+        />
+      );
+    }
+    return (
+      <BottomBar>
+        <PrimaryButton
+          label="Check"
+          onPress={() => rendererRef.current?.check()}
+          disabled={!canCheck || busy}
+        />
+      </BottomBar>
+    );
+  };
+
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ title: lesson.title }} />
+      <TopBar
+        progress={exercises.length === 0 ? 0 : (index + 1) / exercises.length}
+        onClose={() => (router.canGoBack() ? router.back() : router.replace('/home'))}
+      />
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.title}>{lesson.title}</Text>
-
-        <View style={styles.progressRow}>
-          <Text style={styles.progressText}>
-            Exercise {Math.min(index + 1, exercises.length)} of {exercises.length}
-          </Text>
-          <View style={styles.progressTrack}>
-            <View
-              style={[
-                styles.progressFill,
-                {
-                  width: `${exercises.length === 0 ? 0 : ((index + 1) / exercises.length) * 100}%`,
-                },
-              ]}
-            />
-          </View>
-        </View>
 
         {exercises.length === 0 && (
           <View style={styles.stateBox}>
@@ -384,42 +451,38 @@ export default function LessonPlayer() {
 
         {exercise && (
           <>
-            <Text style={styles.prompt}>{exercise.prompt}</Text>
+            {exercise.type !== 'fill_blank' && (
+              <Text style={styles.prompt}>{exercise.prompt}</Text>
+            )}
 
             {exercise.type === 'multiple_choice' && (
-              <MultipleChoiceRenderer key={exercise.id} {...rendererProps(exercise)} />
+              <MultipleChoiceRenderer key={exercise.id} ref={rendererRef} {...rendererProps(exercise)} />
             )}
             {exercise.type === 'fill_blank' && (
-              <FillBlankRenderer key={exercise.id} {...rendererProps(exercise)} />
+              <FillBlankRenderer key={exercise.id} ref={rendererRef} {...rendererProps(exercise)} />
             )}
             {exercise.type === 'word_order' && (
-              <WordOrderRenderer key={exercise.id} {...rendererProps(exercise)} />
+              <WordOrderRenderer key={exercise.id} ref={rendererRef} {...rendererProps(exercise)} />
             )}
             {exercise.type === 'matching' && (
-              <MatchingRenderer key={exercise.id} {...rendererProps(exercise)} />
+              <MatchingRenderer key={exercise.id} ref={rendererRef} {...rendererProps(exercise)} />
             )}
             {exercise.type === 'listening_multiple_choice' && (
-              <ListeningMultipleChoiceRenderer key={exercise.id} {...rendererProps(exercise)} />
+              <ListeningMultipleChoiceRenderer key={exercise.id} ref={rendererRef} {...rendererProps(exercise)} />
+            )}
+            {exercise.type === 'reading_comprehension' && (
+              <ReadingComprehensionRenderer key={exercise.id} ref={rendererRef} {...rendererProps(exercise)} />
             )}
             {exercise.type === 'listening_dictation' && (
-              <ListeningDictationRenderer key={exercise.id} {...rendererProps(exercise)} />
+              <ListeningDictationRenderer key={exercise.id} ref={rendererRef} {...rendererProps(exercise)} />
             )}
             {exercise.type === 'speaking_recording' && (
               <SpeakingRecordingRenderer key={exercise.id} {...rendererProps(exercise)} />
             )}
-            {!['multiple_choice', 'fill_blank', 'word_order', 'matching', 'listening_multiple_choice', 'listening_dictation', 'speaking_recording'].includes(
-              exercise.type
-            ) && (
-              <>
-                <View style={styles.placeholderCard}>
-                  <Text style={styles.placeholderText}>Exercise type coming next</Text>
-                </View>
-                <ContinueButton
-                  isLast={index === exercises.length - 1}
-                  onPress={handleContinue}
-                  disabled={busy}
-                />
-              </>
+            {isPlaceholder && (
+              <View style={styles.placeholderCard}>
+                <Text style={styles.placeholderText}>Exercise type coming next</Text>
+              </View>
             )}
 
             {attemptError && <Text style={styles.errorText}>{attemptError}</Text>}
@@ -427,6 +490,7 @@ export default function LessonPlayer() {
           </>
         )}
       </ScrollView>
+      {exercise && bottomArea()}
     </View>
   );
 }
@@ -438,36 +502,13 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 24,
-    paddingBottom: 48,
+    paddingBottom: 160,
   },
   title: {
     fontFamily: fonts.display,
     fontSize: 28,
     color: colors.ink,
     marginBottom: 16,
-  },
-  progressRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  progressText: {
-    fontFamily: fonts.body,
-    fontSize: 14,
-    color: colors.ink,
-    marginRight: 12,
-  },
-  progressTrack: {
-    flex: 1,
-    height: 8,
-    borderRadius: radius.button,
-    backgroundColor: colors.grey,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: radius.button,
-    backgroundColor: colors.sky,
   },
   prompt: {
     fontFamily: fonts.body,
@@ -487,6 +528,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.ink,
     opacity: 0.7,
+  },
+  pairsLeft: {
+    fontFamily: fonts.body,
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.ink,
+    textAlign: 'center',
   },
   stateBox: {
     alignItems: 'center',

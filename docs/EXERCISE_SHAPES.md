@@ -158,7 +158,35 @@ Example:
 
 ## reading_comprehension
 
-No renderer yet. Shape TBD.
+```json
+{
+  "bubbles": ["string", "..."],
+  "text_to_speak": "string",
+  "question": "string",
+  "options": ["string", "..."],
+  "correct_index": 0,
+  "explanation": "string"
+}
+```
+
+The passage is shown as alternating chat bubbles (left sky-tinted / right white); `text_to_speak` is the TTS version (auto-played; a small Listen control replays it). The question renders bold below the bubbles.
+
+Example:
+
+```json
+{
+  "bubbles": [
+    "Good evening. Welcome to the Grand Hotel.",
+    "I have a reservation under the name Novak.",
+    "Certainly, Mrs. Novak. Room 412, third floor. Here is your key."
+  ],
+  "text_to_speak": "Good evening. Welcome to the Grand Hotel. I have a reservation under the name Novak. Certainly, Mrs. Novak. Room 412, third floor. Here is your key.",
+  "question": "What room is Mrs. Novak staying in?",
+  "options": ["412", "421", "214", "312"],
+  "correct_index": 0,
+  "explanation": "Her room is 412 on the third floor."
+}
+```
 
 ## flashcard
 

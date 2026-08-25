@@ -1,19 +1,6 @@
-import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import type { ExerciseRendererProps } from '@/src/features/lesson/content';
-import { FillBlankRenderer } from '@/src/features/lesson/renderers/fill-blank';
-import { ListeningDictationRenderer } from '@/src/features/lesson/renderers/listening-dictation';
-import { ListeningMultipleChoiceRenderer } from '@/src/features/lesson/renderers/listening-multiple-choice';
-import { MatchingRenderer } from '@/src/features/lesson/renderers/matching';
-import { MultipleChoiceRenderer } from '@/src/features/lesson/renderers/multiple-choice';
-import { SpeakingRecordingRenderer } from '@/src/features/lesson/renderers/speaking-recording';
-import { WordOrderRenderer } from '@/src/features/lesson/renderers/word-order';
-import {
-  buildSample,
-  contentShapes,
-  exerciseMeta,
-  samplesByType,
-} from '@/src/dev/sampleExercises';
+import { useRouter } from 'expo-router';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { exerciseMeta, samplesByType } from '@/src/dev/sampleExercises';
 import { colors, fonts, radius } from '@/src/theme/tokens';
 import type { ExerciseType } from '@/src/types/content';
 
@@ -24,57 +11,9 @@ const GROUPS: { title: string; types: ExerciseType[] }[] = [
   { title: 'Other', types: ['reading_comprehension', 'flashcard'] },
 ];
 
-function renderSandboxRenderer(type: ExerciseType, props: ExerciseRendererProps) {
-  switch (type) {
-    case 'multiple_choice':
-      return <MultipleChoiceRenderer {...props} />;
-    case 'fill_blank':
-      return <FillBlankRenderer {...props} />;
-    case 'word_order':
-      return <WordOrderRenderer {...props} />;
-    case 'matching':
-      return <MatchingRenderer {...props} />;
-    case 'listening_multiple_choice':
-      return <ListeningMultipleChoiceRenderer {...props} />;
-    case 'listening_dictation':
-      return <ListeningDictationRenderer {...props} />;
-    case 'speaking_recording':
-      return <SpeakingRecordingRenderer {...props} />;
-    default:
-      return null;
-  }
-}
-
-function SandboxExercise({ type, index }: { type: ExerciseType; index: number }) {
-  const [run, setRun] = useState(0);
-  const [checked, setChecked] = useState(false);
-
-  const samples = samplesByType[type];
-  const exercise = buildSample(type, samples[index], index);
-
-  const onCheck = (userAnswer: Record<string, unknown>, isCorrect: boolean) => {
-    console.log('[sandbox]', type, JSON.stringify(userAnswer), 'correct:', isCorrect);
-    setChecked(true);
-  };
-
-  const onContinue = () => {
-    setRun((n) => n + 1);
-    setChecked(false);
-  };
-
-  const props: ExerciseRendererProps = {
-    exercise,
-    checked,
-    busy: false,
-    isLast: false,
-    onCheck,
-    onContinue,
-  };
-
-  return <View key={`${index}-${run}`}>{renderSandboxRenderer(type, props)}</View>;
-}
-
 export default function Testing() {
+  const router = useRouter();
+
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <Text style={styles.title}>Exercise catalog</Text>
@@ -84,27 +23,29 @@ export default function Testing() {
         <View key={group.title} style={styles.group}>
           <Text style={styles.groupTitle}>{group.title}</Text>
 
-          {group.types.map((type) => (
-            <View key={type} style={styles.typeCard}>
-              <Text style={styles.typeName}>{type}</Text>
-              <Text style={styles.typeDescription}>{exerciseMeta[type]}</Text>
-
-              {samplesByType[type].length === 0 ? (
-                <Text style={styles.noRenderer}>no renderer yet</Text>
-              ) : (
-                <>
-                  <Text style={styles.shapeTitle}>content JSON shape</Text>
-                  <Text style={styles.shape}>{contentShapes[type]}</Text>
-                  <Text style={styles.shapeTitle}>samples</Text>
-                  {samplesByType[type].map((_, i) => (
-                    <View key={i} style={styles.sample}>
-                      <SandboxExercise type={type} index={i} />
-                    </View>
-                  ))}
-                </>
-              )}
-            </View>
-          ))}
+          {group.types.map((type) => {
+            const ready = samplesByType[type].length > 0;
+            return (
+              <Pressable
+                key={type}
+                style={styles.tile}
+                onPress={() =>
+                  router.push({
+                    pathname: '/testing/[type]',
+                    params: { type },
+                  })
+                }
+              >
+                <View style={styles.tileHeader}>
+                  <Text style={styles.tileName}>{type}</Text>
+                  <View style={[styles.chip, ready ? styles.chipReady : styles.chipNo]}>
+                    <Text style={styles.chipText}>{ready ? 'ready' : 'no renderer'}</Text>
+                  </View>
+                </View>
+                <Text style={styles.tileDescription}>{exerciseMeta[type]}</Text>
+              </Pressable>
+            );
+          })}
         </View>
       ))}
     </ScrollView>
@@ -141,7 +82,7 @@ const styles = StyleSheet.create({
     color: colors.ink,
     marginBottom: 12,
   },
-  typeCard: {
+  tile: {
     backgroundColor: colors.white,
     borderWidth: 2,
     borderColor: colors.grey,
@@ -149,43 +90,38 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 12,
   },
-  typeName: {
+  tileHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  tileName: {
     fontFamily: fonts.display,
     fontSize: 18,
     color: colors.ink,
   },
-  typeDescription: {
+  tileDescription: {
     fontFamily: fonts.body,
     fontSize: 14,
     color: colors.ink,
     opacity: 0.7,
     marginTop: 4,
-    marginBottom: 12,
   },
-  shapeTitle: {
+  chip: {
+    borderRadius: radius.bubble,
+    paddingHorizontal: 10,
+    paddingVertical: 2,
+  },
+  chipReady: {
+    backgroundColor: colors.leaf,
+  },
+  chipNo: {
+    backgroundColor: colors.grey,
+  },
+  chipText: {
     fontFamily: fonts.body,
     fontSize: 12,
     fontWeight: '600',
-    color: colors.ink,
-    opacity: 0.7,
-    marginTop: 8,
-    marginBottom: 4,
-  },
-  shape: {
-    fontFamily: 'monospace',
-    fontSize: 11,
-    color: colors.ink,
-    opacity: 0.8,
-    backgroundColor: colors.paper,
-    borderRadius: radius.bubble,
-    padding: 8,
-  },
-  noRenderer: {
-    fontFamily: fonts.body,
-    fontSize: 14,
-    color: colors.coral,
-  },
-  sample: {
-    marginTop: 12,
+    color: colors.white,
   },
 });

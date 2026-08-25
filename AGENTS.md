@@ -52,6 +52,8 @@ Speaking exercises are ungraded practice for now (record and compare with the mo
 
 The /testing page is a dev-only exercise catalog/sandbox. It must be hidden or removed before any store release.
 
+All UI work follows docs/DESIGN_PRINCIPLES.md; new activity types must pass its checklist.
+
 ## Mastery medals (no XP)
 
 - Lessons award a medal from the best score: bronze 60-79, silver 80-89, gold 90-99, platinum 100.

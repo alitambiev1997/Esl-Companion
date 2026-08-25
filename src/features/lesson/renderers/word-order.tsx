@@ -1,107 +1,112 @@
-import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import type { ExerciseRendererProps, WordOrderContent } from '@/src/features/lesson/content';
-import { FeedbackPanel } from '@/src/features/lesson/feedback-panel';
-import { ContinueButton, PrimaryButton } from '@/src/features/lesson/flow-buttons';
-import { colors, fonts, radius } from '@/src/theme/tokens';
+import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { Chip } from '@/src/components/ui/chip';
+import type {
+  ExerciseRendererHandle,
+  ExerciseRendererProps,
+  WordOrderContent,
+} from '@/src/features/lesson/content';
+import { colors, fonts } from '@/src/theme/tokens';
 
-export function WordOrderRenderer({
-  exercise,
-  checked,
-  busy,
-  isLast,
-  onCheck,
-  onContinue,
-}: ExerciseRendererProps) {
-  const content = exercise.content as unknown as WordOrderContent;
-  const [bank, setBank] = useState<string[]>(content.words);
-  const [sequence, setSequence] = useState<string[]>([]);
-  const [lastCorrect, setLastCorrect] = useState<boolean | null>(null);
+export const WordOrderRenderer = forwardRef<ExerciseRendererHandle, ExerciseRendererProps>(
+  function WordOrderRenderer({ exercise, checked, onCheck, onCanCheckChange }, ref) {
+    const content = exercise.content as unknown as WordOrderContent;
+    const words = content.words;
+    const [answer, setAnswer] = useState<string[]>([]);
 
-  const moveToAnswer = (word: string) => {
-    if (checked) return;
-    setBank((prev) => prev.filter((w) => w !== word));
-    setSequence((prev) => [...prev, word]);
-  };
+    useImperativeHandle(ref, () => ({
+      check: () => {
+        const isCorrect =
+          answer.length === content.correct_sequence.length &&
+          answer.every((w, i) => w === content.correct_sequence[i]);
+        onCheck(
+          { sequence: answer },
+          isCorrect,
+          {
+            correct: isCorrect,
+            explanation: content.explanation,
+            correctAnswer: null,
+            chips: content.correct_sequence,
+          }
+        );
+      },
+    }));
 
-  const moveToBank = (word: string) => {
-    if (checked) return;
-    setSequence((prev) => prev.filter((w) => w !== word));
-    setBank((prev) => [...prev, word]);
-  };
+    useEffect(() => {
+      onCanCheckChange(answer.length === words.length);
+    }, [answer, words, onCanCheckChange]);
 
-  const check = () => {
-    const isCorrect =
-      sequence.length === content.correct_sequence.length &&
-      sequence.every((word, i) => word === content.correct_sequence[i]);
-    setLastCorrect(isCorrect);
-    onCheck({ sequence }, isCorrect);
-  };
+    const tapToAnswer = (word: string) => {
+      if (checked) return;
+      setAnswer((prev) => [...prev, word]);
+    };
 
-  return (
-    <>
-      {sequence.length > 0 && (
-        <View style={styles.answerRow}>
-          {sequence.map((word) => (
-            <Pressable key={word} style={styles.chip} onPress={() => moveToBank(word)}>
-              <Text style={styles.chipText}>{word}</Text>
-            </Pressable>
+    const tapToBank = (word: string) => {
+      if (checked) return;
+      setAnswer((prev) => prev.filter((w) => w !== word));
+    };
+
+    return (
+      <>
+        <View style={styles.answerArea}>
+          {answer.length === 0 && <Text style={styles.emptyHint}>Tap the words below</Text>}
+          {answer.map((word, i) => (
+            <Chip
+              key={`${word}-${i}`}
+              label={word}
+              centered
+              disabled={checked}
+              onPress={() => tapToBank(word)}
+            />
           ))}
         </View>
-      )}
 
-      <View style={styles.bank}>
-        {bank.map((word) => (
-          <Pressable key={word} style={styles.chip} onPress={() => moveToAnswer(word)}>
-            <Text style={styles.chipText}>{word}</Text>
-          </Pressable>
-        ))}
-      </View>
-
-      {!checked && (
-        <PrimaryButton label="Check" onPress={check} disabled={bank.length > 0 || busy} />
-      )}
-
-      {checked && (
-        <>
-          <FeedbackPanel isCorrect={lastCorrect === true} explanation={content.explanation} />
-          <ContinueButton isLast={isLast} onPress={onContinue} disabled={busy} />
-        </>
-      )}
-    </>
-  );
-}
+        <View style={styles.bank}>
+          {words.map((word, i) => {
+            const used = answer.includes(word);
+            return (
+              <View key={`${word}-${i}`} style={used && styles.hidden}>
+                <Chip
+                  label={word}
+                  centered
+                  disabled={checked || used}
+                  onPress={() => tapToAnswer(word)}
+                />
+              </View>
+            );
+          })}
+        </View>
+      </>
+    );
+  }
+);
 
 const styles = StyleSheet.create({
-  answerRow: {
-    minHeight: 56,
-    borderWidth: 2,
-    borderColor: colors.sky,
-    borderRadius: radius.card,
-    padding: 8,
+  answerArea: {
+    minHeight: 64,
     flexDirection: 'row',
     flexWrap: 'wrap',
+    alignItems: 'flex-start',
+    borderBottomWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: colors.grey,
+    paddingBottom: 8,
     marginBottom: 16,
+  },
+  emptyHint: {
+    position: 'absolute',
+    top: 4,
+    left: 4,
+    fontFamily: fonts.body,
+    fontSize: 14,
+    color: colors.ink,
+    opacity: 0.4,
   },
   bank: {
     flexDirection: 'row',
     flexWrap: 'wrap',
   },
-  chip: {
-    flexGrow: 0,
-    flexShrink: 0,
-    borderWidth: 2,
-    borderColor: colors.grey,
-    borderRadius: radius.bubble,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    margin: 4,
-    backgroundColor: colors.paper,
-  },
-  chipText: {
-    fontFamily: fonts.body,
-    fontSize: 16,
-    color: colors.ink,
-    includeFontPadding: false,
+  hidden: {
+    opacity: 0,
   },
 });

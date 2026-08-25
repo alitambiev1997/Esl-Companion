@@ -27,6 +27,7 @@ export default function RootLayout() {
         <Stack.Screen name="lesson/[id]" options={{ title: 'Lesson' }} />
         <Stack.Screen name="review" options={{ title: 'Review' }} />
         <Stack.Screen name="testing" options={{ title: 'Testing' }} />
+        <Stack.Screen name="testing/[type]" options={{ title: 'Testing' }} />
       </Stack>
       <StatusBar style="auto" />
     </>

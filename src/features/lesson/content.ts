@@ -40,12 +40,40 @@ export interface ListeningDictationContent {
   explanation: string | null;
 }
 
+export interface ReadingComprehensionContent {
+  bubbles: string[];
+  text_to_speak: string;
+  question: string;
+  options: string[];
+  correct_index: number;
+  explanation: string | null;
+}
+
+export interface FeedbackBannerInfo {
+  correct: boolean;
+  title?: string | null;
+  explanation: string | null;
+  correctAnswer: string | null;
+  chips?: string[] | null;
+}
+
+export interface ExerciseRendererHandle {
+  check: () => void;
+}
+
 export interface ExerciseRendererProps {
   exercise: Exercise;
   checked: boolean;
   busy: boolean;
   isLast: boolean;
-  onCheck: (userAnswer: Record<string, unknown>, isCorrect: boolean) => void;
+  onCheck: (
+    userAnswer: Record<string, unknown>,
+    isCorrect: boolean,
+    banner: FeedbackBannerInfo
+  ) => void;
+  onCanCheckChange: (canCheck: boolean) => void;
+  onProgressChange?: (remaining: number) => void;
   onContinue: () => void;
   onUngradedContinue?: (exercise: Exercise) => void;
+  continueLabel?: string;
 }

@@ -19,18 +19,6 @@ export function PrimaryButton({ label, onPress, disabled }: FlowButtonProps) {
   );
 }
 
-export function ContinueButton({
-  isLast,
-  onPress,
-  disabled,
-}: {
-  isLast: boolean;
-  onPress: () => void;
-  disabled?: boolean;
-}) {
-  return <PrimaryButton label={isLast ? 'Finish' : 'Continue'} onPress={onPress} disabled={disabled} />;
-}
-
 const styles = StyleSheet.create({
   button: {
     backgroundColor: colors.sun,

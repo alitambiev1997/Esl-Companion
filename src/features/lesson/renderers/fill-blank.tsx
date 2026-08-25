@@ -1,66 +1,81 @@
-import { useState } from 'react';
-import { StyleSheet, TextInput } from 'react-native';
-import type { ExerciseRendererProps, FillBlankContent } from '@/src/features/lesson/content';
-import { FeedbackPanel } from '@/src/features/lesson/feedback-panel';
-import { ContinueButton, PrimaryButton } from '@/src/features/lesson/flow-buttons';
+import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
+import { StyleSheet, Text, TextInput } from 'react-native';
+import type {
+  ExerciseRendererHandle,
+  ExerciseRendererProps,
+  FillBlankContent,
+} from '@/src/features/lesson/content';
 import { colors, fonts } from '@/src/theme/tokens';
 
-export function FillBlankRenderer({
-  exercise,
-  checked,
-  busy,
-  isLast,
-  onCheck,
-  onContinue,
-}: ExerciseRendererProps) {
-  const content = exercise.content as unknown as FillBlankContent;
-  const [text, setText] = useState('');
-  const [lastCorrect, setLastCorrect] = useState<boolean | null>(null);
+export const FillBlankRenderer = forwardRef<ExerciseRendererHandle, ExerciseRendererProps>(
+  function FillBlankRenderer({ exercise, checked, onCheck, onCanCheckChange }, ref) {
+    const content = exercise.content as unknown as FillBlankContent;
+    const [text, setText] = useState('');
+    const parts = exercise.prompt.split('___');
 
-  const check = () => {
-    const answer = text.trim().toLowerCase();
-    const isCorrect = content.correct_answers.some(
-      (candidate) => candidate.trim().toLowerCase() === answer
+    useImperativeHandle(ref, () => ({
+      check: () => {
+        const answer = text.trim().toLowerCase();
+        const isCorrect = content.correct_answers.some(
+          (candidate) => candidate.trim().toLowerCase() === answer
+        );
+        onCheck(
+          { text },
+          isCorrect,
+          {
+            correct: isCorrect,
+            explanation: content.explanation,
+            correctAnswer: content.correct_answers.join(' or '),
+          }
+        );
+      },
+    }));
+
+    useEffect(() => {
+      onCanCheckChange(text.trim().length > 0);
+    }, [text, onCanCheckChange]);
+
+    return (
+      <>
+        <Text style={styles.sentence}>
+          {parts[0]}
+          {parts.length > 1 && <Text style={styles.gap}>___</Text>}
+          {parts.slice(1).join('')}
+        </Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Type your answer"
+          placeholderTextColor={colors.greyDark}
+          autoCapitalize="none"
+          autoCorrect={false}
+          value={text}
+          onChangeText={setText}
+          editable={!checked}
+        />
+      </>
     );
-    setLastCorrect(isCorrect);
-    onCheck({ text }, isCorrect);
-  };
-
-  return (
-    <>
-      <TextInput
-        style={styles.input}
-        placeholder="Type your answer"
-        autoCapitalize="none"
-        autoCorrect={false}
-        value={text}
-        onChangeText={setText}
-        editable={!checked}
-      />
-
-      {!checked && (
-        <PrimaryButton label="Check" onPress={check} disabled={text.trim().length === 0 || busy} />
-      )}
-
-      {checked && (
-        <>
-          <FeedbackPanel isCorrect={lastCorrect === true} explanation={content.explanation} />
-          <ContinueButton isLast={isLast} onPress={onContinue} disabled={busy} />
-        </>
-      )}
-    </>
-  );
-}
+  }
+);
 
 const styles = StyleSheet.create({
+  sentence: {
+    fontFamily: fonts.body,
+    fontSize: 20,
+    lineHeight: 28,
+    color: colors.ink,
+    marginBottom: 24,
+  },
+  gap: {
+    textDecorationLine: 'underline',
+    fontWeight: '700',
+  },
   input: {
-    backgroundColor: colors.white,
-    borderWidth: 2,
-    borderColor: colors.grey,
-    borderRadius: 14,
-    padding: 12,
-    fontSize: 16,
+    fontSize: 20,
     fontFamily: fonts.body,
     color: colors.ink,
+    borderBottomWidth: 2,
+    borderColor: colors.grey,
+    paddingVertical: 10,
+    paddingHorizontal: 0,
   },
 });

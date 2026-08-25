@@ -45,7 +45,14 @@ export const contentShapes: Record<ExerciseType, string> = {
   speaking_recording: `{
   text_to_speak: string
 }`,
-  reading_comprehension: 'no renderer yet',
+  reading_comprehension: `{
+  bubbles: string[],
+  text_to_speak: string,
+  question: string,
+  options: string[],
+  correct_index: number,
+  explanation: string
+}`,
   flashcard: 'no renderer yet',
 };
 
@@ -185,7 +192,40 @@ export const samplesByType: Record<ExerciseType, SampleSpec[]> = {
       },
     },
   ],
-  reading_comprehension: [],
+  reading_comprehension: [
+    {
+      prompt: 'Read the conversation and answer the question.',
+      content: {
+        bubbles: [
+          'Good evening. Welcome to the Grand Hotel.',
+          'I have a reservation under the name Novak.',
+          'Certainly, Mrs. Novak. Room 412, third floor. Here is your key.',
+        ],
+        text_to_speak:
+          'Good evening. Welcome to the Grand Hotel. I have a reservation under the name Novak. Certainly, Mrs. Novak. Room 412, third floor. Here is your key.',
+        question: 'What room is Mrs. Novak staying in?',
+        options: ['412', '421', '214', '312'],
+        correct_index: 0,
+        explanation: 'Her room is 412 on the third floor.',
+      },
+    },
+    {
+      prompt: 'Read the hotel information and answer the question.',
+      content: {
+        bubbles: [
+          'Breakfast is served from 7 to 10 in the lobby.',
+          'The pool is open from 8 am to 9 pm.',
+          'Wi-Fi is free, and the password is on your card.',
+        ],
+        text_to_speak:
+          'Breakfast is served from 7 to 10 in the lobby. The pool is open from 8 am to 9 pm. Wi-Fi is free, and the password is on your card.',
+        question: 'When is breakfast served?',
+        options: ['7 to 10', '8 to 9', '7 to 9', '8 to 10'],
+        correct_index: 0,
+        explanation: 'Breakfast is from 7 to 10 in the lobby.',
+      },
+    },
+  ],
   flashcard: [],
 };
 
