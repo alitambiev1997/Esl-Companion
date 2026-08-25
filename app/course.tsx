@@ -282,6 +282,13 @@ export default function Course() {
           </View>
         </View>
       ))}
+
+      <Pressable
+        style={styles.buttonPrimary}
+        onPress={() => (router.canGoBack() ? router.back() : router.replace('/home'))}
+      >
+        <Text style={styles.buttonPrimaryText}>Back to home</Text>
+      </Pressable>
     </ScrollView>
   );
 }
@@ -410,5 +417,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: colors.white,
+  },
+  buttonPrimary: {
+    backgroundColor: colors.sun,
+    borderRadius: radius.button,
+    paddingVertical: 14,
+    minHeight: 52,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 12,
+  },
+  buttonPrimaryText: {
+    fontFamily: fonts.body,
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.ink,
   },
 });

@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native';
 import { useAuth } from '@/src/features/auth/useAuth';
+import { MascotBadge } from '@/components/mascot-badge';
 import {
   getOnboardingCopy,
   goalKeys,
@@ -152,6 +153,9 @@ export default function Onboarding() {
 
         {step === 'language' && (
           <>
+            <View style={styles.mascotTop}>
+              <MascotBadge size={96} />
+            </View>
             <Pressable style={styles.card} onPress={() => chooseLanguage('cs')}>
               <Text style={styles.cardTitle}>Čeština</Text>
             </Pressable>
@@ -277,6 +281,10 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: colors.ink,
     opacity: 0.7,
+    marginBottom: 16,
+  },
+  mascotTop: {
+    alignItems: 'center',
     marginBottom: 16,
   },
   progressRow: {

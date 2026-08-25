@@ -12,6 +12,7 @@ import { supabase } from '@/src/lib/supabase';
 import { ensureReviewItems } from '@/src/lib/review';
 import { colors, fonts, radius } from '@/src/theme/tokens';
 import { useAuth } from '@/src/features/auth/useAuth';
+import { MascotBadge } from '@/components/mascot-badge';
 import type { Lesson, LessonProgress, Unit } from '@/src/types/content';
 
 interface NextLesson {
@@ -235,9 +236,14 @@ export default function Home() {
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Welcome</Text>
-        <Text style={styles.email}>{user.email ?? 'No email on file'}</Text>
-        {levelTitle && <Text style={styles.level}>Level: {levelTitle}</Text>}
+        <View style={styles.welcomeRow}>
+          <View style={styles.welcomeBlock}>
+            <Text style={styles.title}>Welcome</Text>
+            <Text style={styles.email}>{user.email ?? 'No email on file'}</Text>
+            {levelTitle && <Text style={styles.level}>Level: {levelTitle}</Text>}
+          </View>
+          <MascotBadge size={48} />
+        </View>
 
         {dash.status === 'loading' && (
           <View style={styles.stateBox}>
@@ -318,6 +324,16 @@ const styles = StyleSheet.create({
     fontFamily: fonts.display,
     fontSize: 28,
     color: colors.ink,
+  },
+  welcomeRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  welcomeBlock: {
+    flex: 1,
+    marginRight: 12,
   },
   email: {
     fontFamily: fonts.body,

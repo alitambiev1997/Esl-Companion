@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native';
 import { useAuth } from '@/src/features/auth/useAuth';
+import { MascotBadge } from '@/components/mascot-badge';
 import { addDailyActivity } from '@/src/lib/activity';
 import { ContinueButton } from '@/src/features/lesson/flow-buttons';
 import { Confetti, MedalStamp } from '@/src/features/lesson/celebration';
@@ -279,6 +280,9 @@ export default function LessonPlayer() {
         return (
           <View style={styles.container}>
             <Confetti />
+            <View style={styles.mascotCorner}>
+              <MascotBadge size={56} />
+            </View>
             <Text style={styles.celebrationTitle}>Lesson complete!</Text>
             <MedalStamp medal={result.medal} />
           </View>
@@ -392,14 +396,16 @@ export default function LessonPlayer() {
             {!['multiple_choice', 'fill_blank', 'word_order', 'matching', 'listening_multiple_choice', 'listening_dictation', 'speaking_recording'].includes(
               exercise.type
             ) && (
-              <View style={styles.placeholderCard}>
-                <Text style={styles.placeholderText}>Exercise type coming next</Text>
+              <>
+                <View style={styles.placeholderCard}>
+                  <Text style={styles.placeholderText}>Exercise type coming next</Text>
+                </View>
                 <ContinueButton
                   isLast={index === exercises.length - 1}
                   onPress={handleContinue}
                   disabled={busy}
                 />
-              </View>
+              </>
             )}
 
             {attemptError && <Text style={styles.errorText}>{attemptError}</Text>}
@@ -531,6 +537,11 @@ const styles = StyleSheet.create({
     fontFamily: fonts.display,
     fontSize: 28,
     color: colors.ink,
+  },
+  mascotCorner: {
+    position: 'absolute',
+    top: 24,
+    right: 24,
   },
   encouragementText: {
     fontFamily: fonts.display,
