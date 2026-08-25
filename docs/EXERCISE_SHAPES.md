@@ -55,7 +55,7 @@ Example:
 }
 ```
 
-`words` is the shuffled bank shown to the user; `correct_sequence` is the exact order that scores a correct answer.
+`words` is the word bank (the renderer shuffles it once on mount for display); `correct_sequence` is the exact order that scores a correct answer.
 
 Example:
 

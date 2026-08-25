@@ -8,10 +8,19 @@ import type {
 } from '@/src/features/lesson/content';
 import { colors, fonts } from '@/src/theme/tokens';
 
+function shuffle<T>(items: T[]): T[] {
+  const result = [...items];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
 export const WordOrderRenderer = forwardRef<ExerciseRendererHandle, ExerciseRendererProps>(
   function WordOrderRenderer({ exercise, checked, onCheck, onCanCheckChange }, ref) {
     const content = exercise.content as unknown as WordOrderContent;
-    const words = content.words;
+    const [bankOrder] = useState(() => shuffle(content.words));
     const [answer, setAnswer] = useState<string[]>([]);
 
     useImperativeHandle(ref, () => ({
@@ -33,8 +42,8 @@ export const WordOrderRenderer = forwardRef<ExerciseRendererHandle, ExerciseRend
     }));
 
     useEffect(() => {
-      onCanCheckChange(answer.length === words.length);
-    }, [answer, words, onCanCheckChange]);
+      onCanCheckChange(answer.length === bankOrder.length);
+    }, [answer, bankOrder, onCanCheckChange]);
 
     const tapToAnswer = (word: string) => {
       if (checked) return;
@@ -62,7 +71,7 @@ export const WordOrderRenderer = forwardRef<ExerciseRendererHandle, ExerciseRend
         </View>
 
         <View style={styles.bank}>
-          {words.map((word, i) => {
+          {bankOrder.map((word, i) => {
             const used = answer.includes(word);
             return (
               <View key={`${word}-${i}`} style={used && styles.hidden}>
