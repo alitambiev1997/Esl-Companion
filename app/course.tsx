@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Animated,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -32,12 +33,72 @@ type LoadState =
   | { status: 'empty'; message: string }
   | { status: 'ready'; units: UnitRow[] };
 
-const STATUS_ICON: Record<LessonStatus, { name: keyof typeof Ionicons.glyphMap; color: string }> = {
-  completed: { name: 'checkmark-circle', color: colors.leaf },
-  current: { name: 'play-circle', color: colors.sun },
-  unlocked: { name: 'play-circle', color: colors.sky },
-  locked: { name: 'lock-closed', color: colors.grey },
-};
+const OFFSET_ALIGN = ['flex-start', 'center', 'flex-end'] as const;
+const OFFSET_CENTER_X = [56, 120, 184];
+
+function midpointX(prevOffset: number, curOffset: number): number {
+  return (OFFSET_CENTER_X[prevOffset] + OFFSET_CENTER_X[curOffset]) / 2 - 1;
+}
+
+function CourseNode({
+  lesson,
+  offset,
+  prevOffset,
+  isFirst,
+  onPress,
+}: {
+  lesson: LessonRow;
+  offset: number;
+  prevOffset: number;
+  isFirst: boolean;
+  onPress: () => void;
+}) {
+  const pulse = useRef(new Animated.Value(1)).current;
+  const isCurrent = lesson.status === 'current';
+  const locked = lesson.status === 'locked';
+  const completed = lesson.status === 'completed';
+  const ringColor = completed ? (lesson.medalColor ?? colors.leaf) : colors.sky;
+
+  useEffect(() => {
+    if (!isCurrent) return;
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 1.1, duration: 700, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 1, duration: 700, useNativeDriver: true }),
+      ])
+    );
+    animation.start();
+    return () => animation.stop();
+  }, [isCurrent, pulse]);
+
+  return (
+    <View>
+      {!isFirst && (
+        <View style={[styles.connector, { marginLeft: midpointX(prevOffset, offset) }]} />
+      )}
+      <View style={[styles.nodeRow, { justifyContent: OFFSET_ALIGN[offset] }]}>
+        <Pressable onPress={onPress} disabled={locked} style={styles.nodeBlock}>
+          <Animated.View
+            style={[
+              styles.nodeCircle,
+              completed && { borderColor: ringColor },
+              lesson.status === 'unlocked' && styles.nodeCircleUnlocked,
+              isCurrent && styles.nodeCircleCurrent,
+              isCurrent && { transform: [{ scale: pulse }] },
+              locked && styles.nodeCircleLocked,
+            ]}
+          >
+            {completed && <View style={[styles.medalDot, { backgroundColor: ringColor }]} />}
+            {locked && <Ionicons name="lock-closed" size={22} color={colors.white} />}
+          </Animated.View>
+          <Text style={styles.nodeTitle} numberOfLines={2}>
+            {lesson.title}
+          </Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
 
 export default function Course() {
   const router = useRouter();
@@ -90,7 +151,10 @@ export default function Course() {
         setLoadState({
           status: 'error',
           message:
-            unitsRes.error?.message ?? lessonsRes.error?.message ?? progressRes.error?.message ?? 'Failed to load course',
+            unitsRes.error?.message ??
+            lessonsRes.error?.message ??
+            progressRes.error?.message ??
+            'Failed to load course',
         });
         return;
       }
@@ -119,7 +183,7 @@ export default function Course() {
       const unitRows: UnitRow[] = units.map((unit) => {
         const unitLessons = lessons
           .filter((lesson) => lesson.unit_id === unit.id)
-          .map((lesson) => ({ ...lesson, status: 'locked' as LessonStatus }));
+          .map((lesson) => ({ ...lesson, status: 'locked' as LessonStatus, medalColor: null }));
 
         let prevCompleted = true;
         const rows = unitLessons.map((lesson) => {
@@ -176,8 +240,8 @@ export default function Course() {
     return (
       <View style={styles.container}>
         <Text style={styles.errorText}>{loadState.message}</Text>
-        <Pressable style={styles.button} onPress={() => setRetry((n) => n + 1)}>
-          <Text style={styles.buttonText}>Try again</Text>
+        <Pressable style={styles.buttonSecondary} onPress={() => setRetry((n) => n + 1)}>
+          <Text style={styles.buttonSecondaryText}>Try again</Text>
         </Pressable>
       </View>
     );
@@ -197,31 +261,25 @@ export default function Course() {
 
       {loadState.units.map((unit) => (
         <View key={unit.id} style={styles.unitSection}>
-          <Text style={styles.unitTitle}>{unit.title}</Text>
-          {unit.lessons.map((lesson) => {
-            const icon =
-              lesson.status === 'completed'
-                ? {
-                    name: 'checkmark-circle' as const,
-                    color: lesson.medalColor ?? colors.leaf,
-                  }
-                : STATUS_ICON[lesson.status];
-            return (
-              <Pressable
+          <View style={styles.unitCard}>
+            <Text style={styles.unitTitle}>{unit.title}</Text>
+            {unit.description && (
+              <Text style={styles.unitDescription}>{unit.description}</Text>
+            )}
+          </View>
+
+          <View style={styles.pathColumn}>
+            {unit.lessons.map((lesson, i) => (
+              <CourseNode
                 key={lesson.id}
-                style={[
-                  styles.lessonRow,
-                  lesson.status === 'current' && styles.lessonRowCurrent,
-                  lesson.status === 'locked' && styles.lessonRowLocked,
-                ]}
+                lesson={lesson}
+                offset={i % 3}
+                prevOffset={(i - 1 + 3) % 3}
+                isFirst={i === 0}
                 onPress={() => onLessonPress(lesson)}
-                disabled={lesson.status === 'locked'}
-              >
-                <Ionicons name={icon.name} size={28} color={icon.color} />
-                <Text style={styles.lessonTitle}>{lesson.title}</Text>
-              </Pressable>
-            );
-          })}
+              />
+            ))}
+          </View>
         </View>
       ))}
     </ScrollView>
@@ -253,33 +311,78 @@ const styles = StyleSheet.create({
   unitSection: {
     marginBottom: 24,
   },
+  unitCard: {
+    backgroundColor: colors.white,
+    borderWidth: 2,
+    borderColor: colors.grey,
+    borderRadius: radius.card,
+    padding: 16,
+    marginBottom: 16,
+  },
   unitTitle: {
     fontFamily: fonts.display,
     fontSize: 20,
     color: colors.ink,
-    marginBottom: 12,
   },
-  lessonRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.paper,
-    borderWidth: 2,
+  unitDescription: {
+    fontFamily: fonts.body,
+    fontSize: 14,
+    color: colors.ink,
+    opacity: 0.7,
+    marginTop: 4,
+  },
+  pathColumn: {
+    width: '100%',
+  },
+  connector: {
+    width: 2,
+    height: 28,
+    borderLeftWidth: 2,
+    borderStyle: 'dashed',
     borderColor: colors.grey,
-    borderRadius: radius.card,
-    padding: 14,
-    marginBottom: 8,
   },
-  lessonRowCurrent: {
+  nodeRow: {
+    flexDirection: 'row',
+  },
+  nodeBlock: {
+    width: 88,
+    alignItems: 'center',
+  },
+  nodeCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.white,
+    borderWidth: 3,
+    borderColor: colors.grey,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  nodeCircleUnlocked: {
+    borderColor: colors.sky,
+  },
+  nodeCircleCurrent: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: colors.sun,
     borderColor: colors.sun,
   },
-  lessonRowLocked: {
-    opacity: 0.7,
+  nodeCircleLocked: {
+    backgroundColor: colors.grey,
+    borderColor: colors.grey,
   },
-  lessonTitle: {
+  medalDot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+  },
+  nodeTitle: {
     fontFamily: fonts.body,
-    fontSize: 16,
+    fontSize: 12,
     color: colors.ink,
-    marginLeft: 12,
+    textAlign: 'center',
+    marginTop: 6,
   },
   stateText: {
     fontFamily: fonts.body,
@@ -293,14 +396,16 @@ const styles = StyleSheet.create({
     color: colors.coral,
     textAlign: 'center',
   },
-  button: {
+  buttonSecondary: {
     backgroundColor: colors.sky,
     borderRadius: radius.button,
-    padding: 14,
+    paddingVertical: 14,
+    minHeight: 52,
     alignItems: 'center',
+    justifyContent: 'center',
     marginTop: 16,
   },
-  buttonText: {
+  buttonSecondaryText: {
     fontFamily: fonts.body,
     fontSize: 16,
     fontWeight: '600',

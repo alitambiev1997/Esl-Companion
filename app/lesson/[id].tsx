@@ -11,6 +11,7 @@ import {
 import { useAuth } from '@/src/features/auth/useAuth';
 import { addDailyActivity } from '@/src/lib/activity';
 import { ContinueButton } from '@/src/features/lesson/flow-buttons';
+import { Confetti, MedalStamp } from '@/src/features/lesson/celebration';
 import { medalColor, medalForScore, type Medal } from '@/src/lib/medals';
 import { Ionicons } from '@expo/vector-icons';
 import type { ExerciseRendererProps } from '@/src/features/lesson/content';
@@ -52,6 +53,13 @@ export default function LessonPlayer() {
   const [busy, setBusy] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [result, setResult] = useState<Result | null>(null);
+  const [celebrating, setCelebrating] = useState(false);
+
+  useEffect(() => {
+    if (!result) return;
+    const timer = setTimeout(() => setCelebrating(false), 1500);
+    return () => clearTimeout(timer);
+  }, [result]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -238,6 +246,7 @@ export default function LessonPlayer() {
       }
 
       setResult({ score, passed, medal });
+      setCelebrating(true);
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : 'Failed to finish lesson');
     } finally {
@@ -265,6 +274,27 @@ export default function LessonPlayer() {
   }
 
   if (result) {
+    if (celebrating) {
+      if (result.passed && result.medal) {
+        return (
+          <View style={styles.container}>
+            <Confetti />
+            <Text style={styles.celebrationTitle}>Lesson complete!</Text>
+            <MedalStamp medal={result.medal} />
+          </View>
+        );
+      }
+      return (
+        <View style={styles.container}>
+          <Text style={styles.encouragementText}>
+            Not yet - you need{' '}
+            {loadState.status === 'ready' ? (loadState.lesson.pass_score ?? 60) : 60}%.
+            {'\n'}Try again!
+          </Text>
+        </View>
+      );
+    }
+
     return (
       <View style={styles.container}>
         <Stack.Screen
@@ -496,6 +526,17 @@ const styles = StyleSheet.create({
     fontSize: 28,
     marginTop: 8,
     marginBottom: 16,
+  },
+  celebrationTitle: {
+    fontFamily: fonts.display,
+    fontSize: 28,
+    color: colors.ink,
+  },
+  encouragementText: {
+    fontFamily: fonts.display,
+    fontSize: 24,
+    color: colors.coral,
+    textAlign: 'center',
   },
   noMedalText: {
     fontFamily: fonts.body,
