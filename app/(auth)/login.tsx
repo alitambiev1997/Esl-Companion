@@ -92,6 +92,10 @@ export default function Login() {
       <Link href="/signup" style={styles.link}>
         Don&apos;t have an account? Sign up
       </Link>
+
+      <Pressable style={styles.testingButton} onPress={() => router.push('/testing')}>
+        <Text style={styles.testingButtonText}>Testing</Text>
+      </Pressable>
     </KeyboardFormWrapper>
   );
 }
@@ -157,5 +161,15 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.sky,
     textAlign: 'center',
+  },
+  testingButton: {
+    marginTop: 24,
+    alignItems: 'center',
+  },
+  testingButtonText: {
+    fontFamily: fonts.body,
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.sky,
   },
 });
