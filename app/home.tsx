@@ -1,5 +1,5 @@
-import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -61,7 +61,6 @@ export default function Home() {
   const { user, profile, loading, signOut } = useAuth();
   const [levelTitle, setLevelTitle] = useState<string | null>(null);
   const [dash, setDash] = useState<DashState>({ status: 'loading' });
-  const [retry, setRetry] = useState(0);
   const [signOutError, setSignOutError] = useState<string | null>(null);
   const [signingOut, setSigningOut] = useState(false);
 
@@ -96,7 +95,8 @@ export default function Home() {
     };
   }, [profile?.current_level_id]);
 
-  useEffect(() => {
+  const loadDash = useCallback(() => {
+
     if (!user) return;
 
     if (!profile?.current_level_id) {
@@ -207,7 +207,13 @@ export default function Home() {
     return () => {
       mounted = false;
     };
-  }, [user, profile?.current_level_id, retry]);
+  }, [user, profile?.current_level_id]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadDash();
+    }, [loadDash])
+  );
 
   if (loading) {
     return (
@@ -254,7 +260,7 @@ export default function Home() {
         {dash.status === 'error' && (
           <View style={styles.stateBox}>
             <Text style={styles.errorText}>{dash.message}</Text>
-            <Pressable style={styles.buttonSecondary} onPress={() => setRetry((n) => n + 1)}>
+            <Pressable style={styles.buttonSecondary} onPress={() => loadDash()}>
               <Text style={styles.buttonSecondaryText}>Try again</Text>
             </Pressable>
           </View>

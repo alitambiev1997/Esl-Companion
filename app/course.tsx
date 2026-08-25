@@ -34,27 +34,23 @@ type LoadState =
   | { status: 'ready'; units: UnitRow[] };
 
 const OFFSET_ALIGN = ['flex-start', 'center', 'flex-end'] as const;
-const OFFSET_CENTER_X = [56, 120, 184];
-
-function midpointX(prevOffset: number, curOffset: number): number {
-  return (OFFSET_CENTER_X[prevOffset] + OFFSET_CENTER_X[curOffset]) / 2 - 1;
-}
 
 function CourseNode({
   lesson,
   offset,
-  prevOffset,
   isFirst,
+  isCurrent,
   onPress,
+  onRowLayout,
 }: {
   lesson: LessonRow;
   offset: number;
-  prevOffset: number;
   isFirst: boolean;
+  isCurrent: boolean;
   onPress: () => void;
+  onRowLayout: (y: number) => void;
 }) {
   const pulse = useRef(new Animated.Value(1)).current;
-  const isCurrent = lesson.status === 'current';
   const locked = lesson.status === 'locked';
   const completed = lesson.status === 'completed';
   const ringColor = completed ? (lesson.medalColor ?? colors.leaf) : colors.sky;
@@ -72,10 +68,8 @@ function CourseNode({
   }, [isCurrent, pulse]);
 
   return (
-    <View>
-      {!isFirst && (
-        <View style={[styles.connector, { marginLeft: midpointX(prevOffset, offset) }]} />
-      )}
+    <View onLayout={(e) => onRowLayout(e.nativeEvent.layout.y)}>
+      {!isFirst && <View style={styles.rowSpacer} />}
       <View style={[styles.nodeRow, { justifyContent: OFFSET_ALIGN[offset] }]}>
         <Pressable onPress={onPress} disabled={locked} style={styles.nodeBlock}>
           <Animated.View
@@ -100,11 +94,41 @@ function CourseNode({
   );
 }
 
+function dotsBetween(a: { x: number; y: number }, b: { x: number; y: number }) {
+  const dist = Math.hypot(b.x - a.x, b.y - a.y);
+  const count = Math.max(1, Math.floor(dist / 12));
+  const dots: { x: number; y: number }[] = [];
+  for (let i = 1; i < count; i++) {
+    const t = i / count;
+    dots.push({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t });
+  }
+  return dots;
+}
+
 export default function Course() {
   const router = useRouter();
   const { user, profile, loading: authLoading } = useAuth();
   const [loadState, setLoadState] = useState<LoadState>({ status: 'loading' });
   const [retry, setRetry] = useState(0);
+  const [colWidth, setColWidth] = useState(0);
+  const [centersByUnit, setCentersByUnit] = useState<Record<string, { x: number; y: number }[]>>(
+    {}
+  );
+
+  useEffect(() => {
+    setColWidth(0);
+    setCentersByUnit({});
+  }, [loadState]);
+
+  const recordCenter = (unitId: string, rowY: number, offset: number, isCurrent: boolean) => {
+    if (colWidth === 0) return;
+    const x = offset === 0 ? 44 : offset === 1 ? colWidth / 2 : colWidth - 44;
+    const y = rowY + 28 + (isCurrent ? 32 : 28);
+    setCentersByUnit((prev) => {
+      const list = prev[unitId] ?? [];
+      return { ...prev, [unitId]: [...list, { x, y }] };
+    });
+  };
 
   useEffect(() => {
     if (authLoading) return;
@@ -268,17 +292,30 @@ export default function Course() {
             )}
           </View>
 
-          <View style={styles.pathColumn}>
-            {unit.lessons.map((lesson, i) => (
-              <CourseNode
-                key={lesson.id}
-                lesson={lesson}
-                offset={i % 3}
-                prevOffset={(i - 1 + 3) % 3}
-                isFirst={i === 0}
-                onPress={() => onLessonPress(lesson)}
-              />
-            ))}
+          <View style={styles.pathColumn} onLayout={(e) => setColWidth(e.nativeEvent.layout.width)}>
+            {unit.lessons.map((lesson, i) => {
+              const offset = i % 3;
+              return (
+                <CourseNode
+                  key={lesson.id}
+                  lesson={lesson}
+                  offset={offset}
+                  isFirst={i === 0}
+                  isCurrent={lesson.status === 'current'}
+                  onPress={() => onLessonPress(lesson)}
+                  onRowLayout={(y) => recordCenter(unit.id, y, offset, lesson.status === 'current')}
+                />
+              );
+            })}
+            <View style={styles.dotsLayer} pointerEvents="none">
+              {((centersByUnit[unit.id] ?? []) as { x: number; y: number }[])
+                .flatMap((center, i, all) =>
+                  i === 0 ? [] : dotsBetween(all[i - 1], center)
+                )
+                .map((dot, i) => (
+                  <View key={i} style={[styles.pathDot, { left: dot.x - 2, top: dot.y - 2 }]} />
+                ))}
+            </View>
           </View>
         </View>
       ))}
@@ -341,12 +378,18 @@ const styles = StyleSheet.create({
   pathColumn: {
     width: '100%',
   },
-  connector: {
-    width: 2,
+  rowSpacer: {
     height: 28,
-    borderLeftWidth: 2,
-    borderStyle: 'dashed',
-    borderColor: colors.grey,
+  },
+  dotsLayer: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  pathDot: {
+    position: 'absolute',
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.grey,
   },
   nodeRow: {
     flexDirection: 'row',

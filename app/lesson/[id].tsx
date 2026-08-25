@@ -14,7 +14,6 @@ import { addDailyActivity } from '@/src/lib/activity';
 import { ContinueButton } from '@/src/features/lesson/flow-buttons';
 import { Confetti, MedalStamp } from '@/src/features/lesson/celebration';
 import { medalColor, medalForScore, type Medal } from '@/src/lib/medals';
-import { Ionicons } from '@expo/vector-icons';
 import type { ExerciseRendererProps } from '@/src/features/lesson/content';
 import { FillBlankRenderer } from '@/src/features/lesson/renderers/fill-blank';
 import { ListeningDictationRenderer } from '@/src/features/lesson/renderers/listening-dictation';
@@ -54,13 +53,12 @@ export default function LessonPlayer() {
   const [busy, setBusy] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [result, setResult] = useState<Result | null>(null);
-  const [celebrating, setCelebrating] = useState(false);
-
-  useEffect(() => {
-    if (!result) return;
-    const timer = setTimeout(() => setCelebrating(false), 1500);
-    return () => clearTimeout(timer);
-  }, [result]);
+  const [containerLayout, setContainerLayout] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
+  const [blockLayout, setBlockLayout] = useState<{ y: number; height: number } | null>(null);
+  const [stampLayout, setStampLayout] = useState<{ y: number; height: number } | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -247,7 +245,6 @@ export default function LessonPlayer() {
       }
 
       setResult({ score, passed, medal });
-      setCelebrating(true);
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : 'Failed to finish lesson');
     } finally {
@@ -275,54 +272,68 @@ export default function LessonPlayer() {
   }
 
   if (result) {
-    if (celebrating) {
-      if (result.passed && result.medal) {
-        return (
-          <View style={styles.container}>
-            <Confetti />
-            <View style={styles.mascotCorner}>
-              <MascotBadge size={56} />
-            </View>
-            <Text style={styles.celebrationTitle}>Lesson complete!</Text>
-            <MedalStamp medal={result.medal} />
-          </View>
-        );
-      }
-      return (
-        <View style={styles.container}>
-          <Text style={styles.encouragementText}>
-            Not yet - you need{' '}
-            {loadState.status === 'ready' ? (loadState.lesson.pass_score ?? 60) : 60}%.
-            {'\n'}Try again!
-          </Text>
-        </View>
-      );
-    }
+    const passScore = loadState.status === 'ready' ? (loadState.lesson.pass_score ?? 60) : 60;
+    const origin =
+      containerLayout && blockLayout && stampLayout
+        ? {
+            x: containerLayout.width / 2,
+            y: blockLayout.y + stampLayout.y + stampLayout.height / 2,
+          }
+        : null;
+
+    const onTryAgain = () => {
+      setIndex(0);
+      setPhase('answering');
+      setCorrectCount(0);
+      setResult(null);
+      setAttemptError(null);
+    };
 
     return (
-      <View style={styles.container}>
+      <View
+        style={styles.resultContainer}
+        onLayout={(e) => setContainerLayout(e.nativeEvent.layout)}
+      >
         <Stack.Screen
           options={{
             title: loadState.status === 'ready' ? loadState.lesson.title : 'Lesson',
           }}
         />
-        <View style={styles.resultCard}>
-          <Text style={styles.title}>{result.passed ? 'Lesson complete!' : 'Not passed yet'}</Text>
-          <Text style={styles.scoreText}>Score: {result.score}%</Text>
-          {result.medal ? (
-            <>
-              <Ionicons name="medal" size={72} color={medalColor(result.medal) ?? colors.sky} />
-              <Text style={[styles.medalName, { color: medalColor(result.medal) ?? colors.sky }]}>
-                {result.medal.charAt(0).toUpperCase() + result.medal.slice(1)}
-              </Text>
-            </>
-          ) : (
-            <Text style={styles.noMedalText}>No medal yet - retry</Text>
-          )}
-          <Pressable style={styles.buttonPrimary} onPress={() => router.replace('/course')}>
-            <Text style={styles.buttonPrimaryText}>Back to course</Text>
-          </Pressable>
-        </View>
+        {result.passed && result.medal ? (
+          <>
+            <Confetti origin={origin} />
+            <View style={styles.mascotCorner} pointerEvents="none">
+              <MascotBadge size={56} />
+            </View>
+            <View
+              style={styles.ceremonyBlock}
+              onLayout={(e) => setBlockLayout(e.nativeEvent.layout)}
+            >
+              <Text style={styles.celebrationTitle}>Lesson complete!</Text>
+              <View onLayout={(e) => setStampLayout(e.nativeEvent.layout)}>
+                <MedalStamp medal={result.medal} />
+              </View>
+            </View>
+            <Text style={styles.scoreText}>Score: {result.score}%</Text>
+            <Text style={[styles.medalName, { color: medalColor(result.medal) ?? colors.sky }]}>
+              {result.medal.charAt(0).toUpperCase() + result.medal.slice(1)}
+            </Text>
+            <Pressable style={styles.buttonPrimary} onPress={() => router.replace('/course')}>
+              <Text style={styles.buttonPrimaryText}>Continue</Text>
+            </Pressable>
+          </>
+        ) : (
+          <>
+            <Text style={styles.encouragementText}>
+              Not yet - you need {passScore}%.
+              {'\n'}Try again!
+            </Text>
+            <Text style={styles.scoreText}>Score: {result.score}%</Text>
+            <Pressable style={styles.buttonPrimary} onPress={onTryAgain}>
+              <Text style={styles.buttonPrimaryText}>Try again</Text>
+            </Pressable>
+          </>
+        )}
       </View>
     );
   }
@@ -538,6 +549,17 @@ const styles = StyleSheet.create({
     fontSize: 28,
     color: colors.ink,
   },
+  resultContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    paddingTop: '20%',
+    backgroundColor: colors.paper,
+  },
+  ceremonyBlock: {
+    width: '100%',
+    alignItems: 'center',
+  },
   mascotCorner: {
     position: 'absolute',
     top: 24,
@@ -548,21 +570,5 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: colors.coral,
     textAlign: 'center',
-  },
-  noMedalText: {
-    fontFamily: fonts.body,
-    fontSize: 16,
-    color: colors.ink,
-    opacity: 0.7,
-    marginBottom: 8,
-  },
-  resultCard: {
-    width: '100%',
-    backgroundColor: colors.white,
-    borderWidth: 2,
-    borderColor: colors.grey,
-    borderRadius: radius.card,
-    padding: 24,
-    alignItems: 'center',
   },
 });
