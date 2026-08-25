@@ -1,4 +1,4 @@
-import { forwardRef, Fragment, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import { createRef, forwardRef, Fragment, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 import { Chip } from '@/src/components/ui/chip';
 import type {
@@ -6,7 +6,7 @@ import type {
   ExerciseRendererProps,
   MatchingContent,
 } from '@/src/features/lesson/content';
-import { colors, radius } from '@/src/theme/tokens';
+import { colors } from '@/src/theme/tokens';
 
 function shuffle<T>(items: T[]): T[] {
   const result = [...items];
@@ -21,8 +21,7 @@ interface PillAnims {
   scale: Animated.Value;
   opacity: Animated.Value;
   shakeX: Animated.Value;
-  leafFlash: Animated.Value;
-  coralFlash: Animated.Value;
+  flash: Animated.Value;
 }
 
 function makeAnims(): PillAnims {
@@ -30,14 +29,79 @@ function makeAnims(): PillAnims {
     scale: new Animated.Value(1),
     opacity: new Animated.Value(1),
     shakeX: new Animated.Value(0),
-    leafFlash: new Animated.Value(0),
-    coralFlash: new Animated.Value(0),
+    flash: new Animated.Value(0),
   };
 }
 
 const SHAKE_VALUES = [-6, 6, -6, 6, -6, 6, 0];
 const CORRECT_LOCK_MS = 750;
 const WRONG_LOCK_MS = 500;
+const LEAF_HOLD_MS = 350;
+const CORAL_HOLD_MS = 300;
+
+interface PairPillProps {
+  label: string;
+  anims: PillAnims;
+  selected: boolean;
+  disabled: boolean;
+  onPress: () => void;
+}
+
+const PairPill = forwardRef<{ flashWith: (color: string) => void }, PairPillProps>(
+  function PairPill({ label, anims, selected, disabled, onPress }, ref) {
+    const [flashColor, setFlashColor] = useState<string | null>(null);
+
+    const bg = anims.flash.interpolate({
+      inputRange: [0, 1],
+      outputRange: [
+        selected ? colors.skyTint : colors.white,
+        flashColor ?? (selected ? colors.skyTint : colors.white),
+      ],
+    });
+
+    useImperativeHandle(ref, () => ({
+      flashWith: (color: string) => {
+        setFlashColor(color);
+      },
+    }));
+
+    useEffect(() => {
+      if (flashColor === null) return;
+      const hold = flashColor === colors.leafTint ? LEAF_HOLD_MS : CORAL_HOLD_MS;
+      const sequence = Animated.sequence([
+        Animated.timing(anims.flash, { toValue: 1, duration: 100, useNativeDriver: false }),
+        Animated.delay(hold),
+        Animated.timing(anims.flash, { toValue: 0, duration: 0, useNativeDriver: false }),
+      ]);
+      sequence.start();
+      return () => sequence.stop();
+    }, [flashColor, anims.flash]);
+
+    return (
+      <Animated.View
+        style={[
+          styles.pillWrap,
+          {
+            opacity: anims.opacity,
+            transform: [
+              { scale: anims.scale },
+              { translateX: anims.shakeX },
+            ],
+          },
+        ]}
+      >
+        <Chip
+          label={label}
+          centered
+          selected={selected}
+          disabled={disabled}
+          backgroundColor={bg}
+          onPress={onPress}
+        />
+      </Animated.View>
+    );
+  }
+);
 
 export const MatchingRenderer = forwardRef<ExerciseRendererHandle, ExerciseRendererProps>(
   function MatchingRenderer({ exercise, checked, onCheck, onProgressChange }, ref) {
@@ -51,6 +115,9 @@ export const MatchingRenderer = forwardRef<ExerciseRendererHandle, ExerciseRende
       }
       return map;
     }, [content]);
+    const pillRefs = useRef(
+    new Map<string, ReturnType<typeof createRef<{ flashWith: (c: string) => void }>>>()
+  );
 
     const [selectedLeft, setSelectedLeft] = useState<string | null>(null);
     const [matchedLefts, setMatchedLefts] = useState<Set<string>>(new Set());
@@ -69,20 +136,23 @@ export const MatchingRenderer = forwardRef<ExerciseRendererHandle, ExerciseRende
 
     useImperativeHandle(ref, () => ({ check: () => {} }));
 
+    const getRef = (word: string) => {
+      let r = pillRefs.current.get(word);
+      if (!r) {
+        r = createRef<{ flashWith: (c: string) => void }>();
+        pillRefs.current.set(word, r);
+      }
+      return r;
+    };
+
+    const flash = (word: string, color: string) => {
+      getRef(word).current?.flashWith(color);
+    };
+
     const animateMatched = (left: string, right: string) => {
       const l = anims.get(left)!;
       const r = anims.get(right)!;
       Animated.parallel([
-        Animated.sequence([
-          Animated.timing(l.leafFlash, { toValue: 1, duration: 100, useNativeDriver: true }),
-          Animated.delay(350),
-          Animated.timing(l.leafFlash, { toValue: 0, duration: 0, useNativeDriver: true }),
-        ]),
-        Animated.sequence([
-          Animated.timing(r.leafFlash, { toValue: 1, duration: 100, useNativeDriver: true }),
-          Animated.delay(350),
-          Animated.timing(r.leafFlash, { toValue: 0, duration: 0, useNativeDriver: true }),
-        ]),
         Animated.sequence([
           Animated.delay(450),
           Animated.parallel([
@@ -93,6 +163,8 @@ export const MatchingRenderer = forwardRef<ExerciseRendererHandle, ExerciseRende
           ]),
         ]),
       ]).start();
+      flash(left, colors.leafTint);
+      flash(right, colors.leafTint);
     };
 
     const animateWrong = (left: string, right: string) => {
@@ -109,17 +181,9 @@ export const MatchingRenderer = forwardRef<ExerciseRendererHandle, ExerciseRende
             Animated.timing(r.shakeX, { toValue: v, duration: 70, useNativeDriver: true })
           )
         ),
-        Animated.sequence([
-          Animated.timing(l.coralFlash, { toValue: 1, duration: 100, useNativeDriver: true }),
-          Animated.delay(300),
-          Animated.timing(l.coralFlash, { toValue: 0, duration: 100, useNativeDriver: true }),
-        ]),
-        Animated.sequence([
-          Animated.timing(r.coralFlash, { toValue: 1, duration: 100, useNativeDriver: true }),
-          Animated.delay(300),
-          Animated.timing(r.coralFlash, { toValue: 0, duration: 100, useNativeDriver: true }),
-        ]),
       ]).start();
+      flash(left, colors.coralTint);
+      flash(right, colors.coralTint);
     };
 
     const reportIfDone = (nextMatched: Set<string>, nextMistakes: number) => {
@@ -171,74 +235,33 @@ export const MatchingRenderer = forwardRef<ExerciseRendererHandle, ExerciseRende
       }
     };
 
-    const renderPill = (
-      label: string,
-      matched: boolean,
-      selected: boolean,
-      onPress: () => void,
-      word: string
-    ) => {
-      const a = anims.get(word)!;
-      return (
-        <Animated.View
-          style={[
-            styles.pillWrap,
-            {
-              opacity: a.opacity,
-              transform: [{ scale: a.scale }, { translateX: a.shakeX }],
-            },
-          ]}
-        >
-          <Chip
-            label={label}
-            centered
-            selected={selected}
-            disabled={checked || matched}
-            onPress={onPress}
-          />
-          <Animated.View
-            pointerEvents="none"
-            style={[
-              styles.flash,
-              {
-                backgroundColor: colors.leafTint,
-                opacity: a.leafFlash.interpolate({ inputRange: [0, 1], outputRange: [0, 0.55] }),
-              },
-            ]}
-          />
-          <Animated.View
-            pointerEvents="none"
-            style={[
-              styles.flash,
-              {
-                backgroundColor: colors.coralTint,
-                opacity: a.coralFlash.interpolate({ inputRange: [0, 1], outputRange: [0, 0.55] }),
-              },
-            ]}
-          />
-        </Animated.View>
-      );
-    };
-
     return (
       <View style={styles.columns}>
         <View style={styles.column}>
           {content.pairs.map((pair) => (
             <Fragment key={pair.left}>
-              {renderPill(
-                pair.left,
-                matchedLefts.has(pair.left),
-                selectedLeft === pair.left,
-                () => tapLeft(pair.left),
-                pair.left
-              )}
+              <PairPill
+                ref={getRef(pair.left)}
+                label={pair.left}
+                anims={anims.get(pair.left)!}
+                selected={selectedLeft === pair.left}
+                disabled={checked || matchedLefts.has(pair.left)}
+                onPress={() => tapLeft(pair.left)}
+              />
             </Fragment>
           ))}
         </View>
         <View style={styles.column}>
           {rightItems.map((right) => (
             <Fragment key={right}>
-              {renderPill(right, matchedRights.has(right), false, () => tapRight(right), right)}
+              <PairPill
+                ref={getRef(right)}
+                label={right}
+                anims={anims.get(right)!}
+                selected={false}
+                disabled={checked || matchedRights.has(right)}
+                onPress={() => tapRight(right)}
+              />
             </Fragment>
           ))}
         </View>
@@ -256,11 +279,6 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   pillWrap: {
-    position: 'relative',
     marginBottom: 8,
-  },
-  flash: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: radius.button,
   },
 });

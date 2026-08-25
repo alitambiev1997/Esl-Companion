@@ -8,12 +8,14 @@ export function Chip({
   centered,
   selected,
   disabled,
+  backgroundColor,
 }: {
   label: string;
   onPress: () => void;
   centered?: boolean;
   selected?: boolean;
   disabled?: boolean;
+  backgroundColor?: string | Animated.AnimatedInterpolation<string | number>;
 }) {
   const scale = useRef(new Animated.Value(1)).current;
 
@@ -25,13 +27,17 @@ export function Chip({
   };
 
   return (
-    <Animated.View style={{ transform: [{ scale }] }}>
+    <Animated.View style={[{ transform: [{ scale }] }, backgroundColor ? { backgroundColor } : null]}>
       <Pressable
         onPress={onPress}
         disabled={disabled}
         onPressIn={onPressIn}
         onPressOut={onPressOut}
-        style={[styles.chip, selected && styles.selected]}
+        style={[
+          styles.chip,
+          selected && !backgroundColor && styles.selected,
+          backgroundColor ? { backgroundColor: 'transparent' } : null,
+        ]}
       >
         <Text
           style={[styles.label, centered && styles.centered]}
