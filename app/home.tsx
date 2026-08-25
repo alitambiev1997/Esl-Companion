@@ -288,7 +288,12 @@ export default function Home() {
             {dash.nextLesson && (
               <Pressable
                 style={styles.card}
-                onPress={() => router.push(`/lesson/${dash.nextLesson!.id}`)}
+                onPress={() =>
+                  router.push({
+                    pathname: '/lesson/[id]',
+                    params: { id: dash.nextLesson!.id, from: 'home' },
+                  })
+                }
               >
                 <Text style={styles.cardTitle}>Continue learning</Text>
                 <Text style={styles.cardSubtitle}>{dash.nextLesson.title}</Text>

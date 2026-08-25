@@ -6,6 +6,7 @@ export const colors = {
   ink: '#16324F',
   paper: '#FFFDF7',
   grey: '#E8E8E8',
+  pathGrey: '#B9C1CA',
   white: '#FFFFFF',
   bronze: '#CD7F32',
   silver: '#C0C0C0',

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Animated,
+  Dimensions,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -14,6 +15,7 @@ import { useAuth } from '@/src/features/auth/useAuth';
 import { medalColor, medalForScore } from '@/src/lib/medals';
 import { supabase } from '@/src/lib/supabase';
 import { colors, fonts, radius } from '@/src/theme/tokens';
+import Svg, { Path } from 'react-native-svg';
 import type { Lesson, LessonProgress, Unit } from '@/src/types/content';
 
 type LessonStatus = 'completed' | 'current' | 'unlocked' | 'locked';
@@ -33,22 +35,20 @@ type LoadState =
   | { status: 'empty'; message: string }
   | { status: 'ready'; units: UnitRow[] };
 
-const OFFSET_ALIGN = ['flex-start', 'center', 'flex-end'] as const;
+const NODE = 64;
+const ROW_H = 110;
+const X_CYCLE = [0.18, 0.5, 0.82];
+const NODE_SLOT_W = 100;
+const LABEL_SPACE = 34;
 
 function CourseNode({
   lesson,
-  offset,
-  isFirst,
   isCurrent,
   onPress,
-  onRowLayout,
 }: {
   lesson: LessonRow;
-  offset: number;
-  isFirst: boolean;
   isCurrent: boolean;
   onPress: () => void;
-  onRowLayout: (y: number) => void;
 }) {
   const pulse = useRef(new Animated.Value(1)).current;
   const locked = lesson.status === 'locked';
@@ -68,41 +68,25 @@ function CourseNode({
   }, [isCurrent, pulse]);
 
   return (
-    <View onLayout={(e) => onRowLayout(e.nativeEvent.layout.y)}>
-      {!isFirst && <View style={styles.rowSpacer} />}
-      <View style={[styles.nodeRow, { justifyContent: OFFSET_ALIGN[offset] }]}>
-        <Pressable onPress={onPress} disabled={locked} style={styles.nodeBlock}>
-          <Animated.View
-            style={[
-              styles.nodeCircle,
-              completed && { borderColor: ringColor },
-              lesson.status === 'unlocked' && styles.nodeCircleUnlocked,
-              isCurrent && styles.nodeCircleCurrent,
-              isCurrent && { transform: [{ scale: pulse }] },
-              locked && styles.nodeCircleLocked,
-            ]}
-          >
-            {completed && <View style={[styles.medalDot, { backgroundColor: ringColor }]} />}
-            {locked && <Ionicons name="lock-closed" size={22} color={colors.white} />}
-          </Animated.View>
-          <Text style={styles.nodeTitle} numberOfLines={2}>
-            {lesson.title}
-          </Text>
-        </Pressable>
-      </View>
-    </View>
+    <Pressable onPress={onPress} disabled={locked} style={styles.nodeSlot}>
+      <Animated.View
+        style={[
+          styles.nodeCircle,
+          completed && { borderColor: ringColor },
+          lesson.status === 'unlocked' && styles.nodeCircleUnlocked,
+          isCurrent && styles.nodeCircleCurrent,
+          isCurrent && { transform: [{ scale: pulse }] },
+          locked && styles.nodeCircleLocked,
+        ]}
+      >
+        {completed && <View style={[styles.medalDot, { backgroundColor: ringColor }]} />}
+        {locked && <Ionicons name="lock-closed" size={22} color={colors.white} />}
+      </Animated.View>
+      <Text style={styles.nodeTitle} numberOfLines={2}>
+        {lesson.title}
+      </Text>
+    </Pressable>
   );
-}
-
-function dotsBetween(a: { x: number; y: number }, b: { x: number; y: number }) {
-  const dist = Math.hypot(b.x - a.x, b.y - a.y);
-  const count = Math.max(1, Math.floor(dist / 12));
-  const dots: { x: number; y: number }[] = [];
-  for (let i = 1; i < count; i++) {
-    const t = i / count;
-    dots.push({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t });
-  }
-  return dots;
 }
 
 export default function Course() {
@@ -110,25 +94,7 @@ export default function Course() {
   const { user, profile, loading: authLoading } = useAuth();
   const [loadState, setLoadState] = useState<LoadState>({ status: 'loading' });
   const [retry, setRetry] = useState(0);
-  const [colWidth, setColWidth] = useState(0);
-  const [centersByUnit, setCentersByUnit] = useState<Record<string, { x: number; y: number }[]>>(
-    {}
-  );
-
-  useEffect(() => {
-    setColWidth(0);
-    setCentersByUnit({});
-  }, [loadState]);
-
-  const recordCenter = (unitId: string, rowY: number, offset: number, isCurrent: boolean) => {
-    if (colWidth === 0) return;
-    const x = offset === 0 ? 44 : offset === 1 ? colWidth / 2 : colWidth - 44;
-    const y = rowY + 28 + (isCurrent ? 32 : 28);
-    setCentersByUnit((prev) => {
-      const list = prev[unitId] ?? [];
-      return { ...prev, [unitId]: [...list, { x, y }] };
-    });
-  };
+  const [pathWidth, setPathWidth] = useState(0);
 
   useEffect(() => {
     if (authLoading) return;
@@ -249,7 +215,10 @@ export default function Course() {
 
   const onLessonPress = (lesson: LessonRow) => {
     if (lesson.status === 'locked') return;
-    router.push(`/lesson/${lesson.id}`);
+    router.push({
+      pathname: '/lesson/[id]',
+      params: { id: lesson.id, from: 'course' },
+    });
   };
 
   if (authLoading || loadState.status === 'loading') {
@@ -279,46 +248,75 @@ export default function Course() {
     );
   }
 
+  const W = pathWidth > 0 ? pathWidth : Dimensions.get('window').width - 32;
+  const centerAt = (i: number) => ({ x: X_CYCLE[i % 3] * W, y: i * ROW_H + NODE / 2 });
+
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <Text style={styles.title}>Your course</Text>
 
-      {loadState.units.map((unit) => (
-        <View key={unit.id} style={styles.unitSection}>
-          <View style={styles.unitCard}>
-            <Text style={styles.unitTitle}>{unit.title}</Text>
-            {unit.description && (
-              <Text style={styles.unitDescription}>{unit.description}</Text>
-            )}
-          </View>
+      {loadState.units.map((unit) => {
+        const n = unit.lessons.length;
+        const pathHeight = (n - 1) * ROW_H + NODE + LABEL_SPACE;
 
-          <View style={styles.pathColumn} onLayout={(e) => setColWidth(e.nativeEvent.layout.width)}>
-            {unit.lessons.map((lesson, i) => {
-              const offset = i % 3;
-              return (
-                <CourseNode
-                  key={lesson.id}
-                  lesson={lesson}
-                  offset={offset}
-                  isFirst={i === 0}
-                  isCurrent={lesson.status === 'current'}
-                  onPress={() => onLessonPress(lesson)}
-                  onRowLayout={(y) => recordCenter(unit.id, y, offset, lesson.status === 'current')}
-                />
-              );
-            })}
-            <View style={styles.dotsLayer} pointerEvents="none">
-              {((centersByUnit[unit.id] ?? []) as { x: number; y: number }[])
-                .flatMap((center, i, all) =>
-                  i === 0 ? [] : dotsBetween(all[i - 1], center)
-                )
-                .map((dot, i) => (
-                  <View key={i} style={[styles.pathDot, { left: dot.x - 2, top: dot.y - 2 }]} />
-                ))}
+        return (
+          <View key={unit.id} style={styles.unitSection}>
+            <View style={styles.unitCard}>
+              <Text style={styles.unitTitle}>{unit.title}</Text>
+              {unit.description && (
+                <Text style={styles.unitDescription}>{unit.description}</Text>
+              )}
+            </View>
+
+            <View
+              style={[styles.pathColumn, { height: pathHeight }]}
+              onLayout={(e) => setPathWidth(e.nativeEvent.layout.width)}
+            >
+              <Svg
+                width={W}
+                height={pathHeight}
+                style={styles.pathSvg}
+                pointerEvents="none"
+              >
+                {Array.from({ length: Math.max(0, n - 1) }, (_, i) => {
+                  const a = centerAt(i);
+                  const b = centerAt(i + 1);
+                  const d =
+                    `M ${a.x} ${a.y + NODE / 2} ` +
+                    `C ${a.x} ${a.y + ROW_H * 0.55}, ${b.x} ${a.y + ROW_H * 0.45}, ` +
+                    `${b.x} ${b.y - NODE / 2}`;
+                  return (
+                    <Path
+                      key={i}
+                      d={d}
+                      stroke={colors.pathGrey}
+                      strokeWidth={4}
+                      fill="none"
+                      strokeDasharray="0.1 14"
+                      strokeLinecap="round"
+                    />
+                  );
+                })}
+              </Svg>
+              {unit.lessons.map((lesson, i) => {
+                const c = centerAt(i);
+                return (
+                  <View
+                    key={lesson.id}
+                    style={[styles.nodePosition, { left: c.x - NODE_SLOT_W / 2, top: c.y - NODE / 2 }]}
+                  >
+                    <CourseNode
+                      lesson={lesson}
+                      isCurrent={lesson.status === 'current'}
+                      onPress={() => onLessonPress(lesson)}
+                    />
+                  </View>
+                );
+              })}
             </View>
           </View>
-        </View>
-      ))}
+        );
+      })}
 
       <Pressable
         style={styles.buttonPrimary}
@@ -378,30 +376,22 @@ const styles = StyleSheet.create({
   pathColumn: {
     width: '100%',
   },
-  rowSpacer: {
-    height: 28,
-  },
-  dotsLayer: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  pathDot: {
+  pathSvg: {
     position: 'absolute',
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: colors.grey,
+    top: 0,
+    left: 0,
   },
-  nodeRow: {
-    flexDirection: 'row',
+  nodePosition: {
+    position: 'absolute',
+    width: NODE_SLOT_W,
   },
-  nodeBlock: {
-    width: 88,
+  nodeSlot: {
     alignItems: 'center',
   },
   nodeCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: NODE,
+    height: NODE,
+    borderRadius: NODE / 2,
     backgroundColor: colors.white,
     borderWidth: 3,
     borderColor: colors.grey,
@@ -412,9 +402,6 @@ const styles = StyleSheet.create({
     borderColor: colors.sky,
   },
   nodeCircleCurrent: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
     backgroundColor: colors.sun,
     borderColor: colors.sun,
   },

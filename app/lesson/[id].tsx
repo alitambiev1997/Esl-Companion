@@ -40,7 +40,7 @@ type LoadState =
   | { status: 'ready'; lesson: Lesson; exercises: Exercise[] };
 
 export default function LessonPlayer() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, from } = useLocalSearchParams<{ id: string; from?: string }>();
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
 
@@ -318,7 +318,10 @@ export default function LessonPlayer() {
             <Text style={[styles.medalName, { color: medalColor(result.medal) ?? colors.sky }]}>
               {result.medal.charAt(0).toUpperCase() + result.medal.slice(1)}
             </Text>
-            <Pressable style={styles.buttonPrimary} onPress={() => router.replace('/course')}>
+            <Pressable
+              style={styles.buttonPrimary}
+              onPress={() => (from === 'course' ? router.back() : router.replace('/course'))}
+            >
               <Text style={styles.buttonPrimaryText}>Continue</Text>
             </Pressable>
           </>
