@@ -117,25 +117,57 @@ export default function LessonPlayer() {
     setBusy(true);
     setAttemptError(null);
 
-    const { error } = await supabase.from('exercise_attempts').insert({
-      user_id: user.id,
-      lesson_id: exercise.lesson_id,
-      exercise_id: exercise.id,
-      user_answer: userAnswer,
-      is_correct: isCorrect,
-    });
+    try {
+      const { error } = await supabase.from('exercise_attempts').insert({
+        user_id: user.id,
+        lesson_id: exercise.lesson_id,
+        exercise_id: exercise.id,
+        user_answer: userAnswer,
+        is_correct: isCorrect,
+      });
 
-    setBusy(false);
+      if (error) {
+        setAttemptError(error.message);
+        return;
+      }
 
-    if (error) {
-      setAttemptError(error.message);
-      return;
+      if (isCorrect && exercise.is_required !== false) {
+        setCorrectCount((n) => n + 1);
+      }
+      setPhase('checked');
+    } catch (error) {
+      setAttemptError(error instanceof Error ? error.message : 'Failed to save answer');
+    } finally {
+      setBusy(false);
     }
+  };
 
-    if (isCorrect) {
-      setCorrectCount((n) => n + 1);
+  const handleUngradedContinue = async (exercise: Exercise) => {
+    if (!user) return;
+
+    setBusy(true);
+    setAttemptError(null);
+
+    try {
+      const { error } = await supabase.from('exercise_attempts').insert({
+        user_id: user.id,
+        lesson_id: exercise.lesson_id,
+        exercise_id: exercise.id,
+        user_answer: {},
+        is_correct: true,
+      });
+
+      if (error) {
+        setAttemptError(error.message);
+        return;
+      }
+
+      await handleContinue();
+    } catch (error) {
+      setAttemptError(error instanceof Error ? error.message : 'Failed to save answer');
+    } finally {
+      setBusy(false);
     }
-    setPhase('checked');
   };
 
   const handleContinue = async () => {
@@ -165,48 +197,52 @@ export default function LessonPlayer() {
     setBusy(true);
     setSaveError(null);
 
-    const { data: existing } = await supabase
-      .from('lesson_progress')
-      .select('score,completed_at')
-      .eq('user_id', user.id)
-      .eq('lesson_id', id)
-      .maybeSingle();
+    try {
+      const { data: existing } = await supabase
+        .from('lesson_progress')
+        .select('score,completed_at')
+        .eq('user_id', user.id)
+        .eq('lesson_id', id)
+        .maybeSingle();
 
-    const bestScore = Math.max(existing?.score ?? 0, score);
-    const status = bestScore >= passScore ? 'completed' : 'attempted';
-    const completedAt =
-      existing?.completed_at ?? (status === 'completed' ? new Date().toISOString() : null);
+      const bestScore = Math.max(existing?.score ?? 0, score);
+      const status = bestScore >= passScore ? 'completed' : 'attempted';
+      const completedAt =
+        existing?.completed_at ?? (status === 'completed' ? new Date().toISOString() : null);
 
-    const { error } = await supabase.from('lesson_progress').upsert(
-      {
-        user_id: user.id,
-        lesson_id: id,
-        score: bestScore,
-        status,
-        completed_at: completedAt,
-      },
-      { onConflict: 'user_id,lesson_id' }
-    );
+      const { error } = await supabase.from('lesson_progress').upsert(
+        {
+          user_id: user.id,
+          lesson_id: id,
+          score: bestScore,
+          status,
+          completed_at: completedAt,
+        },
+        { onConflict: 'user_id,lesson_id' }
+      );
 
-    if (error) {
-      setSaveError(error.message);
-      setBusy(false);
-      return;
-    }
-
-    if (passed) {
-      try {
-        await addDailyActivity(user.id, {
-          lessonsCompleted: 1,
-          minutesPracticed: loadState.lesson.estimated_minutes ?? 0,
-        });
-      } catch {
-        // no-op
+      if (error) {
+        setSaveError(error.message);
+        return;
       }
-    }
 
-    setResult({ score, passed, medal });
-    setBusy(false);
+      if (passed) {
+        try {
+          await addDailyActivity(user.id, {
+            lessonsCompleted: 1,
+            minutesPracticed: loadState.lesson.estimated_minutes ?? 0,
+          });
+        } catch {
+          // no-op
+        }
+      }
+
+      setResult({ score, passed, medal });
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : 'Failed to finish lesson');
+    } finally {
+      setBusy(false);
+    }
   };
 
   if (authLoading || loadState.status === 'loading') {
@@ -267,6 +303,7 @@ export default function LessonPlayer() {
     isLast: index === exercises.length - 1,
     onCheck: (userAnswer, isCorrect) => handleCheck(current, userAnswer, isCorrect),
     onContinue: handleContinue,
+    onUngradedContinue: handleUngradedContinue,
   });
 
   return (

@@ -47,4 +47,5 @@ export interface ExerciseRendererProps {
   isLast: boolean;
   onCheck: (userAnswer: Record<string, unknown>, isCorrect: boolean) => void;
   onContinue: () => void;
+  onUngradedContinue?: (exercise: Exercise) => void;
 }
