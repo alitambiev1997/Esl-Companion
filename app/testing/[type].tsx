@@ -3,6 +3,7 @@ import { useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { BottomBar } from '@/src/components/ui/bottom-bar';
 import { FeedbackBanner } from '@/src/components/ui/feedback-banner';
+import { Toast } from '@/src/components/ui/toast';
 import { TopBar } from '@/src/components/ui/top-bar';
 import { renderSandboxRenderer } from '@/src/dev/sandboxRenderer';
 import { buildSample, contentShapes, exerciseMeta, samplesByType } from '@/src/dev/sampleExercises';
@@ -28,6 +29,7 @@ export default function TestingDetail() {
   const [canCheck, setCanCheck] = useState(false);
   const [banner, setBanner] = useState<FeedbackBannerInfo | null>(null);
   const [pairsLeft, setPairsLeft] = useState(0);
+  const [hintMessage, setHintMessage] = useState<string | null>(null);
 
   const advance = () => {
     if (index < samples.length - 1) {
@@ -75,6 +77,7 @@ export default function TestingDetail() {
     },
     onCanCheckChange: setCanCheck,
     onProgressChange: setPairsLeft,
+    onHint: setHintMessage,
     onContinue: advance,
     onUngradedContinue: () => {
       console.log('[sandbox]', exerciseType, 'ungraded continue');
@@ -138,6 +141,7 @@ export default function TestingDetail() {
           />
         </BottomBar>
       )}
+      <Toast message={hintMessage} />
     </View>
   );
 }

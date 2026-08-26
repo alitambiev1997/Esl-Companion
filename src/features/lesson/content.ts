@@ -145,6 +145,7 @@ export interface ExerciseRendererProps {
   ) => void;
   onCanCheckChange: (canCheck: boolean) => void;
   onProgressChange?: (remaining: number) => void;
+  onHint?: (message: string | null) => void;
   onContinue: () => void;
   onUngradedContinue?: (exercise: Exercise) => void;
   continueLabel?: string;

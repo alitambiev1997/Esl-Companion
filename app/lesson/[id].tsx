@@ -12,6 +12,7 @@ import { useAuth } from '@/src/features/auth/useAuth';
 import { MascotBadge } from '@/components/mascot-badge';
 import { BottomBar } from '@/src/components/ui/bottom-bar';
 import { FeedbackBanner } from '@/src/components/ui/feedback-banner';
+import { Toast } from '@/src/components/ui/toast';
 import { TopBar } from '@/src/components/ui/top-bar';
 import { addDailyActivity } from '@/src/lib/activity';
 import { PrimaryButton } from '@/src/features/lesson/flow-buttons';
@@ -80,6 +81,7 @@ export default function LessonPlayer() {
   const [canCheck, setCanCheck] = useState(false);
   const [banner, setBanner] = useState<FeedbackBannerInfo | null>(null);
   const [pairsLeft, setPairsLeft] = useState(0);
+  const [hintMessage, setHintMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -387,6 +389,7 @@ export default function LessonPlayer() {
     onCheck: (userAnswer, isCorrect, info) => handleCheck(current, userAnswer, isCorrect, info),
     onCanCheckChange: setCanCheck,
     onProgressChange: setPairsLeft,
+    onHint: setHintMessage,
     onContinue: handleContinue,
     onUngradedContinue: handleUngradedContinue,
   });
@@ -548,6 +551,7 @@ export default function LessonPlayer() {
         )}
       </ScrollView>
       {exercise && bottomArea()}
+      <Toast message={hintMessage} />
     </View>
   );
 }
