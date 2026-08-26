@@ -6,7 +6,7 @@ import type {
   ExerciseRendererProps,
   MatchingContent,
 } from '@/src/features/lesson/content';
-import { colors } from '@/src/theme/tokens';
+import { colors, radius } from '@/src/theme/tokens';
 
 function shuffle<T>(items: T[]): T[] {
   const result = [...items];
@@ -78,27 +78,32 @@ const PairPill = forwardRef<{ flashWith: (color: string) => void }, PairPillProp
     }, [flashColor, anims.flash]);
 
     return (
-      <Animated.View
-        style={[
-          styles.pillWrap,
-          {
-            opacity: anims.opacity,
-            transform: [
-              { scale: anims.scale },
-              { translateX: anims.shakeX },
-            ],
-          },
-        ]}
-      >
-        <Chip
-          label={label}
-          centered
-          selected={selected}
-          disabled={disabled}
-          backgroundColor={bg}
-          onPress={onPress}
+      <View style={styles.pillWrap}>
+        <Animated.View
+          pointerEvents="none"
+          style={[styles.flashLayer, { backgroundColor: bg }]}
         />
-      </Animated.View>
+        <Animated.View
+          style={[
+            {
+              opacity: anims.opacity,
+              transform: [
+                { scale: anims.scale },
+                { translateX: anims.shakeX },
+              ],
+            },
+          ]}
+        >
+          <Chip
+            label={label}
+            centered
+            selected={selected}
+            disabled={disabled}
+            backgroundColor="transparent"
+            onPress={onPress}
+          />
+        </Animated.View>
+      </View>
     );
   }
 );
@@ -279,6 +284,11 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   pillWrap: {
+    position: 'relative',
     marginBottom: 8,
+  },
+  flashLayer: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: radius.button,
   },
 });
