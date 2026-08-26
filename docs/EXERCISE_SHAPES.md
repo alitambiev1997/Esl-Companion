@@ -548,7 +548,7 @@ Example:
 }
 ```
 
-Linear choose-your-reply chat. The accumulated conversation renders as chat bubbles; each step adds its lines plus (from the second step on) the correct reply of every previous step as a right "You" bubble. Three reply OptionCards per step — picking one advances immediately (no Check): on a wrong pick the chosen option flashes coral (with the step explanation below) for ~700 ms, then the correct reply is appended anyway and `mistakes` increments. After the last step the banner shows "Perfect conversation!" (0 mistakes) or "Done with N mistakes"; `is_correct` = `mistakes === 0`.
+Linear choose-your-reply chat. The accumulated conversation renders as chat bubbles; each step adds its lines plus (from the second step on) the correct reply of every previous step as a "You" bubble. **Layout rule**: player replies always render as left sky-tinted bubbles, computer lines always as right grey bubbles — the stored `side` is informational only. Three reply OptionCards per step — picking one advances immediately (no Check): on a wrong pick the chosen option flashes coral (with the step explanation below) for ~700 ms, then the correct reply is appended anyway and `mistakes` increments. After the last step the banner shows "Perfect conversation!" (0 mistakes) or "Done with N mistakes"; `is_correct` = `mistakes === 0`.
 
 Example:
 

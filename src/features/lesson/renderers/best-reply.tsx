@@ -27,10 +27,10 @@ export const BestReplyRenderer = forwardRef<ExerciseRendererHandle, ExerciseRend
       const lines: ChatLine[] = [];
       for (let si = 0; si <= stepIndex; si++) {
         for (const line of content.steps[si].lines) {
-          lines.push({ text: line.text, left: line.side !== 'right', speaker: line.speaker });
+          lines.push({ text: line.text, left: false, speaker: line.speaker });
         }
         if (si < stepIndex) {
-          lines.push({ text: content.steps[si].reply, left: false, speaker: 'You' });
+          lines.push({ text: content.steps[si].reply, left: true, speaker: 'You' });
         }
       }
       return lines;
