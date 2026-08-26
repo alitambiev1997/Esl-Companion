@@ -16,6 +16,7 @@ export const colors = {
   skyTint: '#EAF6FC',
   leafTint: '#F0F9E8',
   coralTint: '#FDEFEA',
+  sunTint: '#FFF3C4',
 } as const;
 
 export const radius = {

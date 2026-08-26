@@ -12,18 +12,41 @@ import { colors, fonts } from '@/src/theme/tokens';
 export const ErrorSpotRenderer = forwardRef<ExerciseRendererHandle, ExerciseRendererProps>(
   function ErrorSpotRenderer({ exercise, checked, onCheck }, ref) {
     const content = exercise.content as unknown as ErrorSpotContent;
-    const [selectedWord, setSelectedWord] = useState<number | null>(null);
+    const [wrongChips, setWrongChips] = useState<Set<number>>(new Set());
+    const [found, setFound] = useState(false);
+    const [revealed, setRevealed] = useState(false);
     const [selectedFix, setSelectedFix] = useState<number | null>(null);
 
     useImperativeHandle(ref, () => ({ check: () => {} }));
 
+    const tapWord = (i: number) => {
+      if (checked || found || revealed) return;
+      if (i === content.wrong_index) {
+        setFound(true);
+        return;
+      }
+      const nextWrong = new Set(wrongChips).add(i);
+      setWrongChips(nextWrong);
+      if (nextWrong.size >= 2) {
+        setRevealed(true);
+        onCheck(
+          { tapped_word: i },
+          false,
+          {
+            correct: false,
+            explanation: content.explanation,
+            correctAnswer: `Mistake: "${content.words[content.wrong_index]}" → Fix: "${content.options[content.correct_index]}"`,
+          }
+        );
+      }
+    };
+
     const grade = (fixIndex: number) => {
-      if (selectedWord === null || checked) return;
-      const isCorrect =
-        selectedWord === content.wrong_index && fixIndex === content.correct_index;
+      if (!found || checked) return;
+      const isCorrect = fixIndex === content.correct_index;
       setSelectedFix(fixIndex);
       onCheck(
-        { tapped_word: selectedWord, fix: fixIndex },
+        { fix: fixIndex },
         isCorrect,
         {
           correct: isCorrect,
@@ -43,16 +66,21 @@ export const ErrorSpotRenderer = forwardRef<ExerciseRendererHandle, ExerciseRend
               key={`${word}-${i}`}
               label={word}
               centered
-              selected={selectedWord === i}
-              disabled={checked}
-              onPress={() => {
-                if (!checked) setSelectedWord(i);
-              }}
+              tone={
+                found && i === content.wrong_index
+                  ? 'leaf'
+                  : revealed && i === content.wrong_index
+                    ? 'sun'
+                    : undefined
+              }
+              wrong={wrongChips.has(i)}
+              disabled={checked || wrongChips.has(i)}
+              onPress={() => tapWord(i)}
             />
           ))}
         </View>
 
-        {selectedWord !== null && !checked && (
+        {found && !checked && (
           <>
             <Text style={styles.fixLabel}>Fix it:</Text>
             {content.options.map((option, i) => (

@@ -11,6 +11,7 @@ export function Chip({
   backgroundColor,
   large,
   wrong,
+  tone,
 }: {
   label: string;
   onPress: () => void;
@@ -20,6 +21,7 @@ export function Chip({
   backgroundColor?: string | Animated.AnimatedInterpolation<string | number>;
   large?: boolean;
   wrong?: boolean;
+  tone?: 'leaf' | 'sun';
 }) {
   const scale = useRef(new Animated.Value(1)).current;
 
@@ -41,6 +43,8 @@ export function Chip({
           styles.chip,
           selected && !backgroundColor && styles.selected,
           wrong && styles.wrong,
+          tone === 'leaf' && styles.toneLeaf,
+          tone === 'sun' && styles.toneSun,
           large && styles.large,
           backgroundColor ? { backgroundColor: 'transparent' } : null,
         ]}
@@ -79,6 +83,16 @@ const styles = StyleSheet.create({
     borderColor: colors.coral,
     borderBottomColor: colors.coral,
     backgroundColor: colors.coralTint,
+  },
+  toneLeaf: {
+    borderColor: colors.leaf,
+    borderBottomColor: colors.leaf,
+    backgroundColor: colors.leafTint,
+  },
+  toneSun: {
+    borderColor: colors.sun,
+    borderBottomColor: colors.sun,
+    backgroundColor: colors.sunTint,
   },
   large: {
     paddingHorizontal: 22,
