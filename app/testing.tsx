@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { TopBar } from '@/src/components/ui/TopBar';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { exerciseMeta, samplesByType } from '@/src/dev/sampleExercises';
 import { colors, fonts, radius } from '@/src/theme/tokens';
@@ -15,8 +16,10 @@ export default function Testing() {
   const router = useRouter();
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Exercise catalog</Text>
+    <View style={styles.screen}>
+      <TopBar title="Testing" />
+      <ScrollView contentContainerStyle={styles.content}>
+        <Text style={styles.title}>Exercise catalog</Text>
       <Text style={styles.subtitle}>Dev-only sandbox. Answers are logged, nothing is saved.</Text>
 
       {GROUPS.map((group) => (
@@ -48,7 +51,8 @@ export default function Testing() {
           })}
         </View>
       ))}
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -58,7 +62,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.paper,
   },
   content: {
-    padding: 24,
+    paddingHorizontal: 16,
+    paddingVertical: 24,
     paddingBottom: 48,
   },
   title: {
@@ -68,7 +73,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontFamily: fonts.body,
-    fontSize: 14,
+    fontSize: 13,
     color: colors.ink,
     opacity: 0.7,
     marginBottom: 24,
@@ -78,7 +83,7 @@ const styles = StyleSheet.create({
   },
   groupTitle: {
     fontFamily: fonts.display,
-    fontSize: 20,
+    fontSize: 22,
     color: colors.ink,
     marginBottom: 12,
   },
@@ -97,12 +102,12 @@ const styles = StyleSheet.create({
   },
   tileName: {
     fontFamily: fonts.display,
-    fontSize: 18,
+    fontSize: 22,
     color: colors.ink,
   },
   tileDescription: {
     fontFamily: fonts.body,
-    fontSize: 14,
+    fontSize: 13,
     color: colors.ink,
     opacity: 0.7,
     marginTop: 4,

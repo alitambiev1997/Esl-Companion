@@ -1,10 +1,11 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { TopBar } from '@/src/components/ui/TopBar';
 import { BottomBar } from '@/src/components/ui/bottom-bar';
 import { FeedbackBanner } from '@/src/components/ui/feedback-banner';
 import { Toast } from '@/src/components/ui/toast';
-import { TopBar } from '@/src/components/ui/top-bar';
+import { TopBar as GameTopBar } from '@/src/components/ui/top-bar';
 import { renderSandboxRenderer } from '@/src/dev/sandboxRenderer';
 import { buildSample, contentShapes, exerciseMeta, samplesByType } from '@/src/dev/sampleExercises';
 import type {
@@ -88,8 +89,8 @@ export default function TestingDetail() {
 
   return (
     <View style={styles.container}>
-      <Stack.Screen options={{ title: exerciseType }} />
-      <TopBar progress={(index + 1) / samples.length} onClose={() => router.back()} />
+      <TopBar title={exerciseType} showBack />
+      <GameTopBar progress={(index + 1) / samples.length} onClose={() => router.back()} />
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.title}>{exerciseType}</Text>
 
@@ -157,7 +158,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: fonts.display,
-    fontSize: 24,
+    fontSize: 28,
     color: colors.ink,
     marginBottom: 16,
   },
@@ -176,7 +177,7 @@ const styles = StyleSheet.create({
   },
   prompt: {
     fontFamily: fonts.body,
-    fontSize: 18,
+    fontSize: 16,
     color: colors.ink,
     marginBottom: 16,
   },
@@ -186,7 +187,7 @@ const styles = StyleSheet.create({
   },
   jsonToggleText: {
     fontFamily: fonts.body,
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
     color: colors.sky,
   },

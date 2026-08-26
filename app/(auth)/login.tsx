@@ -2,9 +2,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Pressable, StyleSheet, Text, TextInput } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { z } from 'zod';
 import { KeyboardFormWrapper } from '@/components/keyboard-form-wrapper';
+import { TopBar } from '@/src/components/ui/TopBar';
 import { supabase } from '@/src/lib/supabase';
 import { colors, fonts, radius } from '@/src/theme/tokens';
 
@@ -39,7 +40,9 @@ export default function Login() {
   });
 
   return (
-    <KeyboardFormWrapper>
+    <View style={styles.screen}>
+      <TopBar title="Log in" />
+      <KeyboardFormWrapper>
       <Text style={styles.title}>Log in</Text>
 
       <Text style={styles.label}>Email</Text>
@@ -97,10 +100,15 @@ export default function Login() {
         <Text style={styles.testingButtonText}>Testing</Text>
       </Pressable>
     </KeyboardFormWrapper>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: colors.paper,
+  },
   title: {
     fontFamily: fonts.display,
     fontSize: 28,
@@ -109,7 +117,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontFamily: fonts.body,
-    fontSize: 14,
+    fontSize: 13,
     color: colors.ink,
     marginBottom: 4,
   },

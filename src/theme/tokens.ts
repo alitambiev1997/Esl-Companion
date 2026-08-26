@@ -29,3 +29,10 @@ export const fonts = {
   display: 'Baloo2_700Bold',
   body: 'Nunito_400Regular',
 } as const;
+
+export const typography = {
+  h1: { fontFamily: fonts.display, fontSize: 28 },
+  h2: { fontFamily: fonts.display, fontSize: 22 },
+  body: { fontFamily: fonts.body, fontSize: 16 },
+  caption: { fontFamily: fonts.body, fontSize: 13 },
+} as const;

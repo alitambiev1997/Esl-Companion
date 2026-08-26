@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native';
 import { useAuth } from '@/src/features/auth/useAuth';
+import { TopBar } from '@/src/components/ui/TopBar';
 import { MascotBadge } from '@/components/mascot-badge';
 import {
   getOnboardingCopy,
@@ -135,6 +136,7 @@ export default function Onboarding() {
 
   return (
     <View style={styles.container}>
+      <TopBar title="Setup" />
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.title}>{languageStepCopy.titleLine1}</Text>
         <Text style={styles.subtitle}>{languageStepCopy.titleLine2}</Text>
@@ -294,7 +296,7 @@ const styles = StyleSheet.create({
   },
   progressText: {
     fontFamily: fonts.body,
-    fontSize: 14,
+    fontSize: 13,
     color: colors.ink,
     marginRight: 12,
   },
@@ -312,7 +314,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontFamily: fonts.display,
-    fontSize: 20,
+    fontSize: 22,
     color: colors.ink,
     marginBottom: 16,
   },
@@ -330,12 +332,12 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontFamily: fonts.display,
-    fontSize: 18,
+    fontSize: 22,
     color: colors.ink,
   },
   cardDescription: {
     fontFamily: fonts.body,
-    fontSize: 14,
+    fontSize: 13,
     color: colors.ink,
     opacity: 0.7,
     marginTop: 4,

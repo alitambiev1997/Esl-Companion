@@ -8,6 +8,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { TopBar } from '@/src/components/ui/TopBar';
 import { useAuth } from '@/src/features/auth/useAuth';
 import { BottomBar } from '@/src/components/ui/bottom-bar';
 import { FeedbackBanner } from '@/src/components/ui/feedback-banner';
@@ -344,8 +345,8 @@ export default function Review() {
 
   return (
     <View style={styles.container}>
+      <TopBar title="Review" />
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Review</Text>
         <Text style={styles.progressText}>
           Card {index + 1} of {session.cards.length}
         </Text>
@@ -396,7 +397,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.paper,
   },
   content: {
-    padding: 24,
+    paddingHorizontal: 16,
+    paddingVertical: 24,
     paddingBottom: 160,
   },
   title: {
@@ -407,14 +409,14 @@ const styles = StyleSheet.create({
   },
   progressText: {
     fontFamily: fonts.body,
-    fontSize: 14,
+    fontSize: 13,
     color: colors.ink,
     opacity: 0.7,
     marginBottom: 16,
   },
   prompt: {
     fontFamily: fonts.body,
-    fontSize: 18,
+    fontSize: 16,
     color: colors.ink,
     marginBottom: 16,
   },

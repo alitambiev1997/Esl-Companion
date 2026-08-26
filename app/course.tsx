@@ -11,6 +11,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { TopBar } from '@/src/components/ui/TopBar';
 import { useAuth } from '@/src/features/auth/useAuth';
 import { medalColor, medalForScore } from '@/src/lib/medals';
 import { supabase } from '@/src/lib/supabase';
@@ -252,8 +253,9 @@ export default function Course() {
   const centerAt = (i: number) => ({ x: X_CYCLE[i % 3] * W, y: i * ROW_H + NODE / 2 });
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Your course</Text>
+    <View style={styles.screen}>
+      <TopBar title="Your course" />
+      <ScrollView contentContainerStyle={styles.content}>
 
       {loadState.units.map((unit) => {
         const n = unit.lessons.length;
@@ -318,13 +320,14 @@ export default function Course() {
         );
       })}
 
-      <Pressable
-        style={styles.buttonPrimary}
-        onPress={() => (router.canGoBack() ? router.back() : router.replace('/home'))}
-      >
-        <Text style={styles.buttonPrimaryText}>Back to home</Text>
-      </Pressable>
-    </ScrollView>
+        <Pressable
+          style={styles.buttonPrimary}
+          onPress={() => (router.canGoBack() ? router.back() : router.replace('/home'))}
+        >
+          <Text style={styles.buttonPrimaryText}>Back to home</Text>
+        </Pressable>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -341,7 +344,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.paper,
   },
   content: {
-    padding: 24,
+    paddingHorizontal: 16,
+    paddingVertical: 24,
     paddingBottom: 48,
   },
   title: {
@@ -363,12 +367,12 @@ const styles = StyleSheet.create({
   },
   unitTitle: {
     fontFamily: fonts.display,
-    fontSize: 20,
+    fontSize: 22,
     color: colors.ink,
   },
   unitDescription: {
     fontFamily: fonts.body,
-    fontSize: 14,
+    fontSize: 13,
     color: colors.ink,
     opacity: 0.7,
     marginTop: 4,
@@ -416,7 +420,7 @@ const styles = StyleSheet.create({
   },
   nodeTitle: {
     fontFamily: fonts.body,
-    fontSize: 12,
+    fontSize: 13,
     color: colors.ink,
     textAlign: 'center',
     marginTop: 6,
