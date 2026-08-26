@@ -9,7 +9,7 @@ import type {
 } from '@/src/features/lesson/content';
 import { colors, fonts } from '@/src/theme/tokens';
 
-const WRONG_FLASH_MS = 700;
+const WRONG_FLASH_MS = 2000;
 
 export const BestReplyRenderer = forwardRef<ExerciseRendererHandle, ExerciseRendererProps>(
   function BestReplyRenderer({ exercise, checked, onCheck }, ref) {
@@ -89,6 +89,7 @@ export const BestReplyRenderer = forwardRef<ExerciseRendererHandle, ExerciseRend
             <OptionCard
               label={option}
               wrong={pendingWrong === option}
+              tone={pendingWrong !== null && i === step.correct_index ? 'sun' : undefined}
               disabled={advancing || checked}
               onPress={() => pick(i)}
             />

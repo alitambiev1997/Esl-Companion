@@ -9,6 +9,7 @@ export function OptionCard({
   compact,
   align,
   wrong,
+  tone,
   onPress,
 }: {
   label: string;
@@ -17,6 +18,7 @@ export function OptionCard({
   compact?: boolean;
   align?: 'center' | 'left';
   wrong?: boolean;
+  tone?: 'leaf' | 'sun';
   onPress: () => void;
 }) {
   const scale = useRef(new Animated.Value(1)).current;
@@ -35,7 +37,14 @@ export function OptionCard({
         disabled={disabled}
         onPressIn={onPressIn}
         onPressOut={onPressOut}
-        style={[styles.card, compact && styles.compact, selected && styles.selected, wrong && styles.wrong]}
+        style={[
+        styles.card,
+        compact && styles.compact,
+        selected && styles.selected,
+        wrong && styles.wrong,
+        tone === 'leaf' && styles.toneLeaf,
+        tone === 'sun' && styles.toneSun,
+      ]}
       >
         <Text style={[styles.label, align === 'left' && styles.labelLeft]}>{label}</Text>
       </Pressable>
@@ -68,6 +77,16 @@ const styles = StyleSheet.create({
     borderColor: colors.coral,
     borderBottomColor: colors.coral,
     backgroundColor: colors.coralTint,
+  },
+  toneLeaf: {
+    borderColor: colors.leaf,
+    borderBottomColor: colors.leaf,
+    backgroundColor: colors.leafTint,
+  },
+  toneSun: {
+    borderColor: colors.sun,
+    borderBottomColor: colors.sun,
+    backgroundColor: colors.sunTint,
   },
   label: {
     fontFamily: fonts.body,
