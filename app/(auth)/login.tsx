@@ -5,6 +5,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { z } from 'zod';
 import { KeyboardFormWrapper } from '@/components/keyboard-form-wrapper';
+import { MascotBadge } from '@/components/mascot-badge';
 import { TopBar } from '@/src/components/ui/TopBar';
 import { supabase } from '@/src/lib/supabase';
 import { colors, fonts, radius } from '@/src/theme/tokens';
@@ -43,7 +44,11 @@ export default function Login() {
     <View style={styles.screen}>
       <TopBar title="Log in" />
       <KeyboardFormWrapper>
-      <Text style={styles.title}>Log in</Text>
+      <View style={styles.hero}>
+        <MascotBadge size={96} />
+        <Text style={styles.title}>Welcome back</Text>
+        <Text style={styles.tagline}>English with joy - step by step.</Text>
+      </View>
 
       <Text style={styles.label}>Email</Text>
       <Controller
@@ -109,11 +114,21 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.paper,
   },
+  hero: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
   title: {
     fontFamily: fonts.display,
     fontSize: 28,
     color: colors.ink,
-    marginBottom: 24,
+    marginTop: 16,
+  },
+  tagline: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: colors.greyDark,
+    marginTop: 4,
   },
   label: {
     fontFamily: fonts.body,
@@ -126,7 +141,8 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: colors.grey,
     borderRadius: 14,
-    padding: 12,
+    height: 52,
+    paddingHorizontal: 12,
     fontSize: 16,
     fontFamily: fonts.body,
     color: colors.ink,
@@ -135,7 +151,7 @@ const styles = StyleSheet.create({
   fieldError: {
     fontFamily: fonts.body,
     color: colors.coral,
-    fontSize: 12,
+    fontSize: 13,
     marginBottom: 4,
   },
   formError: {

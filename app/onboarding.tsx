@@ -11,6 +11,7 @@ import {
 import { useAuth } from '@/src/features/auth/useAuth';
 import { TopBar } from '@/src/components/ui/TopBar';
 import { MascotBadge } from '@/components/mascot-badge';
+import { OptionCard } from '@/src/components/ui/option-card';
 import {
   getOnboardingCopy,
   goalKeys,
@@ -31,7 +32,7 @@ type LevelsState =
   | { status: 'error'; message: string }
   | { status: 'success'; levels: Level[] };
 
-const STEP_NUMBER: Record<Step, number> = { language: 1, goal: 2, level: 3 };
+const STEP_INDEX: Record<Step, number> = { language: 0, goal: 1, level: 2 };
 
 export default function Onboarding() {
   const router = useRouter();
@@ -138,19 +139,10 @@ export default function Onboarding() {
     <View style={styles.container}>
       <TopBar title="Setup" />
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>{languageStepCopy.titleLine1}</Text>
-        <Text style={styles.subtitle}>{languageStepCopy.titleLine2}</Text>
-
-        <View style={styles.progressRow}>
-          <Text style={styles.progressText}>Step {STEP_NUMBER[step]} of 3</Text>
-          <View style={styles.progressTrack}>
-            <View
-              style={[
-                styles.progressFill,
-                { width: `${(STEP_NUMBER[step] / 3) * 100}%` },
-              ]}
-            />
-          </View>
+        <View style={styles.dotsRow}>
+          {[0, 1, 2].map((i) => (
+            <View key={i} style={[styles.dot, i <= STEP_INDEX[step] && styles.dotActive]} />
+          ))}
         </View>
 
         {step === 'language' && (
@@ -158,12 +150,12 @@ export default function Onboarding() {
             <View style={styles.mascotTop}>
               <MascotBadge size={96} />
             </View>
-            <Pressable style={styles.card} onPress={() => chooseLanguage('cs')}>
-              <Text style={styles.cardTitle}>Čeština</Text>
-            </Pressable>
-            <Pressable style={styles.card} onPress={() => chooseLanguage('en')}>
-              <Text style={styles.cardTitle}>English</Text>
-            </Pressable>
+            <Text style={styles.title}>{languageStepCopy.titleLine1}</Text>
+            <Text style={styles.subtitle}>{languageStepCopy.titleLine2}</Text>
+            <View style={styles.languageOptions}>
+              <OptionCard label="Čeština" onPress={() => chooseLanguage('cs')} />
+              <OptionCard label="English" onPress={() => chooseLanguage('en')} />
+            </View>
           </>
         )}
 
@@ -171,13 +163,13 @@ export default function Onboarding() {
           <>
             <Text style={styles.sectionTitle}>{copy.titleGoal}</Text>
             {goalKeys.map((key) => (
-              <Pressable
-                key={key}
-                style={[styles.card, selectedGoal === key && styles.cardSelected]}
-                onPress={() => setSelectedGoal(key)}
-              >
-                <Text style={styles.cardTitle}>{copy.goals[key]}</Text>
-              </Pressable>
+              <View key={key} style={styles.optionSpacing}>
+                <OptionCard
+                  label={copy.goals[key]}
+                  selected={selectedGoal === key}
+                  onPress={() => setSelectedGoal(key)}
+                />
+              </View>
             ))}
             <Pressable style={styles.buttonGhost} onPress={() => setStep('language')}>
               <Text style={styles.buttonGhostText}>{copy.back}</Text>
@@ -224,19 +216,17 @@ export default function Onboarding() {
                 return (
                   <Pressable
                     key={level.id}
-                    style={[styles.card, selectedLevelId === level.id && styles.cardSelected]}
+                    style={[
+                      styles.levelCard,
+                      selectedLevelId === level.id && styles.levelCardSelected,
+                    ]}
                     onPress={() => setSelectedLevelId(level.id)}
                   >
-                    <View style={styles.levelHeader}>
-                      <Text style={styles.cardTitle}>{display.title}</Text>
-                      {level.cefr_level && (
-                        <View style={styles.cefrChip}>
-                          <Text style={styles.cefrText}>{level.cefr_level}</Text>
-                        </View>
-                      )}
-                    </View>
+                    {level.cefr_level && (
+                      <Text style={styles.levelCefr}>{level.cefr_level}</Text>
+                    )}
                     {display.description && (
-                      <Text style={styles.cardDescription}>{display.description}</Text>
+                      <Text style={styles.levelDescription}>{display.description}</Text>
                     )}
                   </Pressable>
                 );
@@ -289,28 +279,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  progressRow: {
+  dotsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 24,
   },
-  progressText: {
-    fontFamily: fonts.body,
-    fontSize: 13,
-    color: colors.ink,
-    marginRight: 12,
-  },
-  progressTrack: {
-    flex: 1,
+  dot: {
+    width: 8,
     height: 8,
-    borderRadius: radius.button,
+    borderRadius: 4,
     backgroundColor: colors.grey,
-    overflow: 'hidden',
+    marginHorizontal: 4,
   },
-  progressFill: {
-    height: '100%',
-    borderRadius: radius.button,
-    backgroundColor: colors.sky,
+  dotActive: {
+    backgroundColor: colors.sun,
   },
   sectionTitle: {
     fontFamily: fonts.display,
@@ -318,46 +300,35 @@ const styles = StyleSheet.create({
     color: colors.ink,
     marginBottom: 16,
   },
-  card: {
-    backgroundColor: colors.paper,
+  optionSpacing: {
+    marginBottom: 12,
+  },
+  languageOptions: {
+    marginTop: 16,
+  },
+  levelCard: {
+    backgroundColor: colors.white,
     borderWidth: 2,
     borderColor: colors.grey,
     borderRadius: radius.card,
     padding: 16,
     marginBottom: 12,
   },
-  cardSelected: {
+  levelCardSelected: {
     borderColor: colors.sky,
     backgroundColor: colors.skyTint,
   },
-  cardTitle: {
+  levelCefr: {
     fontFamily: fonts.display,
-    fontSize: 22,
+    fontSize: 24,
     color: colors.ink,
   },
-  cardDescription: {
+  levelDescription: {
     fontFamily: fonts.body,
     fontSize: 13,
     color: colors.ink,
     opacity: 0.7,
     marginTop: 4,
-  },
-  levelHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  cefrChip: {
-    backgroundColor: colors.sky,
-    borderRadius: radius.bubble,
-    paddingHorizontal: 10,
-    paddingVertical: 2,
-  },
-  cefrText: {
-    fontFamily: fonts.body,
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.white,
   },
   stateBox: {
     alignItems: 'center',
