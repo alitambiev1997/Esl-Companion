@@ -3,6 +3,7 @@ import type {
   ExerciseRendererHandle,
   ExerciseRendererProps,
 } from '@/src/features/lesson/content';
+import { BestReplyRenderer } from '@/src/features/lesson/renderers/best-reply';
 import { ContextFillRenderer } from '@/src/features/lesson/renderers/context-fill';
 import { ErrorSpotRenderer } from '@/src/features/lesson/renderers/error-spot';
 import { FillBlankRenderer } from '@/src/features/lesson/renderers/fill-blank';
@@ -51,6 +52,8 @@ export function renderSandboxRenderer(
       return <ImageChoiceRenderer ref={ref} {...props} />;
     case 'document_reader':
       return <DocumentReaderRenderer ref={ref} {...props} />;
+    case 'best_reply':
+      return <BestReplyRenderer ref={ref} {...props} />;
     case 'fill_blank':
       return <FillBlankRenderer ref={ref} {...props} />;
     case 'word_order':

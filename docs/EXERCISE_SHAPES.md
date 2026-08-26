@@ -531,6 +531,48 @@ Example:
 }
 ```
 
+## best_reply
+
+```json
+{
+  "steps": [
+    {
+      "lines": [{ "speaker": "string", "side": "left | right", "text": "string" }, "..."],
+      "options": ["string", "string", "string"],
+      "correct_index": 0,
+      "explanation": "string",
+      "reply": "string"
+    },
+    "..."
+  ]
+}
+```
+
+Linear choose-your-reply chat. The accumulated conversation renders as chat bubbles; each step adds its lines plus (from the second step on) the correct reply of every previous step as a right "You" bubble. Three reply OptionCards per step — picking one advances immediately (no Check): on a wrong pick the chosen option flashes coral (with the step explanation below) for ~700 ms, then the correct reply is appended anyway and `mistakes` increments. After the last step the banner shows "Perfect conversation!" (0 mistakes) or "Done with N mistakes"; `is_correct` = `mistakes === 0`.
+
+Example:
+
+```json
+{
+  "steps": [
+    {
+      "lines": [{ "speaker": "Receptionist", "side": "right", "text": "Good evening. How can I help you?" }],
+      "options": ["I would like to book a room.", "Where is the train station?", "The weather is nice today."],
+      "correct_index": 0,
+      "explanation": "The guest wants a room for the night.",
+      "reply": "I would like to book a room, please."
+    },
+    {
+      "lines": [{ "speaker": "Receptionist", "side": "right", "text": "Certainly. For how many nights?" }],
+      "options": ["Three nights.", "A hamburger, please.", "Yes, thank you."],
+      "correct_index": 0,
+      "explanation": "The receptionist asks about the length of the stay.",
+      "reply": "Three nights, please."
+    }
+  ]
+}
+```
+
 ## flashcard
 
 No renderer yet. Shape TBD.

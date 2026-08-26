@@ -130,7 +130,7 @@ export default function TestingDetail() {
             onPress={advance}
           />
         </BottomBar>
-      ) : ['matching', 'error_spot', 'stress_tap', 'silent_letter', 'image_choice'].includes(exerciseType) ? (
+      ) : ['matching', 'error_spot', 'stress_tap', 'silent_letter', 'image_choice', 'best_reply'].includes(exerciseType) ? (
         null
       ) : (
         <BottomBar>

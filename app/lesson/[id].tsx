@@ -23,6 +23,7 @@ import type {
   FeedbackBannerInfo,
 } from '@/src/features/lesson/content';
 import { medalColor, medalForScore, type Medal } from '@/src/lib/medals';
+import { BestReplyRenderer } from '@/src/features/lesson/renderers/best-reply';
 import { ContextFillRenderer } from '@/src/features/lesson/renderers/context-fill';
 import { DocumentReaderRenderer } from '@/src/features/lesson/renderers/document-reader';
 import { ErrorSpotRenderer } from '@/src/features/lesson/renderers/error-spot';
@@ -376,13 +377,13 @@ export default function LessonPlayer() {
   const exercise = exercises[index];
   const isPlaceholder =
     exercise &&
-    !['multiple_choice', 'inline_choice', 'context_fill', 'error_spot', 'stress_tap', 'silent_letter', 'word_sort', 'form_fill', 'image_choice', 'document_reader', 'fill_blank', 'word_order', 'matching', 'listening_multiple_choice', 'listening_dictation', 'listening_word_order', 'sentence_order', 'reading_comprehension', 'speaking_recording', 'flashcard_flip'].includes(
+    !['multiple_choice', 'inline_choice', 'context_fill', 'error_spot', 'stress_tap', 'silent_letter', 'word_sort', 'form_fill', 'image_choice', 'document_reader', 'best_reply', 'fill_blank', 'word_order', 'matching', 'listening_multiple_choice', 'listening_dictation', 'listening_word_order', 'sentence_order', 'reading_comprehension', 'speaking_recording', 'flashcard_flip'].includes(
       exercise.type
     );
   const isUngraded =
     exercise?.type === 'speaking_recording' || exercise?.type === 'flashcard_flip';
   const isMatching = exercise?.type === 'matching';
-  const isTapGraded = exercise != null && ['matching', 'error_spot', 'stress_tap', 'silent_letter', 'image_choice'].includes(exercise.type);
+  const isTapGraded = exercise != null && ['matching', 'error_spot', 'stress_tap', 'silent_letter', 'image_choice', 'best_reply'].includes(exercise.type);
 
   const rendererProps = (current: Exercise): ExerciseRendererProps => ({
     exercise: current,
@@ -520,6 +521,9 @@ export default function LessonPlayer() {
             )}
             {exercise.type === 'document_reader' && (
               <DocumentReaderRenderer key={exercise.id} ref={rendererRef} {...rendererProps(exercise)} />
+            )}
+            {exercise.type === 'best_reply' && (
+              <BestReplyRenderer key={exercise.id} ref={rendererRef} {...rendererProps(exercise)} />
             )}
             {exercise.type === 'fill_blank' && (
               <FillBlankRenderer key={exercise.id} ref={rendererRef} {...rendererProps(exercise)} />

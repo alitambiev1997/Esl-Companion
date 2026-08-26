@@ -157,6 +157,24 @@ export interface DocumentReaderContent {
   explanation: string | null;
 }
 
+export interface BestReplyLine {
+  speaker: string;
+  side: 'left' | 'right';
+  text: string;
+}
+
+export interface BestReplyStep {
+  lines: BestReplyLine[];
+  options: string[];
+  correct_index: number;
+  explanation: string | null;
+  reply: string;
+}
+
+export interface BestReplyContent {
+  steps: BestReplyStep[];
+}
+
 export interface FeedbackBannerInfo {
   correct: boolean;
   title?: string | null;

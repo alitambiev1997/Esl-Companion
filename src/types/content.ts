@@ -19,7 +19,8 @@ export type ExerciseType =
   | 'word_sort'
   | 'form_fill'
   | 'image_choice'
-  | 'document_reader';
+  | 'document_reader'
+  | 'best_reply';
 
 export interface Program {
   id: string;

@@ -22,6 +22,7 @@ export const exerciseMeta: Record<ExerciseType, string> = {
   form_fill: 'Fill in the blanks on the card.',
   image_choice: 'Look, listen, and pick the answer.',
   document_reader: 'Read the document and answer the questions.',
+  best_reply: 'Pick the best reply in the conversation.',
 };
 
 export const contentShapes: Record<ExerciseType, string> = {
@@ -135,6 +136,15 @@ export const contentShapes: Record<ExerciseType, string> = {
   document_lines?: string[],
   questions: { question: string, options: string[], correct_index: number, explanation: string }[],
   explanation: string
+}`,
+  best_reply: `{
+  steps: {
+    lines: { speaker: string, side: 'left' | 'right', text: string }[],
+    options: string[],
+    correct_index: number,
+    explanation: string,
+    reply: string
+  }[]
 }`,
   flashcard: 'no renderer yet',
 };
@@ -650,6 +660,79 @@ export const samplesByType: Record<ExerciseType, SampleSpec[]> = {
           },
         ],
         explanation: 'Both answers are in the menu.',
+      },
+    },
+  ],
+  best_reply: [
+    {
+      prompt: 'Pick the best reply at each step.',
+      content: {
+        steps: [
+          {
+            lines: [
+              { speaker: 'Receptionist', side: 'right', text: 'Good evening. How can I help you?' },
+            ],
+            options: [
+              'I would like to book a room.',
+              'Where is the train station?',
+              'The weather is nice today.',
+            ],
+            correct_index: 0,
+            explanation: 'The guest wants a room for the night.',
+            reply: 'I would like to book a room, please.',
+          },
+          {
+            lines: [
+              { speaker: 'Receptionist', side: 'right', text: 'Certainly. For how many nights?' },
+            ],
+            options: ['Three nights.', 'A hamburger, please.', 'Yes, thank you.'],
+            correct_index: 0,
+            explanation: 'The receptionist asks about the length of the stay.',
+            reply: 'Three nights, please.',
+          },
+          {
+            lines: [
+              { speaker: 'Receptionist', side: 'right', text: 'Perfect. Your room is 412.' },
+            ],
+            options: ['Thank you very much.', 'I need a taxi.', 'Goodbye.'],
+            correct_index: 0,
+            explanation: 'A polite thank you ends the check-in.',
+            reply: 'Thank you very much.',
+          },
+        ],
+      },
+    },
+    {
+      prompt: 'Pick the best reply at each step.',
+      content: {
+        steps: [
+          {
+            lines: [
+              { speaker: 'Guest', side: 'left', text: 'The shower in my room is broken.' },
+            ],
+            options: [
+              'I am sorry. We can change your room.',
+              'That is a great idea.',
+              'See you tomorrow.',
+            ],
+            correct_index: 0,
+            explanation: 'The hotel offers a solution to the problem.',
+            reply: 'I am sorry. We can change your room right away.',
+          },
+          {
+            lines: [
+              { speaker: 'Guest', side: 'left', text: 'Thank you. That helps a lot.' },
+            ],
+            options: [
+              'You are welcome. Enjoy your stay!',
+              'The bill is ready.',
+              'The pool is closed.',
+            ],
+            correct_index: 0,
+            explanation: 'A friendly reply ends the conversation.',
+            reply: 'You are welcome. Enjoy your stay!',
+          },
+        ],
       },
     },
   ],
