@@ -1,6 +1,6 @@
 import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { OptionCard } from '@/src/components/ui/option-card';
+import { Chip } from '@/src/components/ui/chip';
 import { SlowButton, SpeakerButton } from '@/src/components/ui/speaker-button';
 import type {
   ExerciseRendererHandle,
@@ -58,9 +58,7 @@ export const FormFillRenderer = forwardRef<ExerciseRendererHandle, ExerciseRende
     };
 
     return (
-      <View style={styles.card}>
-        {content.title ? <Text style={styles.cardTitle}>{content.title}</Text> : null}
-
+      <>
         {content.text_to_speak ? (
           <View style={styles.audioRow}>
             <SpeakerButton onPress={() => speak(content.text_to_speak as string)} />
@@ -68,63 +66,94 @@ export const FormFillRenderer = forwardRef<ExerciseRendererHandle, ExerciseRende
           </View>
         ) : null}
 
-        {content.fields.map((field, fi) => {
-          const parts = field.prompt.split('___');
-          const value = answers[fi];
-          return (
-            <View key={fi} style={styles.field}>
-              <Text style={styles.prompt}>
-                {parts[0]}
-                <Text style={[styles.slot, value !== null && styles.slotFilled]}>
-                  {value !== null ? field.options[value] : '___'}
+        <View style={styles.card}>
+          {content.title ? <Text style={styles.cardTitle}>{content.title}</Text> : null}
+
+          {content.fields.map((field, fi) => {
+            const parts = field.prompt.split('___');
+            const selected = answers[fi];
+            const shown = checked
+              ? field.options[field.correct_index]
+              : selected !== null
+                ? field.options[selected]
+                : null;
+            const isLineWrong = checked && selected !== field.correct_index;
+            const isLineCorrect = checked && selected === field.correct_index;
+
+            return (
+              <View
+                key={fi}
+                style={[
+                  styles.field,
+                  isLineWrong && styles.lineWrong,
+                  isLineCorrect && styles.lineCorrect,
+                ]}
+              >
+                <Text style={styles.sentence}>
+                  {parts[0]}
+                  <Text style={[styles.slot, shown !== null && styles.slotFilled]}>
+                    {shown ?? '___'}
+                  </Text>
+                  {parts.slice(1).join('')}
                 </Text>
-                {parts.slice(1).join('')}
-              </Text>
-              <View style={styles.options}>
-                {field.options.map((option, oi) => (
-                  <View key={oi} style={styles.optionSpacing}>
-                    <OptionCard
-                      compact
+                <View style={styles.chipsRow}>
+                  {field.options.map((option, oi) => (
+                    <Chip
+                      key={`${option}-${oi}`}
                       label={option}
-                      selected={value === oi}
+                      centered
+                      selected={selected === oi}
                       disabled={checked}
                       onPress={() => select(fi, oi)}
                     />
-                  </View>
-                ))}
+                  ))}
+                </View>
               </View>
-            </View>
-          );
-        })}
-      </View>
+            );
+          })}
+        </View>
+      </>
     );
   }
 );
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.white,
-    borderWidth: 2,
-    borderColor: colors.grey,
-    borderRadius: radius.card,
-    padding: 20,
-  },
-  cardTitle: {
-    fontFamily: fonts.display,
-    fontSize: 20,
-    color: colors.ink,
-    marginBottom: 12,
-  },
   audioRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
   },
+  card: {
+    backgroundColor: colors.white,
+    borderWidth: 2,
+    borderColor: colors.grey,
+    borderRadius: radius.card,
+    padding: 16,
+  },
+  cardTitle: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 1.2,
+    color: colors.greyDark,
+    marginBottom: 16,
+  },
   field: {
     marginBottom: 16,
   },
-  prompt: {
+  lineWrong: {
+    backgroundColor: colors.coralTint,
+    borderRadius: 8,
+    padding: 8,
+  },
+  lineCorrect: {
+    backgroundColor: colors.leafTint,
+    borderRadius: 8,
+    padding: 8,
+  },
+  sentence: {
     fontFamily: fonts.body,
     fontSize: 17,
     lineHeight: 24,
@@ -140,12 +169,8 @@ const styles = StyleSheet.create({
     opacity: 1,
     fontWeight: '700',
   },
-  options: {
+  chipsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-  },
-  optionSpacing: {
-    marginRight: 8,
-    marginBottom: 8,
   },
 });
