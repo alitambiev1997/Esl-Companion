@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
@@ -242,13 +243,17 @@ export default function Home() {
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.welcomeRow}>
-          <View style={styles.welcomeBlock}>
-            <Text style={styles.title}>Welcome</Text>
-            <Text style={styles.email}>{user.email ?? 'No email on file'}</Text>
-            {levelTitle && <Text style={styles.level}>Level: {levelTitle}</Text>}
-          </View>
+        <View style={styles.headerRow}>
           <MascotBadge size={48} />
+          <View style={styles.headerText}>
+            <Text style={styles.welcome}>Welcome</Text>
+            <Text style={styles.email}>{user.email ?? 'No email on file'}</Text>
+          </View>
+          {levelTitle && (
+            <View style={styles.levelChip}>
+              <Text style={styles.levelChipText}>{levelTitle}</Text>
+            </View>
+          )}
         </View>
 
         {dash.status === 'loading' && (
@@ -269,19 +274,24 @@ export default function Home() {
         {dash.status === 'ready' && (
           <>
             <View style={styles.statsRow}>
-              <View style={[styles.statCard, styles.statCardMargin]}>
-                <Text style={styles.statValue}>{dash.streak}</Text>
+              <View style={[styles.statCard, styles.statStreak, styles.statCardMargin]}>
+                <Text style={[styles.statValue, styles.statStreakValue]}>{dash.streak}</Text>
                 <Text style={styles.statLabel}>Day streak</Text>
               </View>
-              <View style={styles.statCard}>
-                <Text style={styles.statValue}>{dash.medalCount}</Text>
+              <View style={[styles.statCard, styles.statMedals]}>
+                <Text style={[styles.statValue, styles.statMedalsValue]}>{dash.medalCount}</Text>
                 <Text style={styles.statLabel}>Medals</Text>
               </View>
             </View>
 
             {dash.reviewDue > 0 && (
               <Pressable style={styles.card} onPress={() => router.push('/review')}>
-                <Text style={styles.cardTitle}>Review due: {dash.reviewDue} words</Text>
+                <View style={[styles.cardDot, styles.cardDotLeaf]} />
+                <View style={styles.cardText}>
+                  <Text style={styles.cardTitle}>Review due</Text>
+                  <Text style={styles.cardCaption}>{dash.reviewDue} words waiting</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={22} color={colors.sky} />
               </Pressable>
             )}
 
@@ -295,8 +305,12 @@ export default function Home() {
                   })
                 }
               >
-                <Text style={styles.cardTitle}>Continue learning</Text>
-                <Text style={styles.cardSubtitle}>{dash.nextLesson.title}</Text>
+                <View style={[styles.cardDot, styles.cardDotSky]} />
+                <View style={styles.cardText}>
+                  <Text style={styles.cardTitle}>Continue learning</Text>
+                  <Text style={styles.cardCaption}>{dash.nextLesson.title}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={22} color={colors.sky} />
               </Pressable>
             )}
           </>
@@ -308,12 +322,8 @@ export default function Home() {
           <Text style={styles.buttonSecondaryText}>Your course</Text>
         </Pressable>
 
-        <Pressable
-          style={[styles.buttonPrimary, signingOut && styles.buttonDisabled]}
-          onPress={onSignOut}
-          disabled={signingOut}
-        >
-          <Text style={styles.buttonPrimaryText}>
+        <Pressable style={styles.signOut} onPress={onSignOut} disabled={signingOut}>
+          <Text style={styles.signOutText}>
             {signingOut ? 'Signing out...' : 'Sign out'}
           </Text>
         </Pressable>
@@ -328,36 +338,41 @@ const styles = StyleSheet.create({
     backgroundColor: colors.paper,
   },
   content: {
-    padding: 24,
-    paddingBottom: 48,
+    paddingHorizontal: 16,
+    paddingVertical: 24,
   },
-  title: {
-    fontFamily: fonts.display,
-    fontSize: 28,
-    color: colors.ink,
-  },
-  welcomeRow: {
+  headerRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    marginBottom: 16,
+    alignItems: 'center',
+    marginBottom: 24,
   },
-  welcomeBlock: {
+  headerText: {
     flex: 1,
-    marginRight: 12,
+    marginLeft: 12,
+  },
+  welcome: {
+    fontFamily: fonts.display,
+    fontSize: 22,
+    color: colors.ink,
   },
   email: {
     fontFamily: fonts.body,
-    fontSize: 16,
+    fontSize: 13,
     color: colors.ink,
-    marginTop: 4,
+    opacity: 0.6,
+    marginTop: 2,
   },
-  level: {
+  levelChip: {
+    backgroundColor: colors.skyTint,
+    borderRadius: radius.bubble,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+  },
+  levelChipText: {
     fontFamily: fonts.body,
-    fontSize: 16,
-    color: colors.ink,
-    opacity: 0.7,
-    marginBottom: 16,
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.sky,
   },
   statsRow: {
     flexDirection: 'row',
@@ -365,9 +380,6 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: colors.white,
-    borderWidth: 2,
-    borderColor: colors.grey,
     borderRadius: radius.card,
     padding: 16,
     alignItems: 'center',
@@ -375,19 +387,31 @@ const styles = StyleSheet.create({
   statCardMargin: {
     marginRight: 12,
   },
+  statStreak: {
+    backgroundColor: colors.sunTint,
+  },
+  statMedals: {
+    backgroundColor: colors.skyTint,
+  },
   statValue: {
     fontFamily: fonts.display,
     fontSize: 28,
+  },
+  statStreakValue: {
+    color: colors.sun,
+  },
+  statMedalsValue: {
     color: colors.sky,
   },
   statLabel: {
     fontFamily: fonts.body,
-    fontSize: 14,
-    color: colors.ink,
-    opacity: 0.7,
+    fontSize: 13,
+    color: colors.greyDark,
     marginTop: 4,
   },
   card: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: colors.white,
     borderWidth: 2,
     borderColor: colors.grey,
@@ -395,17 +419,31 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 12,
   },
+  cardDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginRight: 12,
+  },
+  cardDotLeaf: {
+    backgroundColor: colors.leaf,
+  },
+  cardDotSky: {
+    backgroundColor: colors.sky,
+  },
+  cardText: {
+    flex: 1,
+  },
   cardTitle: {
     fontFamily: fonts.display,
     fontSize: 18,
     color: colors.ink,
   },
-  cardSubtitle: {
+  cardCaption: {
     fontFamily: fonts.body,
-    fontSize: 14,
-    color: colors.ink,
-    opacity: 0.7,
-    marginTop: 4,
+    fontSize: 13,
+    color: colors.greyDark,
+    marginTop: 2,
   },
   stateBox: {
     alignItems: 'center',
@@ -413,7 +451,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontFamily: fonts.body,
-    fontSize: 14,
+    fontSize: 13,
     color: colors.coral,
     marginTop: 8,
     textAlign: 'center',
@@ -433,20 +471,15 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.white,
   },
-  buttonPrimary: {
-    backgroundColor: colors.sun,
-    borderRadius: radius.button,
-    paddingVertical: 14,
-    minHeight: 52,
+  signOut: {
+    padding: 12,
     alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 12,
+    marginTop: 8,
   },
-  buttonPrimaryText: {
+  signOutText: {
     fontFamily: fonts.body,
     fontSize: 16,
-    fontWeight: '600',
-    color: colors.ink,
+    color: colors.greyDark,
   },
   buttonDisabled: {
     opacity: 0.5,
