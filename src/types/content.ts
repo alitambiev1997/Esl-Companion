@@ -11,7 +11,8 @@ export type ExerciseType =
   | 'inline_choice'
   | 'context_fill'
   | 'listening_word_order'
-  | 'sentence_order';
+  | 'sentence_order'
+  | 'flashcard_flip';
 
 export interface Program {
   id: string;

@@ -14,6 +14,7 @@ export const exerciseMeta: Record<ExerciseType, string> = {
   context_fill: 'Complete the dialogue with the right word.',
   listening_word_order: 'Listen, then order the words you hear.',
   sentence_order: 'Put the sentences in the correct order.',
+  flashcard_flip: 'Study a card - flip it to check the meaning.',
 };
 
 export const contentShapes: Record<ExerciseType, string> = {
@@ -78,6 +79,12 @@ export const contentShapes: Record<ExerciseType, string> = {
   sentence_order: `{
   correct_sequence: string[],
   explanation: string
+}`,
+  flashcard_flip: `{
+  front: string,
+  back: string,
+  example: string | null,
+  text_to_speak: string
 }`,
   flashcard: 'no renderer yet',
 };
@@ -342,6 +349,26 @@ export const samplesByType: Record<ExerciseType, SampleSpec[]> = {
           'Wi-Fi is free in all rooms.',
         ],
         explanation: 'Hotel information in the order the receptionist gives it.',
+      },
+    },
+  ],
+  flashcard_flip: [
+    {
+      prompt: 'Study the card.',
+      content: {
+        front: 'wake-up call',
+        back: 'A phone call from the hotel to wake you up.',
+        example: 'I need a wake-up call at 7 in the morning.',
+        text_to_speak: 'wake-up call',
+      },
+    },
+    {
+      prompt: 'Study the card.',
+      content: {
+        front: 'check-in',
+        back: 'The process of registering when you arrive at the hotel.',
+        example: 'Check-in is at 2 pm.',
+        text_to_speak: 'check-in',
       },
     },
   ],

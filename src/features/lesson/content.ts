@@ -81,6 +81,13 @@ export interface SentenceOrderContent {
   explanation: string | null;
 }
 
+export interface FlashcardFlipContent {
+  front: string;
+  back: string;
+  example: string | null;
+  text_to_speak: string;
+}
+
 export interface FeedbackBannerInfo {
   correct: boolean;
   title?: string | null;

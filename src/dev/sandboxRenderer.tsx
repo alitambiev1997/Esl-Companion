@@ -5,6 +5,7 @@ import type {
 } from '@/src/features/lesson/content';
 import { ContextFillRenderer } from '@/src/features/lesson/renderers/context-fill';
 import { FillBlankRenderer } from '@/src/features/lesson/renderers/fill-blank';
+import { FlashcardFlipRenderer } from '@/src/features/lesson/renderers/flashcard-flip';
 import { InlineChoiceRenderer } from '@/src/features/lesson/renderers/inline-choice';
 import { ListeningDictationRenderer } from '@/src/features/lesson/renderers/listening-dictation';
 import { ListeningMultipleChoiceRenderer } from '@/src/features/lesson/renderers/listening-multiple-choice';
@@ -47,6 +48,8 @@ export function renderSandboxRenderer(
       return <ReadingComprehensionRenderer ref={ref} {...props} />;
     case 'speaking_recording':
       return <SpeakingRecordingRenderer {...props} />;
+    case 'flashcard_flip':
+      return <FlashcardFlipRenderer {...props} />;
     default:
       return null;
   }

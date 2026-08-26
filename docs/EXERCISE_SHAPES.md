@@ -289,6 +289,30 @@ Example:
 }
 ```
 
+## flashcard_flip
+
+```json
+{
+  "front": "string",
+  "back": "string",
+  "example": "string or null",
+  "text_to_speak": "string"
+}
+```
+
+Ungraded study card: front text large with a Flip button; after a 300 ms flip animation the back shows the meaning, an example sentence (in quotes) and a speaker button that speaks `text_to_speak`. The Continue button reads "Got it" and the exercise must be marked `is_required = false` so it never affects the score.
+
+Example:
+
+```json
+{
+  "front": "wake-up call",
+  "back": "A phone call from the hotel to wake you up.",
+  "example": "I need a wake-up call at 7 in the morning.",
+  "text_to_speak": "wake-up call"
+}
+```
+
 ## flashcard
 
 No renderer yet. Shape TBD.

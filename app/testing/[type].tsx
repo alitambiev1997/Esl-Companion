@@ -119,9 +119,12 @@ export default function TestingDetail() {
         <BottomBar>
           <Text style={styles.pairsLeft}>Pairs left: {pairsLeft}</Text>
         </BottomBar>
-      ) : exerciseType === 'speaking_recording' ? (
+      ) : exerciseType === 'speaking_recording' || exerciseType === 'flashcard_flip' ? (
         <BottomBar>
-          <PrimaryButton label="I said it out loud" onPress={advance} />
+          <PrimaryButton
+            label={exerciseType === 'flashcard_flip' ? 'Got it' : 'I said it out loud'}
+            onPress={advance}
+          />
         </BottomBar>
       ) : (
         <BottomBar>

@@ -24,6 +24,7 @@ import type {
 import { medalColor, medalForScore, type Medal } from '@/src/lib/medals';
 import { ContextFillRenderer } from '@/src/features/lesson/renderers/context-fill';
 import { FillBlankRenderer } from '@/src/features/lesson/renderers/fill-blank';
+import { FlashcardFlipRenderer } from '@/src/features/lesson/renderers/flashcard-flip';
 import { InlineChoiceRenderer } from '@/src/features/lesson/renderers/inline-choice';
 import { ListeningDictationRenderer } from '@/src/features/lesson/renderers/listening-dictation';
 import { ListeningWordOrderRenderer } from '@/src/features/lesson/renderers/listening-word-order';
@@ -366,10 +367,11 @@ export default function LessonPlayer() {
   const exercise = exercises[index];
   const isPlaceholder =
     exercise &&
-    !['multiple_choice', 'inline_choice', 'context_fill', 'fill_blank', 'word_order', 'matching', 'listening_multiple_choice', 'listening_dictation', 'listening_word_order', 'sentence_order', 'reading_comprehension', 'speaking_recording'].includes(
+    !['multiple_choice', 'inline_choice', 'context_fill', 'fill_blank', 'word_order', 'matching', 'listening_multiple_choice', 'listening_dictation', 'listening_word_order', 'sentence_order', 'reading_comprehension', 'speaking_recording', 'flashcard_flip'].includes(
       exercise.type
     );
-  const isUngraded = exercise?.type === 'speaking_recording';
+  const isUngraded =
+    exercise?.type === 'speaking_recording' || exercise?.type === 'flashcard_flip';
   const isMatching = exercise?.type === 'matching';
 
   const rendererProps = (current: Exercise): ExerciseRendererProps => ({
@@ -389,7 +391,7 @@ export default function LessonPlayer() {
       return (
         <BottomBar>
           <PrimaryButton
-            label={isUngraded ? 'I said it out loud' : index === exercises.length - 1 ? 'Finish' : 'Continue'}
+            label={exercise?.type === 'speaking_recording' ? 'I said it out loud' : exercise?.type === 'flashcard_flip' ? 'Got it' : index === exercises.length - 1 ? 'Finish' : 'Continue'}
             onPress={() => (isUngraded ? handleUngradedContinue(exercise) : handleContinue())}
             disabled={busy}
           />
@@ -494,6 +496,9 @@ export default function LessonPlayer() {
             )}
             {exercise.type === 'speaking_recording' && (
               <SpeakingRecordingRenderer key={exercise.id} {...rendererProps(exercise)} />
+            )}
+            {exercise.type === 'flashcard_flip' && (
+              <FlashcardFlipRenderer key={exercise.id} {...rendererProps(exercise)} />
             )}
             {isPlaceholder && (
               <View style={styles.placeholderCard}>
