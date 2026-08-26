@@ -163,8 +163,8 @@ Example:
 
 ```json
 {
-  "bubbles": ["string", "..."],
-  "text_to_speak": "string",
+  "bubbles": ["string", "..."] OR "dialogue": [{ "speaker": "string", "side": "left | right", "text": "string" }, "..."],
+  "text_to_speak": "string (optional)",
   "question": "string",
   "options": ["string", "..."],
   "correct_index": 0,
@@ -172,9 +172,9 @@ Example:
 }
 ```
 
-The passage is shown as alternating chat bubbles (left sky-tinted / right white); `text_to_speak` is the TTS version (auto-played; a small Listen control replays it). The question renders bold below the bubbles.
+The passage is shown as chat bubbles — either the `bubbles` array (alternating left sky-tinted / right white) or a `dialogue` array (each line aligned by its `side`, with the speaker label above). `text_to_speak` is the TTS version (auto-played; a small Listen control replays it); when absent, the bubbles/dialogue text is spoken. The question renders bold below the bubbles.
 
-Example:
+Example (bubbles):
 
 ```json
 {
@@ -188,6 +188,22 @@ Example:
   "options": ["412", "421", "214", "312"],
   "correct_index": 0,
   "explanation": "Her room is 412 on the third floor."
+}
+```
+
+Example (dialogue):
+
+```json
+{
+  "dialogue": [
+    { "speaker": "Receptionist", "side": "left", "text": "Good afternoon! How can I help you?" },
+    { "speaker": "You", "side": "right", "text": "Hi! I would like to check in. I have a reservation." },
+    { "speaker": "Receptionist", "side": "left", "text": "Perfect. Here is your key - room 204." }
+  ],
+  "question": "Which room is the guest getting?",
+  "options": ["Room 204", "Room 240", "Room 402", "Room 202"],
+  "correct_index": 0,
+  "explanation": "The receptionist says: room 204."
 }
 ```
 

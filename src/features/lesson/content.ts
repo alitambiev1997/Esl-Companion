@@ -40,9 +40,16 @@ export interface ListeningDictationContent {
   explanation: string | null;
 }
 
+export interface ReadingComprehensionLine {
+  speaker: string;
+  side: 'left' | 'right';
+  text: string;
+}
+
 export interface ReadingComprehensionContent {
-  bubbles: string[];
-  text_to_speak: string;
+  bubbles?: string[] | null;
+  dialogue?: ReadingComprehensionLine[] | null;
+  text_to_speak?: string | null;
   question: string;
   options: string[];
   correct_index: number;

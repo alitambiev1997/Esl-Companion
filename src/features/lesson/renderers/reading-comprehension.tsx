@@ -18,11 +18,19 @@ export const ReadingComprehensionRenderer = forwardRef<
   const content = exercise.content as unknown as ReadingComprehensionContent;
   const [selected, setSelected] = useState<number | null>(null);
 
-  const passage = () => content.text_to_speak ?? content.bubbles.join(' ');
-  const lines: ChatLine[] = content.bubbles.map((bubble, i) => ({
-    text: bubble,
-    left: i % 2 === 0,
-  }));
+  const lines: ChatLine[] =
+    content.dialogue && content.dialogue.length > 0
+      ? content.dialogue.map((line) => ({
+          text: line.text,
+          left: line.side !== 'right',
+          speaker: line.speaker,
+        }))
+      : (content.bubbles ?? []).map((bubble, i) => ({
+          text: bubble,
+          left: i % 2 === 0,
+        }));
+
+  const passage = () => content.text_to_speak ?? lines.map((line) => line.text).join(' ');
 
   useEffect(() => {
     speak(passage());
