@@ -112,6 +112,7 @@ export default function TestingDetail() {
           explanation={banner.explanation}
           correctAnswer={banner.correctAnswer}
           chips={banner.chips ?? undefined}
+          tip={banner.tip ?? undefined}
           continueLabel={index === samples.length - 1 ? 'Back to testing' : undefined}
           onContinue={advance}
         />
@@ -126,6 +127,8 @@ export default function TestingDetail() {
             onPress={advance}
           />
         </BottomBar>
+      ) : ['matching', 'error_spot', 'stress_tap', 'silent_letter'].includes(exerciseType) ? (
+        null
       ) : (
         <BottomBar>
           <PrimaryButton

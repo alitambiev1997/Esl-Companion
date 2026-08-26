@@ -23,6 +23,7 @@ import type {
 } from '@/src/features/lesson/content';
 import { medalColor, medalForScore, type Medal } from '@/src/lib/medals';
 import { ContextFillRenderer } from '@/src/features/lesson/renderers/context-fill';
+import { ErrorSpotRenderer } from '@/src/features/lesson/renderers/error-spot';
 import { FillBlankRenderer } from '@/src/features/lesson/renderers/fill-blank';
 import { FlashcardFlipRenderer } from '@/src/features/lesson/renderers/flashcard-flip';
 import { InlineChoiceRenderer } from '@/src/features/lesson/renderers/inline-choice';
@@ -31,10 +32,13 @@ import { ListeningWordOrderRenderer } from '@/src/features/lesson/renderers/list
 import { ListeningMultipleChoiceRenderer } from '@/src/features/lesson/renderers/listening-multiple-choice';
 import { MatchingRenderer } from '@/src/features/lesson/renderers/matching';
 import { SpeakingRecordingRenderer } from '@/src/features/lesson/renderers/speaking-recording';
+import { StressTapRenderer } from '@/src/features/lesson/renderers/stress-tap';
 import { MultipleChoiceRenderer } from '@/src/features/lesson/renderers/multiple-choice';
 import { ReadingComprehensionRenderer } from '@/src/features/lesson/renderers/reading-comprehension';
 import { SentenceOrderRenderer } from '@/src/features/lesson/renderers/sentence-order';
+import { SilentLetterRenderer } from '@/src/features/lesson/renderers/silent-letter';
 import { WordOrderRenderer } from '@/src/features/lesson/renderers/word-order';
+import { WordSortRenderer } from '@/src/features/lesson/renderers/word-sort';
 import { supabase } from '@/src/lib/supabase';
 import { colors, fonts, radius } from '@/src/theme/tokens';
 import type { Exercise, Lesson } from '@/src/types/content';
@@ -367,12 +371,13 @@ export default function LessonPlayer() {
   const exercise = exercises[index];
   const isPlaceholder =
     exercise &&
-    !['multiple_choice', 'inline_choice', 'context_fill', 'fill_blank', 'word_order', 'matching', 'listening_multiple_choice', 'listening_dictation', 'listening_word_order', 'sentence_order', 'reading_comprehension', 'speaking_recording', 'flashcard_flip'].includes(
+    !['multiple_choice', 'inline_choice', 'context_fill', 'error_spot', 'stress_tap', 'silent_letter', 'word_sort', 'fill_blank', 'word_order', 'matching', 'listening_multiple_choice', 'listening_dictation', 'listening_word_order', 'sentence_order', 'reading_comprehension', 'speaking_recording', 'flashcard_flip'].includes(
       exercise.type
     );
   const isUngraded =
     exercise?.type === 'speaking_recording' || exercise?.type === 'flashcard_flip';
   const isMatching = exercise?.type === 'matching';
+  const isTapGraded = exercise != null && ['matching', 'error_spot', 'stress_tap', 'silent_letter'].includes(exercise.type);
 
   const rendererProps = (current: Exercise): ExerciseRendererProps => ({
     exercise: current,
@@ -406,6 +411,8 @@ export default function LessonPlayer() {
             title={banner.title ?? undefined}
             explanation={banner.explanation}
             correctAnswer={banner.correctAnswer}
+            chips={banner.chips ?? undefined}
+            tip={banner.tip ?? undefined}
             onContinue={handleContinue}
           />
         );
@@ -416,6 +423,22 @@ export default function LessonPlayer() {
         </BottomBar>
       );
     }
+    if (isTapGraded) {
+      if (phase === 'checked' && banner) {
+        return (
+          <FeedbackBanner
+            correct={banner.correct}
+            title={banner.title ?? undefined}
+            explanation={banner.explanation}
+            correctAnswer={banner.correctAnswer}
+            chips={banner.chips ?? undefined}
+            tip={banner.tip ?? undefined}
+            onContinue={handleContinue}
+          />
+        );
+      }
+      return null;
+    }
     if (phase === 'checked' && banner) {
       return (
         <FeedbackBanner
@@ -424,6 +447,7 @@ export default function LessonPlayer() {
           explanation={banner.explanation}
           correctAnswer={banner.correctAnswer}
           chips={banner.chips ?? undefined}
+          tip={banner.tip ?? undefined}
           onContinue={handleContinue}
         />
       );
@@ -469,6 +493,18 @@ export default function LessonPlayer() {
             )}
             {exercise.type === 'context_fill' && (
               <ContextFillRenderer key={exercise.id} ref={rendererRef} {...rendererProps(exercise)} />
+            )}
+            {exercise.type === 'error_spot' && (
+              <ErrorSpotRenderer key={exercise.id} ref={rendererRef} {...rendererProps(exercise)} />
+            )}
+            {exercise.type === 'stress_tap' && (
+              <StressTapRenderer key={exercise.id} ref={rendererRef} {...rendererProps(exercise)} />
+            )}
+            {exercise.type === 'silent_letter' && (
+              <SilentLetterRenderer key={exercise.id} ref={rendererRef} {...rendererProps(exercise)} />
+            )}
+            {exercise.type === 'word_sort' && (
+              <WordSortRenderer key={exercise.id} ref={rendererRef} {...rendererProps(exercise)} />
             )}
             {exercise.type === 'fill_blank' && (
               <FillBlankRenderer key={exercise.id} ref={rendererRef} {...rendererProps(exercise)} />

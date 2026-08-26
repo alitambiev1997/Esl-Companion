@@ -88,6 +88,38 @@ export interface FlashcardFlipContent {
   text_to_speak: string;
 }
 
+export interface ErrorSpotContent {
+  words: string[];
+  wrong_index: number;
+  options: string[];
+  correct_index: number;
+  explanation: string | null;
+}
+
+export interface StressTapContent {
+  syllables: string[];
+  correct_index: number;
+  text_to_speak: string;
+  explanation: string | null;
+}
+
+export interface SilentLetterContent {
+  letters: string[];
+  correct_index: number;
+  explanation: string | null;
+}
+
+export interface WordSortItem {
+  word: string;
+  category: 0 | 1;
+}
+
+export interface WordSortContent {
+  categories: [string, string];
+  items: WordSortItem[];
+  explanation: string | null;
+}
+
 export interface FeedbackBannerInfo {
   correct: boolean;
   title?: string | null;

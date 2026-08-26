@@ -313,6 +313,107 @@ Example:
 }
 ```
 
+## error_spot
+
+```json
+{
+  "words": ["string", "..."],
+  "wrong_index": 2,
+  "options": ["string", "..."],
+  "correct_index": 0,
+  "explanation": "string"
+}
+```
+
+The sentence is `words` joined with spaces; the word at `wrong_index` is incorrect. Tapping a word selects it (sky), then "Fix it:" options appear. Tapping an option grades immediately (no Check button): correct only if the tapped word is `wrong_index` AND the option is `correct_index`. On wrong, the banner shows `Mistake: "…" → Fix: "…"`.
+
+Example:
+
+```json
+{
+  "words": ["The", "breakfast", "are", "served", "from", "7", "to", "10."],
+  "wrong_index": 2,
+  "options": ["is", "are", "be", "am"],
+  "correct_index": 0,
+  "explanation": "Breakfast is singular, so the verb is \"is\"."
+}
+```
+
+## stress_tap
+
+```json
+{
+  "syllables": ["string", "..."],
+  "correct_index": 0,
+  "text_to_speak": "string",
+  "explanation": "string"
+}
+```
+
+Audio auto-plays once (Play / Slow buttons). Syllables render as large chips; one tap grades immediately (no Check button).
+
+Example:
+
+```json
+{
+  "syllables": ["HO", "tel"],
+  "correct_index": 0,
+  "text_to_speak": "hotel",
+  "explanation": "Hotel is stressed on the first syllable."
+}
+```
+
+## silent_letter
+
+```json
+{
+  "letters": ["string", "..."],
+  "correct_index": 0,
+  "explanation": "string"
+}
+```
+
+Letter chips; one tap grades immediately (no Check button).
+
+Example:
+
+```json
+{
+  "letters": ["h", "o", "u", "r"],
+  "correct_index": 0,
+  "explanation": "The h in hour is silent."
+}
+```
+
+## word_sort
+
+```json
+{
+  "categories": ["string", "string"],
+  "items": [{ "word": "string", "category": 0 }, "..."],
+  "explanation": "string"
+}
+```
+
+Two bin cards on top; a word pool below. Tap a pool word (selected), tap a bin to assign it; tap an assigned chip to return it to the pool. All items assigned enables Check. On wrong, misplaced chips show coral in their bin and the banner lists the correct bins. `is_correct` = every item in its correct bin.
+
+Example:
+
+```json
+{
+  "categories": ["Hotel room", "At the front desk"],
+  "items": [
+    { "word": "pillow", "category": 0 },
+    { "word": "towel", "category": 0 },
+    { "word": "blanket", "category": 0 },
+    { "word": "bill", "category": 1 },
+    { "word": "receipt", "category": 1 },
+    { "word": "deposit", "category": 1 }
+  ],
+  "explanation": "Things in your room vs things at the front desk."
+}
+```
+
 ## flashcard
 
 No renderer yet. Shape TBD.

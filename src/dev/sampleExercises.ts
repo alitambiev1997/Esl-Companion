@@ -15,6 +15,10 @@ export const exerciseMeta: Record<ExerciseType, string> = {
   listening_word_order: 'Listen, then order the words you hear.',
   sentence_order: 'Put the sentences in the correct order.',
   flashcard_flip: 'Study a card - flip it to check the meaning.',
+  error_spot: 'Find the wrong word and fix it.',
+  stress_tap: 'Tap the stressed syllable.',
+  silent_letter: 'Tap the silent letter.',
+  word_sort: 'Sort the words into the two groups.',
 };
 
 export const contentShapes: Record<ExerciseType, string> = {
@@ -85,6 +89,29 @@ export const contentShapes: Record<ExerciseType, string> = {
   back: string,
   example: string | null,
   text_to_speak: string
+}`,
+  error_spot: `{
+  words: string[],
+  wrong_index: number,
+  options: string[],
+  correct_index: number,
+  explanation: string
+}`,
+  stress_tap: `{
+  syllables: string[],
+  correct_index: number,
+  text_to_speak: string,
+  explanation: string
+}`,
+  silent_letter: `{
+  letters: string[],
+  correct_index: number,
+  explanation: string
+}`,
+  word_sort: `{
+  categories: [string, string],
+  items: { word: string, category: 0 | 1 }[],
+  explanation: string
 }`,
   flashcard: 'no renderer yet',
 };
@@ -369,6 +396,98 @@ export const samplesByType: Record<ExerciseType, SampleSpec[]> = {
         back: 'The process of registering when you arrive at the hotel.',
         example: 'Check-in is at 2 pm.',
         text_to_speak: 'check-in',
+      },
+    },
+  ],
+  error_spot: [
+    {
+      prompt: 'Find the wrong word and fix it.',
+      content: {
+        words: ['The', 'breakfast', 'are', 'served', 'from', '7', 'to', '10.'],
+        wrong_index: 2,
+        options: ['is', 'are', 'be', 'am'],
+        correct_index: 0,
+        explanation: 'Breakfast is singular, so the verb is "is".',
+      },
+    },
+    {
+      prompt: 'Find the wrong word and fix it.',
+      content: {
+        words: ['I', 'need', 'a', 'extra', 'pillow.'],
+        wrong_index: 2,
+        options: ['a', 'an', 'the', 'some'],
+        correct_index: 1,
+        explanation: 'Use "an" before a vowel sound: "an extra pillow".',
+      },
+    },
+  ],
+  stress_tap: [
+    {
+      prompt: 'Listen and tap the stressed syllable.',
+      content: {
+        syllables: ['HO', 'tel'],
+        correct_index: 0,
+        text_to_speak: 'hotel',
+        explanation: 'Hotel is stressed on the first syllable.',
+      },
+    },
+    {
+      prompt: 'Listen and tap the stressed syllable.',
+      content: {
+        syllables: ['be', 'HIND'],
+        correct_index: 1,
+        text_to_speak: 'behind',
+        explanation: 'Behind is stressed on the second syllable.',
+      },
+    },
+  ],
+  silent_letter: [
+    {
+      prompt: 'Which letter is silent in the word "hour"?',
+      content: {
+        letters: ['h', 'o', 'u', 'r'],
+        correct_index: 0,
+        explanation: 'The h in hour is silent.',
+      },
+    },
+    {
+      prompt: 'Which letter is silent in the word "listen"?',
+      content: {
+        letters: ['l', 'i', 's', 't', 'e', 'n'],
+        correct_index: 3,
+        explanation: 'The t in listen is silent.',
+      },
+    },
+  ],
+  word_sort: [
+    {
+      prompt: 'Sort the words into the two groups.',
+      content: {
+        categories: ['Hotel room', 'At the front desk'],
+        items: [
+          { word: 'pillow', category: 0 },
+          { word: 'towel', category: 0 },
+          { word: 'blanket', category: 0 },
+          { word: 'bill', category: 1 },
+          { word: 'receipt', category: 1 },
+          { word: 'deposit', category: 1 },
+        ],
+        explanation: 'Things in your room vs things at the front desk.',
+      },
+    },
+    {
+      prompt: 'Sort the words into the two groups.',
+      content: {
+        categories: ['In the bathroom', 'In the lobby'],
+        items: [
+          { word: 'shower', category: 0 },
+          { word: 'mirror', category: 0 },
+          { word: 'soap', category: 0 },
+          { word: 'reception', category: 1 },
+          { word: 'elevator', category: 1 },
+          { word: 'sofa', category: 1 },
+        ],
+        explanation: 'Bathroom items vs lobby places.',
       },
     },
   ],

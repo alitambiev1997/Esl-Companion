@@ -12,7 +12,11 @@ export type ExerciseType =
   | 'context_fill'
   | 'listening_word_order'
   | 'sentence_order'
-  | 'flashcard_flip';
+  | 'flashcard_flip'
+  | 'error_spot'
+  | 'stress_tap'
+  | 'silent_letter'
+  | 'word_sort';
 
 export interface Program {
   id: string;

@@ -5,8 +5,8 @@ import { colors, fonts, radius } from '@/src/theme/tokens';
 import type { ExerciseType } from '@/src/types/content';
 
 const GROUPS: { title: string; types: ExerciseType[] }[] = [
-  { title: 'Choice', types: ['multiple_choice', 'listening_multiple_choice', 'inline_choice'] },
-  { title: 'Production', types: ['fill_blank', 'word_order', 'matching', 'listening_dictation', 'listening_word_order', 'sentence_order'] },
+  { title: 'Choice', types: ['multiple_choice', 'listening_multiple_choice', 'inline_choice', 'error_spot', 'stress_tap', 'silent_letter'] },
+  { title: 'Production', types: ['fill_blank', 'word_order', 'matching', 'listening_dictation', 'listening_word_order', 'sentence_order', 'word_sort'] },
   { title: 'Communication', types: ['speaking_recording', 'context_fill'] },
   { title: 'Other', types: ['reading_comprehension', 'flashcard_flip', 'flashcard'] },
 ];

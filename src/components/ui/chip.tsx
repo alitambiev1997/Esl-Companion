@@ -9,6 +9,8 @@ export function Chip({
   selected,
   disabled,
   backgroundColor,
+  large,
+  wrong,
 }: {
   label: string;
   onPress: () => void;
@@ -16,6 +18,8 @@ export function Chip({
   selected?: boolean;
   disabled?: boolean;
   backgroundColor?: string | Animated.AnimatedInterpolation<string | number>;
+  large?: boolean;
+  wrong?: boolean;
 }) {
   const scale = useRef(new Animated.Value(1)).current;
 
@@ -36,11 +40,13 @@ export function Chip({
         style={[
           styles.chip,
           selected && !backgroundColor && styles.selected,
+          wrong && styles.wrong,
+          large && styles.large,
           backgroundColor ? { backgroundColor: 'transparent' } : null,
         ]}
       >
         <Text
-          style={[styles.label, centered && styles.centered]}
+          style={[styles.label, centered && styles.centered, large && styles.labelLarge]}
           numberOfLines={2}
           adjustsFontSizeToFit
           minimumFontScale={0.8}
@@ -68,6 +74,18 @@ const styles = StyleSheet.create({
     borderColor: colors.sky,
     borderBottomColor: colors.sky,
     backgroundColor: colors.skyTint,
+  },
+  wrong: {
+    borderColor: colors.coral,
+    borderBottomColor: colors.coral,
+    backgroundColor: colors.coralTint,
+  },
+  large: {
+    paddingHorizontal: 22,
+    paddingVertical: 14,
+  },
+  labelLarge: {
+    fontSize: 22,
   },
   label: {
     fontFamily: fonts.body,
