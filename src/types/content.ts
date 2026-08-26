@@ -7,7 +7,9 @@ export type ExerciseType =
   | 'listening_dictation'
   | 'reading_comprehension'
   | 'speaking_recording'
-  | 'flashcard';
+  | 'flashcard'
+  | 'inline_choice'
+  | 'context_fill';
 
 export interface Program {
   id: string;

@@ -10,6 +10,8 @@ export const exerciseMeta: Record<ExerciseType, string> = {
   reading_comprehension: 'Read a text and answer questions.',
   speaking_recording: 'Say the sentence and compare with the model.',
   flashcard: 'Flip a card to check the meaning.',
+  inline_choice: 'Pick the word that fits in the sentence.',
+  context_fill: 'Complete the dialogue with the right word.',
 };
 
 export const contentShapes: Record<ExerciseType, string> = {
@@ -49,6 +51,19 @@ export const contentShapes: Record<ExerciseType, string> = {
   bubbles: string[],
   text_to_speak: string,
   question: string,
+  options: string[],
+  correct_index: number,
+  explanation: string
+}`,
+  inline_choice: `{
+  sentence: string,
+  options: string[],
+  correct_index: number,
+  explanation: string,
+  tip?: string
+}`,
+  context_fill: `{
+  dialogue: { speaker: string, side: 'left' | 'right', text: string }[],
   options: string[],
   correct_index: number,
   explanation: string
@@ -223,6 +238,57 @@ export const samplesByType: Record<ExerciseType, SampleSpec[]> = {
         options: ['7 to 10', '8 to 9', '7 to 9', '8 to 10'],
         correct_index: 0,
         explanation: 'Breakfast is from 7 to 10 in the lobby.',
+      },
+    },
+  ],
+  inline_choice: [
+    {
+      prompt: 'Choose the word that fits.',
+      content: {
+        sentence: 'I would like to ___ a room for two nights.',
+        options: ['book', 'leave', 'clean', 'pay'],
+        correct_index: 0,
+        explanation: 'You book a room before you arrive.',
+        tip: 'book = rezervovat',
+      },
+    },
+    {
+      prompt: 'Choose the word that fits.',
+      content: {
+        sentence: 'The hotel ___ is open until 10 pm.',
+        options: ['gym', 'train', 'kitchen', 'market'],
+        correct_index: 0,
+        explanation: 'Many hotels have a gym for guests.',
+        tip: 'gym = posilovna',
+      },
+    },
+  ],
+  context_fill: [
+    {
+      prompt: 'Complete the dialogue.',
+      content: {
+        dialogue: [
+          { speaker: 'Guest', side: 'left', text: 'Good evening. I have a reservation.' },
+          { speaker: 'Receptionist', side: 'right', text: 'Welcome! What is your name?' },
+          { speaker: 'Guest', side: 'left', text: 'Novak. I would like to ___ in early.' },
+          { speaker: 'Receptionist', side: 'right', text: 'Of course, room 412 is ready now.' },
+        ],
+        options: ['check', 'pay', 'sleep', 'leave'],
+        correct_index: 0,
+        explanation: 'To check in means to arrive and register at the hotel.',
+      },
+    },
+    {
+      prompt: 'Complete the dialogue.',
+      content: {
+        dialogue: [
+          { speaker: 'Guest', side: 'left', text: 'The shower is broken.' },
+          { speaker: 'Receptionist', side: 'right', text: 'I am sorry. We can change your ___ right now.' },
+          { speaker: 'Guest', side: 'left', text: 'Thank you, that helps a lot.' },
+        ],
+        options: ['room', 'towel', 'key', 'bill'],
+        correct_index: 0,
+        explanation: 'The hotel can give you a different room.',
       },
     },
   ],

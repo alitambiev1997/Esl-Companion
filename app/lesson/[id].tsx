@@ -22,7 +22,9 @@ import type {
   FeedbackBannerInfo,
 } from '@/src/features/lesson/content';
 import { medalColor, medalForScore, type Medal } from '@/src/lib/medals';
+import { ContextFillRenderer } from '@/src/features/lesson/renderers/context-fill';
 import { FillBlankRenderer } from '@/src/features/lesson/renderers/fill-blank';
+import { InlineChoiceRenderer } from '@/src/features/lesson/renderers/inline-choice';
 import { ListeningDictationRenderer } from '@/src/features/lesson/renderers/listening-dictation';
 import { ListeningMultipleChoiceRenderer } from '@/src/features/lesson/renderers/listening-multiple-choice';
 import { MatchingRenderer } from '@/src/features/lesson/renderers/matching';
@@ -362,7 +364,7 @@ export default function LessonPlayer() {
   const exercise = exercises[index];
   const isPlaceholder =
     exercise &&
-    !['multiple_choice', 'fill_blank', 'word_order', 'matching', 'listening_multiple_choice', 'listening_dictation', 'reading_comprehension', 'speaking_recording'].includes(
+    !['multiple_choice', 'inline_choice', 'context_fill', 'fill_blank', 'word_order', 'matching', 'listening_multiple_choice', 'listening_dictation', 'reading_comprehension', 'speaking_recording'].includes(
       exercise.type
     );
   const isUngraded = exercise?.type === 'speaking_recording';
@@ -457,6 +459,12 @@ export default function LessonPlayer() {
 
             {exercise.type === 'multiple_choice' && (
               <MultipleChoiceRenderer key={exercise.id} ref={rendererRef} {...rendererProps(exercise)} />
+            )}
+            {exercise.type === 'inline_choice' && (
+              <InlineChoiceRenderer key={exercise.id} ref={rendererRef} {...rendererProps(exercise)} />
+            )}
+            {exercise.type === 'context_fill' && (
+              <ContextFillRenderer key={exercise.id} ref={rendererRef} {...rendererProps(exercise)} />
             )}
             {exercise.type === 'fill_blank' && (
               <FillBlankRenderer key={exercise.id} ref={rendererRef} {...rendererProps(exercise)} />

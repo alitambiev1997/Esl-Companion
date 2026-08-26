@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { ChatBubbles, type ChatLine } from '@/src/components/ui/chat-bubbles';
 import { OptionCard } from '@/src/components/ui/option-card';
 import type {
   ExerciseRendererHandle,
@@ -18,6 +19,10 @@ export const ReadingComprehensionRenderer = forwardRef<
   const [selected, setSelected] = useState<number | null>(null);
 
   const passage = () => content.text_to_speak ?? content.bubbles.join(' ');
+  const lines: ChatLine[] = content.bubbles.map((bubble, i) => ({
+    text: bubble,
+    left: i % 2 === 0,
+  }));
 
   useEffect(() => {
     speak(passage());
@@ -52,19 +57,7 @@ export const ReadingComprehensionRenderer = forwardRef<
         <Text style={styles.listenText}>Listen</Text>
       </Pressable>
 
-      {content.bubbles.map((bubble, i) => {
-        const left = i % 2 === 0;
-        return (
-          <View
-            key={i}
-            style={[styles.bubbleRow, left ? styles.alignLeft : styles.alignRight]}
-          >
-            <View style={[styles.bubble, left ? styles.bubbleLeft : styles.bubbleRight]}>
-              <Text style={styles.bubbleText}>{bubble}</Text>
-            </View>
-          </View>
-        );
-      })}
+      <ChatBubbles lines={lines} />
 
       <Text style={styles.question}>{content.question}</Text>
 
@@ -97,34 +90,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.sky,
     marginLeft: 6,
-  },
-  bubbleRow: {
-    width: '100%',
-    marginBottom: 4,
-  },
-  alignLeft: {
-    alignItems: 'flex-start',
-  },
-  alignRight: {
-    alignItems: 'flex-end',
-  },
-  bubble: {
-    maxWidth: '80%',
-    borderRadius: 16,
-    padding: 10,
-  },
-  bubbleLeft: {
-    backgroundColor: colors.skyTint,
-  },
-  bubbleRight: {
-    backgroundColor: colors.white,
-    borderWidth: 2,
-    borderColor: colors.grey,
-  },
-  bubbleText: {
-    fontFamily: fonts.body,
-    fontSize: 14,
-    color: colors.ink,
   },
   question: {
     fontFamily: fonts.body,

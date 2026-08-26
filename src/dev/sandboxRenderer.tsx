@@ -3,7 +3,9 @@ import type {
   ExerciseRendererHandle,
   ExerciseRendererProps,
 } from '@/src/features/lesson/content';
+import { ContextFillRenderer } from '@/src/features/lesson/renderers/context-fill';
 import { FillBlankRenderer } from '@/src/features/lesson/renderers/fill-blank';
+import { InlineChoiceRenderer } from '@/src/features/lesson/renderers/inline-choice';
 import { ListeningDictationRenderer } from '@/src/features/lesson/renderers/listening-dictation';
 import { ListeningMultipleChoiceRenderer } from '@/src/features/lesson/renderers/listening-multiple-choice';
 import { MatchingRenderer } from '@/src/features/lesson/renderers/matching';
@@ -21,6 +23,10 @@ export function renderSandboxRenderer(
   switch (type) {
     case 'multiple_choice':
       return <MultipleChoiceRenderer ref={ref} {...props} />;
+    case 'inline_choice':
+      return <InlineChoiceRenderer ref={ref} {...props} />;
+    case 'context_fill':
+      return <ContextFillRenderer ref={ref} {...props} />;
     case 'fill_blank':
       return <FillBlankRenderer ref={ref} {...props} />;
     case 'word_order':

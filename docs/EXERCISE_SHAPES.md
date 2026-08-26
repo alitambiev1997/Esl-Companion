@@ -188,6 +188,61 @@ Example:
 }
 ```
 
+## inline_choice
+
+```json
+{
+  "sentence": "string with ___ blank",
+  "options": ["string", "..."],
+  "correct_index": 0,
+  "explanation": "string",
+  "tip": "string (optional, shown as a second hint line)"
+}
+```
+
+The sentence contains exactly one `___`. The blank renders as an underlined slot that fills with the selected option; tapping an option replaces the previous selection.
+
+Example:
+
+```json
+{
+  "sentence": "I would like to ___ a room for two nights.",
+  "options": ["book", "leave", "clean", "pay"],
+  "correct_index": 0,
+  "explanation": "You book a room before you arrive.",
+  "tip": "book = rezervovat"
+}
+```
+
+## context_fill
+
+```json
+{
+  "dialogue": [{ "speaker": "string", "side": "left | right", "text": "string" }, "..."],
+  "options": ["string", "..."],
+  "correct_index": 0,
+  "explanation": "string"
+}
+```
+
+Exactly one dialogue line contains `___`. The dialogue renders as chat bubbles (speaker label above each bubble); after Check the blank fills with the correct word — leaf if the user was correct, coral if not. The correct answer also appears in the feedback banner.
+
+Example:
+
+```json
+{
+  "dialogue": [
+    { "speaker": "Guest", "side": "left", "text": "Good evening. I have a reservation." },
+    { "speaker": "Receptionist", "side": "right", "text": "Welcome! What is your name?" },
+    { "speaker": "Guest", "side": "left", "text": "Novak. I would like to ___ in early." },
+    { "speaker": "Receptionist", "side": "right", "text": "Of course, room 412 is ready now." }
+  ],
+  "options": ["check", "pay", "sleep", "leave"],
+  "correct_index": 0,
+  "explanation": "To check in means to arrive and register at the hotel."
+}
+```
+
 ## flashcard
 
 No renderer yet. Shape TBD.

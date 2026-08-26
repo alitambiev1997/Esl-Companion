@@ -49,12 +49,34 @@ export interface ReadingComprehensionContent {
   explanation: string | null;
 }
 
+export interface InlineChoiceContent {
+  sentence: string;
+  options: string[];
+  correct_index: number;
+  explanation: string | null;
+  tip?: string | null;
+}
+
+export interface DialogueLine {
+  speaker: string;
+  side: 'left' | 'right';
+  text: string;
+}
+
+export interface ContextFillContent {
+  dialogue: DialogueLine[];
+  options: string[];
+  correct_index: number;
+  explanation: string | null;
+}
+
 export interface FeedbackBannerInfo {
   correct: boolean;
   title?: string | null;
   explanation: string | null;
   correctAnswer: string | null;
   chips?: string[] | null;
+  tip?: string | null;
 }
 
 export interface ExerciseRendererHandle {

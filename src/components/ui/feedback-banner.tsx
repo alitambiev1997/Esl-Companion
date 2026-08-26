@@ -12,6 +12,7 @@ export function FeedbackBanner({
   continueLabel,
   title,
   chips,
+  tip,
 }: {
   correct: boolean;
   explanation: string | null;
@@ -20,6 +21,7 @@ export function FeedbackBanner({
   continueLabel?: string;
   title?: string;
   chips?: string[] | null;
+  tip?: string | null;
 }) {
   const insets = useSafeAreaInsets();
   const slide = useRef(new Animated.Value(1)).current;
@@ -43,6 +45,7 @@ export function FeedbackBanner({
     >
       <Text style={styles.title}>{title ?? (correct ? 'Nicely done!' : 'Not quite')}</Text>
       {explanation && <Text style={styles.text}>{explanation}</Text>}
+      {tip && <Text style={styles.tip}>{tip}</Text>}
       {!correct && chips && chips.length > 0 && (
         <View style={styles.chipsRow}>
           {chips.map((chip) => (
@@ -84,6 +87,13 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     fontSize: 14,
     color: colors.ink,
+  },
+  tip: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: colors.ink,
+    opacity: 0.6,
+    marginTop: 4,
   },
   answer: {
     fontFamily: fonts.body,
