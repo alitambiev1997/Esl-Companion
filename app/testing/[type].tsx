@@ -93,7 +93,7 @@ export default function TestingDetail() {
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.title}>{exerciseType}</Text>
 
-        {exerciseType !== 'fill_blank' && exerciseType !== 'listening_word_order' && (
+        {exerciseType !== 'fill_blank' && exerciseType !== 'listening_word_order' && exerciseType !== 'image_choice' && (
           <Text style={styles.prompt}>{exercise.prompt}</Text>
         )}
 
@@ -130,7 +130,7 @@ export default function TestingDetail() {
             onPress={advance}
           />
         </BottomBar>
-      ) : ['matching', 'error_spot', 'stress_tap', 'silent_letter'].includes(exerciseType) ? (
+      ) : ['matching', 'error_spot', 'stress_tap', 'silent_letter', 'image_choice'].includes(exerciseType) ? (
         null
       ) : (
         <BottomBar>

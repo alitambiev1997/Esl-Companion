@@ -20,6 +20,8 @@ export const exerciseMeta: Record<ExerciseType, string> = {
   silent_letter: 'Tap the silent letter.',
   word_sort: 'Sort the words into the two groups.',
   form_fill: 'Fill in the blanks on the card.',
+  image_choice: 'Look, listen, and pick the answer.',
+  document_reader: 'Read the document and answer the questions.',
 };
 
 export const contentShapes: Record<ExerciseType, string> = {
@@ -119,6 +121,20 @@ export const contentShapes: Record<ExerciseType, string> = {
   text_to_speak?: string,
   fields: { prompt: string, options: string[], correct_index: number, explanation?: string }[],
   explanation?: string
+}`,
+  image_choice: `{
+  image_url?: string,
+  text_to_speak?: string,
+  prompt?: string,
+  options: string[],
+  correct_index: number,
+  explanation: string
+}`,
+  document_reader: `{
+  image_url?: string,
+  document_lines?: string[],
+  questions: { question: string, options: string[], correct_index: number, explanation: string }[],
+  explanation: string
 }`,
   flashcard: 'no renderer yet',
 };
@@ -554,6 +570,86 @@ export const samplesByType: Record<ExerciseType, SampleSpec[]> = {
           },
         ],
         explanation: 'Choose the grammatically correct option in each sentence.',
+      },
+    },
+  ],
+  image_choice: [
+    {
+      prompt: 'Look at the picture, listen, and answer.',
+      content: {
+        image_url: 'seed/hotel-lobby.png',
+        text_to_speak: 'Breakfast is served from 7 to 10.',
+        prompt: 'When is breakfast served?',
+        options: ['7 to 10', '6 to 9', '8 to 11', '9 to 12'],
+        correct_index: 0,
+        explanation: 'Breakfast is from 7 to 10.',
+      },
+    },
+    {
+      prompt: 'Pick the answer.',
+      content: {
+        image_url: null,
+        text_to_speak: null,
+        prompt: 'Which word means the same as "lift"?',
+        options: ['elevator', 'staircase', 'door', 'window'],
+        correct_index: 0,
+        explanation: 'In British English a lift is an elevator.',
+      },
+    },
+  ],
+  document_reader: [
+    {
+      prompt: 'Read the document and answer the questions.',
+      content: {
+        image_url: null,
+        document_lines: [
+          'Hotel information',
+          'Breakfast is served from 7 to 10 in the lobby.',
+          'The pool is open from 8 am to 9 pm.',
+          'Wi-Fi is free in all rooms.',
+        ],
+        questions: [
+          {
+            question: 'When is breakfast served?',
+            options: ['7 to 10', '8 to 9', '7 to 9', '8 to 10'],
+            correct_index: 0,
+            explanation: 'The document says breakfast is from 7 to 10.',
+          },
+          {
+            question: 'What is open from 8 am to 9 pm?',
+            options: ['The pool', 'The gym', 'The restaurant', 'The shop'],
+            correct_index: 0,
+            explanation: 'The pool is open from 8 am to 9 pm.',
+          },
+        ],
+        explanation: 'Answer both questions from the document.',
+      },
+    },
+    {
+      prompt: 'Read the menu and answer the questions.',
+      content: {
+        image_url: null,
+        document_lines: [
+          'Room service menu',
+          'Hamburger with fries - 12 euros',
+          'Chicken salad - 9 euros',
+          'Apple pie - 5 euros',
+        ],
+        questions: [
+          {
+            question: 'How much is the chicken salad?',
+            options: ['9 euros', '12 euros', '5 euros', '15 euros'],
+            correct_index: 0,
+            explanation: 'The menu lists the salad at 9 euros.',
+          },
+          {
+            question: 'What costs 12 euros?',
+            options: ['The hamburger with fries', 'The apple pie', 'The chicken salad', 'The water'],
+            correct_index: 0,
+            explanation: 'The hamburger with fries is 12 euros.',
+          },
+        ],
+        explanation: 'Both answers are in the menu.',
       },
     },
   ],

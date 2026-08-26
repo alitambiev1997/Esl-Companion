@@ -134,6 +134,29 @@ export interface FormFillContent {
   explanation: string | null;
 }
 
+export interface ImageChoiceContent {
+  image_url: string | null;
+  text_to_speak: string | null;
+  prompt: string | null;
+  options: string[];
+  correct_index: number;
+  explanation: string | null;
+}
+
+export interface DocumentQuestion {
+  question: string;
+  options: string[];
+  correct_index: number;
+  explanation: string | null;
+}
+
+export interface DocumentReaderContent {
+  image_url: string | null;
+  document_lines: string[] | null;
+  questions: DocumentQuestion[];
+  explanation: string | null;
+}
+
 export interface FeedbackBannerInfo {
   correct: boolean;
   title?: string | null;

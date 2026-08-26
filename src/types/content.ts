@@ -17,7 +17,9 @@ export type ExerciseType =
   | 'stress_tap'
   | 'silent_letter'
   | 'word_sort'
-  | 'form_fill';
+  | 'form_fill'
+  | 'image_choice'
+  | 'document_reader';
 
 export interface Program {
   id: string;

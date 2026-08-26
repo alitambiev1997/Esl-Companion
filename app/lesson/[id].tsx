@@ -24,10 +24,12 @@ import type {
 } from '@/src/features/lesson/content';
 import { medalColor, medalForScore, type Medal } from '@/src/lib/medals';
 import { ContextFillRenderer } from '@/src/features/lesson/renderers/context-fill';
+import { DocumentReaderRenderer } from '@/src/features/lesson/renderers/document-reader';
 import { ErrorSpotRenderer } from '@/src/features/lesson/renderers/error-spot';
 import { FillBlankRenderer } from '@/src/features/lesson/renderers/fill-blank';
 import { FlashcardFlipRenderer } from '@/src/features/lesson/renderers/flashcard-flip';
 import { FormFillRenderer } from '@/src/features/lesson/renderers/form-fill';
+import { ImageChoiceRenderer } from '@/src/features/lesson/renderers/image-choice';
 import { InlineChoiceRenderer } from '@/src/features/lesson/renderers/inline-choice';
 import { ListeningDictationRenderer } from '@/src/features/lesson/renderers/listening-dictation';
 import { ListeningWordOrderRenderer } from '@/src/features/lesson/renderers/listening-word-order';
@@ -374,13 +376,13 @@ export default function LessonPlayer() {
   const exercise = exercises[index];
   const isPlaceholder =
     exercise &&
-    !['multiple_choice', 'inline_choice', 'context_fill', 'error_spot', 'stress_tap', 'silent_letter', 'word_sort', 'form_fill', 'fill_blank', 'word_order', 'matching', 'listening_multiple_choice', 'listening_dictation', 'listening_word_order', 'sentence_order', 'reading_comprehension', 'speaking_recording', 'flashcard_flip'].includes(
+    !['multiple_choice', 'inline_choice', 'context_fill', 'error_spot', 'stress_tap', 'silent_letter', 'word_sort', 'form_fill', 'image_choice', 'document_reader', 'fill_blank', 'word_order', 'matching', 'listening_multiple_choice', 'listening_dictation', 'listening_word_order', 'sentence_order', 'reading_comprehension', 'speaking_recording', 'flashcard_flip'].includes(
       exercise.type
     );
   const isUngraded =
     exercise?.type === 'speaking_recording' || exercise?.type === 'flashcard_flip';
   const isMatching = exercise?.type === 'matching';
-  const isTapGraded = exercise != null && ['matching', 'error_spot', 'stress_tap', 'silent_letter'].includes(exercise.type);
+  const isTapGraded = exercise != null && ['matching', 'error_spot', 'stress_tap', 'silent_letter', 'image_choice'].includes(exercise.type);
 
   const rendererProps = (current: Exercise): ExerciseRendererProps => ({
     exercise: current,
@@ -485,7 +487,7 @@ export default function LessonPlayer() {
 
         {exercise && (
           <>
-            {exercise.type !== 'fill_blank' && exercise.type !== 'listening_word_order' && (
+            {exercise.type !== 'fill_blank' && exercise.type !== 'listening_word_order' && exercise.type !== 'image_choice' && (
               <Text style={styles.prompt}>{exercise.prompt}</Text>
             )}
 
@@ -512,6 +514,12 @@ export default function LessonPlayer() {
             )}
             {exercise.type === 'form_fill' && (
               <FormFillRenderer key={exercise.id} ref={rendererRef} {...rendererProps(exercise)} />
+            )}
+            {exercise.type === 'image_choice' && (
+              <ImageChoiceRenderer key={exercise.id} ref={rendererRef} {...rendererProps(exercise)} />
+            )}
+            {exercise.type === 'document_reader' && (
+              <DocumentReaderRenderer key={exercise.id} ref={rendererRef} {...rendererProps(exercise)} />
             )}
             {exercise.type === 'fill_blank' && (
               <FillBlankRenderer key={exercise.id} ref={rendererRef} {...rendererProps(exercise)} />

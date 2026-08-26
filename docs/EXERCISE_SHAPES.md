@@ -4,6 +4,9 @@ Contract for `exercises.content` (JSONB) per `exercises.type`.
 This is the source of truth for future AI-generated SQL content.
 All fields are required unless marked optional.
 
+`image_url` values are paths inside the public Supabase storage bucket `content`;
+the app resolves them via `src/lib/storage.ts` (`publicStorageUrl`). Full `http(s)://` URLs are passed through as-is.
+
 ## multiple_choice
 
 ```json
@@ -462,6 +465,69 @@ Example (grammar, no audio):
     { "prompt": "I will pay ___ card.", "options": ["by", "with", "on"], "correct_index": 0, "explanation": "\"Pay by card\" is the fixed phrase." }
   ],
   "explanation": "Choose the grammatically correct option in each sentence."
+}
+```
+
+## image_choice
+
+```json
+{
+  "image_url": "string (optional)",
+  "text_to_speak": "string (optional)",
+  "prompt": "string (optional)",
+  "options": ["string", "..."],
+  "correct_index": 0,
+  "explanation": "string"
+}
+```
+
+Image on top (if present), Speaker + Slow buttons (if `text_to_speak`), prompt, then stacked OptionCards. One tap grades immediately — no Check button.
+
+Example:
+
+```json
+{
+  "image_url": "seed/hotel-lobby.png",
+  "text_to_speak": "Breakfast is served from 7 to 10.",
+  "prompt": "When is breakfast served?",
+  "options": ["7 to 10", "6 to 9", "8 to 11", "9 to 12"],
+  "correct_index": 0,
+  "explanation": "Breakfast is from 7 to 10."
+}
+```
+
+## document_reader
+
+```json
+{
+  "image_url": "string (optional)",
+  "document_lines": ["string", "..."] (optional, ignored when image_url present),
+  "questions": [
+    { "question": "string", "options": ["string", "..."], "correct_index": 0, "explanation": "string" },
+    "..."
+  ],
+  "explanation": "string"
+}
+```
+
+Stimulus is the image if present, otherwise a styled document card (first line bold as the title). Questions run sequentially ("Question 1 of 2"), each with stacked OptionCards and the shared Check; after the last question, the banner shows the result — `is_correct` = all questions correct, wrong questions listed with their correct answers.
+
+Example:
+
+```json
+{
+  "image_url": null,
+  "document_lines": [
+    "Hotel information",
+    "Breakfast is served from 7 to 10 in the lobby.",
+    "The pool is open from 8 am to 9 pm.",
+    "Wi-Fi is free in all rooms."
+  ],
+  "questions": [
+    { "question": "When is breakfast served?", "options": ["7 to 10", "8 to 9", "7 to 9", "8 to 10"], "correct_index": 0, "explanation": "The document says breakfast is from 7 to 10." },
+    { "question": "What is open from 8 am to 9 pm?", "options": ["The pool", "The gym", "The restaurant", "The shop"], "correct_index": 0, "explanation": "The pool is open from 8 am to 9 pm." }
+  ],
+  "explanation": "Answer both questions from the document."
 }
 ```
 

@@ -6,8 +6,10 @@ import type {
 import { ContextFillRenderer } from '@/src/features/lesson/renderers/context-fill';
 import { ErrorSpotRenderer } from '@/src/features/lesson/renderers/error-spot';
 import { FillBlankRenderer } from '@/src/features/lesson/renderers/fill-blank';
+import { DocumentReaderRenderer } from '@/src/features/lesson/renderers/document-reader';
 import { FlashcardFlipRenderer } from '@/src/features/lesson/renderers/flashcard-flip';
 import { FormFillRenderer } from '@/src/features/lesson/renderers/form-fill';
+import { ImageChoiceRenderer } from '@/src/features/lesson/renderers/image-choice';
 import { InlineChoiceRenderer } from '@/src/features/lesson/renderers/inline-choice';
 import { ListeningDictationRenderer } from '@/src/features/lesson/renderers/listening-dictation';
 import { ListeningMultipleChoiceRenderer } from '@/src/features/lesson/renderers/listening-multiple-choice';
@@ -45,6 +47,10 @@ export function renderSandboxRenderer(
       return <WordSortRenderer ref={ref} {...props} />;
     case 'form_fill':
       return <FormFillRenderer ref={ref} {...props} />;
+    case 'image_choice':
+      return <ImageChoiceRenderer ref={ref} {...props} />;
+    case 'document_reader':
+      return <DocumentReaderRenderer ref={ref} {...props} />;
     case 'fill_blank':
       return <FillBlankRenderer ref={ref} {...props} />;
     case 'word_order':
