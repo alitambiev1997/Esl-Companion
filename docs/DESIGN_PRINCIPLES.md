@@ -1,41 +1,42 @@
 # Design principles (all screens, all activity types)
 
-Source of truth for UI/UX. Work that violates these is wrong even if it compiles.
-
 ## Layout
-1. One task per screen. Everything else stays out.
-2. Content scrolls; actions live in a fixed bottom bar above the safe area.
-3. Max two columns for anything tappable; option lists are single-column full-width cards.
-4. Tap targets >= 56 height; spacing rhythm 12 / 16 / 24.
-5. No mid-word wrapping on chips/pills (2 lines + font shrink max).
+1. One task per screen.
+2. Content scrolls; actions in a fixed bottom bar above safe area.
+3. Max two columns for tappable things; option lists are single-column full-width cards.
+4. Tap targets >= 56; spacing rhythm 12 / 16 / 24.
+5. No mid-word wrapping on chips (2 lines + font shrink max).
 
-## Components (use these, never re-invent)
+## Components
 6. OptionCard for selectable answers.
-7. Chip for word banks and pairs.
+7. Chip for banks, pairs, short options.
 8. SpeakerButton + SlowButton for all audio.
-9. FeedbackBanner for all results (leaf = correct, coral = wrong); Continue lives inside the banner.
-10. Top bar = X (with leave confirm) + animated progress bar. No "Exercise x of y" text.
+9. FeedbackBanner for all results; Continue lives in the banner.
+10. Top bar = X (leave confirm) + animated progress bar. No "Exercise x of y" text.
+
+## Interaction
+11. Tap-only. No drag gestures.
+12. Shuffle once, store; never reshuffle on render.
+13. Distractors exclude the target; options value-unique.
+14. Removed items keep their space (opacity 0), no reflow.
 
 ## Feel
-11. Buttons have the 3D bottom border + press scale 0.97.
-12. The board reacts: correct pops/fades leaf, wrong shakes coral.
-13. No reflow jumps: removed items keep their space (opacity 0).
-14. Animated API only; no animation packages.
-15. Tokens only. No raw hex outside src/theme.
+15. 3D bottom border + press scale 0.97.
+16. The board reacts: correct pops leaf, wrong shakes coral.
+17. Animations 300-750 ms - for learners, not for demos.
+18. Animated API only; tokens only.
 
-## What we never do
-16. No XP, no hearts/lives, no leagues. Medals + streaks only.
-17. No self-grading. The app always checks objectively.
-18. No new packages without explicit approval.
+## Product rules
+19. No XP, hearts, leagues. Medals (bronze 60 / silver 80 / gold 90 / platinum 100) + streaks.
+20. No self-grading; the app checks objectively.
+21. Every answer has a source of truth: audio contains the fact, or grammar distinguishes options. Never arbitrary facts.
+22. No new packages without explicit approval.
 
-## Activity content rules
-- form_fill: a field is answerable only if exactly one holds — LISTENING (text_to_speak present and contains the fact; options are facts like names/numbers) or GRAMMAR (options differ grammatically, one correct). Never fact options without audio; never audio that omits facts.
-
-## New activity type checklist
-- [ ] content shape documented in docs/EXERCISE_SHAPES.md
-- [ ] two samples added to src/dev/sampleExercises.ts
-- [ ] appears on /testing, grouped, mini-lesson flow works
-- [ ] uses only the shared components above
-- [ ] results via onResult callback (no DB writes in renderers)
-- [ ] is_required respected; scoring feeds medal logic
-- [ ] verified on device: testing page + real lesson
+## New activity checklist
+- [ ] shape in docs/EXERCISE_SHAPES.md
+- [ ] 2 samples in src/dev/sampleExercises.ts
+- [ ] on /testing, grouped, mini-lesson flow works
+- [ ] shared components only
+- [ ] onResult callback, no DB writes in renderers
+- [ ] is_required respected; scoring feeds medals
+- [ ] verified on device

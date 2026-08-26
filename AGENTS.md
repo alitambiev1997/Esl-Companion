@@ -54,6 +54,11 @@ The /testing page is a dev-only exercise catalog/sandbox. It must be hidden or r
 
 All UI work follows docs/DESIGN_PRINCIPLES.md; new activity types must pass its checklist.
 
+## Backlog (dev-build phase)
+
+- Path squiggle polish, Review v2
+- Parked D-ideas: pronunciation scoring, picture hotspots, waveform compare, intonation mimic, karaoke sync
+
 ## Mastery medals (no XP)
 
 - Lessons award a medal from the best score: bronze 60-79, silver 80-89, gold 90-99, platinum 100.
