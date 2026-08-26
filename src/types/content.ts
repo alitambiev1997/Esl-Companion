@@ -16,7 +16,8 @@ export type ExerciseType =
   | 'error_spot'
   | 'stress_tap'
   | 'silent_letter'
-  | 'word_sort';
+  | 'word_sort'
+  | 'form_fill';
 
 export interface Program {
   id: string;

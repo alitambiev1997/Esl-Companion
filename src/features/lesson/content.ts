@@ -120,6 +120,19 @@ export interface WordSortContent {
   explanation: string | null;
 }
 
+export interface FormField {
+  prompt: string;
+  options: string[];
+  correct_index: number;
+}
+
+export interface FormFillContent {
+  title: string | null;
+  text_to_speak: string | null;
+  fields: FormField[];
+  explanation: string | null;
+}
+
 export interface FeedbackBannerInfo {
   correct: boolean;
   title?: string | null;

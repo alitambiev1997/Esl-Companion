@@ -19,6 +19,7 @@ export const exerciseMeta: Record<ExerciseType, string> = {
   stress_tap: 'Tap the stressed syllable.',
   silent_letter: 'Tap the silent letter.',
   word_sort: 'Sort the words into the two groups.',
+  form_fill: 'Fill in the blanks on the card.',
 };
 
 export const contentShapes: Record<ExerciseType, string> = {
@@ -112,6 +113,12 @@ export const contentShapes: Record<ExerciseType, string> = {
   categories: [string, string],
   items: { word: string, category: 0 | 1 }[],
   explanation: string
+}`,
+  form_fill: `{
+  title?: string,
+  text_to_speak?: string,
+  fields: { prompt: string, options: string[], correct_index: number }[],
+  explanation?: string
 }`,
   flashcard: 'no renderer yet',
 };
@@ -488,6 +495,34 @@ export const samplesByType: Record<ExerciseType, SampleSpec[]> = {
           { word: 'sofa', category: 1 },
         ],
         explanation: 'Bathroom items vs lobby places.',
+      },
+    },
+  ],
+  form_fill: [
+    {
+      prompt: 'Fill in the check-in form.',
+      content: {
+        title: 'Check-in',
+        text_to_speak: 'Good evening. Your room is ready. Please complete the check-in form.',
+        fields: [
+          { prompt: 'First name: ___', options: ['Anna', 'Ana', 'Anne', 'Hana'], correct_index: 0 },
+          { prompt: 'Number of nights: ___', options: ['two', 'three', 'four', 'five'], correct_index: 1 },
+          { prompt: 'Room type: ___', options: ['double', 'single', 'suite', 'twin'], correct_index: 0 },
+        ],
+        explanation: 'The receptionist confirms your details.',
+      },
+    },
+    {
+      prompt: 'Fill in the room service order.',
+      content: {
+        title: 'Room service',
+        text_to_speak: null,
+        fields: [
+          { prompt: 'I would like to order a ___.', options: ['pizza', 'burger', 'salad', 'soup'], correct_index: 0 },
+          { prompt: 'And a glass of ___.', options: ['water', 'wine', 'juice', 'milk'], correct_index: 0 },
+          { prompt: 'Room number ___.', options: ['412', '214', '421', '124'], correct_index: 0 },
+        ],
+        explanation: 'Ordering room service.',
       },
     },
   ],

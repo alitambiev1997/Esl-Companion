@@ -414,6 +414,37 @@ Example:
 }
 ```
 
+## form_fill
+
+```json
+{
+  "title": "string (optional)",
+  "text_to_speak": "string (optional)",
+  "fields": [
+    { "prompt": "string with ___ blank", "options": ["string", "..."], "correct_index": 0 },
+    "..."
+  ],
+  "explanation": "string (optional)"
+}
+```
+
+A realistic card with several blanks. Each field renders its prompt with an underlined slot that fills with the selected option; options appear as a wrapping row of compact OptionCards. If `text_to_speak` is present, Speaker + Slow buttons sit on top (auto-play once). Check enables when every field is answered; on wrong, the banner lists each wrong field with its correct answer (`is_correct` = all fields correct).
+
+Example:
+
+```json
+{
+  "title": "Check-in",
+  "text_to_speak": "Good evening. Your room is ready. Please complete the check-in form.",
+  "fields": [
+    { "prompt": "First name: ___", "options": ["Anna", "Ana", "Anne", "Hana"], "correct_index": 0 },
+    { "prompt": "Number of nights: ___", "options": ["two", "three", "four", "five"], "correct_index": 1 },
+    { "prompt": "Room type: ___", "options": ["double", "single", "suite", "twin"], "correct_index": 0 }
+  ],
+  "explanation": "The receptionist confirms your details."
+}
+```
+
 ## flashcard
 
 No renderer yet. Shape TBD.

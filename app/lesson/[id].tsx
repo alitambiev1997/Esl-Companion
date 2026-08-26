@@ -27,6 +27,7 @@ import { ContextFillRenderer } from '@/src/features/lesson/renderers/context-fil
 import { ErrorSpotRenderer } from '@/src/features/lesson/renderers/error-spot';
 import { FillBlankRenderer } from '@/src/features/lesson/renderers/fill-blank';
 import { FlashcardFlipRenderer } from '@/src/features/lesson/renderers/flashcard-flip';
+import { FormFillRenderer } from '@/src/features/lesson/renderers/form-fill';
 import { InlineChoiceRenderer } from '@/src/features/lesson/renderers/inline-choice';
 import { ListeningDictationRenderer } from '@/src/features/lesson/renderers/listening-dictation';
 import { ListeningWordOrderRenderer } from '@/src/features/lesson/renderers/listening-word-order';
@@ -373,7 +374,7 @@ export default function LessonPlayer() {
   const exercise = exercises[index];
   const isPlaceholder =
     exercise &&
-    !['multiple_choice', 'inline_choice', 'context_fill', 'error_spot', 'stress_tap', 'silent_letter', 'word_sort', 'fill_blank', 'word_order', 'matching', 'listening_multiple_choice', 'listening_dictation', 'listening_word_order', 'sentence_order', 'reading_comprehension', 'speaking_recording', 'flashcard_flip'].includes(
+    !['multiple_choice', 'inline_choice', 'context_fill', 'error_spot', 'stress_tap', 'silent_letter', 'word_sort', 'form_fill', 'fill_blank', 'word_order', 'matching', 'listening_multiple_choice', 'listening_dictation', 'listening_word_order', 'sentence_order', 'reading_comprehension', 'speaking_recording', 'flashcard_flip'].includes(
       exercise.type
     );
   const isUngraded =
@@ -508,6 +509,9 @@ export default function LessonPlayer() {
             )}
             {exercise.type === 'word_sort' && (
               <WordSortRenderer key={exercise.id} ref={rendererRef} {...rendererProps(exercise)} />
+            )}
+            {exercise.type === 'form_fill' && (
+              <FormFillRenderer key={exercise.id} ref={rendererRef} {...rendererProps(exercise)} />
             )}
             {exercise.type === 'fill_blank' && (
               <FillBlankRenderer key={exercise.id} ref={rendererRef} {...rendererProps(exercise)} />
