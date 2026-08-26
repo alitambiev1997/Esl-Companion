@@ -2,16 +2,18 @@ import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Animated,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
-import { TopBar } from '@/src/components/ui/TopBar';
 import { useAuth } from '@/src/features/auth/useAuth';
 import { BottomBar } from '@/src/components/ui/bottom-bar';
 import { FeedbackBanner } from '@/src/components/ui/feedback-banner';
+import { MascotBadge } from '@/components/mascot-badge';
+import { TopBar } from '@/src/components/ui/TopBar';
 import { MultipleChoiceRenderer } from '@/src/features/lesson/renderers/multiple-choice';
 import type {
   ExerciseRendererHandle,
@@ -174,6 +176,12 @@ export default function Review() {
   const rendererRef = useRef<ExerciseRendererHandle>(null);
   const [canCheck, setCanCheck] = useState(false);
   const [banner, setBanner] = useState<FeedbackBannerInfo | null>(null);
+  const cardAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    cardAnim.setValue(0);
+    Animated.timing(cardAnim, { toValue: 1, duration: 200, useNativeDriver: true }).start();
+  }, [cardAnim, index]);
 
   const readySession = session.status === 'ready' ? session : null;
   const card = readySession?.cards[index] ?? null;
@@ -328,13 +336,16 @@ export default function Review() {
   if (session.status === 'end') {
     return (
       <View style={styles.container}>
-        <Text style={styles.title}>Session complete</Text>
-        <Text style={styles.stateText}>
-          {session.correct} of {session.reviewed} correct
-        </Text>
-        <Pressable style={styles.buttonPrimary} onPress={() => router.replace('/home')}>
-          <Text style={styles.buttonPrimaryText}>Back to home</Text>
-        </Pressable>
+        <View style={styles.endBox}>
+          <MascotBadge size={72} />
+          <Text style={styles.endTitle}>
+            {session.correct} of {session.reviewed} correct
+          </Text>
+          <Text style={styles.endCaption}>Great work - see you tomorrow.</Text>
+          <Pressable style={styles.buttonPrimary} onPress={() => router.replace('/home')}>
+            <Text style={styles.buttonPrimaryText}>Back to home</Text>
+          </Pressable>
+        </View>
       </View>
     );
   }
@@ -347,28 +358,41 @@ export default function Review() {
     <View style={styles.container}>
       <TopBar title="Review" />
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.progressText}>
-          Card {index + 1} of {session.cards.length}
-        </Text>
+        <View style={styles.dueChip}>
+          <Text style={styles.dueChipText}>{session.cards.length} due</Text>
+        </View>
 
-        <Text style={styles.prompt}>{exercise.prompt}</Text>
-
-        <MultipleChoiceRenderer
-          key={card.id}
-          ref={rendererRef}
-          exercise={toExercise(card, exercise)}
-          checked={phase === 'checked'}
-          busy={busy}
-          isLast={index === session.cards.length - 1}
-          onCheck={(_, isCorrect, info) => {
-            setBanner(info);
-            handleCheck(isCorrect);
+        <Animated.View
+          style={{
+            opacity: cardAnim,
+            transform: [
+              { translateY: cardAnim.interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) },
+            ],
           }}
-          onCanCheckChange={setCanCheck}
-          onContinue={handleContinue}
-        />
+        >
+          <Text style={styles.progressText}>
+            Card {index + 1} of {session.cards.length}
+          </Text>
+
+          <Text style={styles.prompt}>{exercise.prompt}</Text>
+
+          <MultipleChoiceRenderer
+            key={card.id}
+            ref={rendererRef}
+            exercise={toExercise(card, exercise)}
+            checked={phase === 'checked'}
+            busy={busy}
+            isLast={index === session.cards.length - 1}
+            onCheck={(_, isCorrect, info) => {
+              setBanner(info);
+              handleCheck(isCorrect);
+            }}
+            onCanCheckChange={setCanCheck}
+            onContinue={handleContinue}
+          />
 
         {gradeError && <Text style={styles.errorText}>{gradeError}</Text>}
+        </Animated.View>
       </ScrollView>
       {phase === 'checked' && banner ? (
         <FeedbackBanner
@@ -406,6 +430,39 @@ const styles = StyleSheet.create({
     fontSize: 28,
     color: colors.ink,
     marginBottom: 8,
+  },
+  dueChip: {
+    alignSelf: 'flex-start',
+    backgroundColor: colors.leafTint,
+    borderRadius: radius.bubble,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    marginBottom: 16,
+  },
+  dueChipText: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.leaf,
+  },
+  endBox: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  endTitle: {
+    fontFamily: fonts.display,
+    fontSize: 22,
+    color: colors.ink,
+    marginTop: 16,
+  },
+  endCaption: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: colors.greyDark,
+    marginTop: 4,
+    marginBottom: 24,
   },
   progressText: {
     fontFamily: fonts.body,
