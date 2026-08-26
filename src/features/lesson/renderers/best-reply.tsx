@@ -10,6 +10,7 @@ import type {
 import { colors, fonts } from '@/src/theme/tokens';
 
 const WRONG_FLASH_MS = 2000;
+const CORRECT_FLASH_MS = 1000;
 
 export const BestReplyRenderer = forwardRef<ExerciseRendererHandle, ExerciseRendererProps>(
   function BestReplyRenderer({ exercise, checked, onCheck }, ref) {
@@ -17,6 +18,7 @@ export const BestReplyRenderer = forwardRef<ExerciseRendererHandle, ExerciseRend
     const [stepIndex, setStepIndex] = useState(0);
     const [mistakes, setMistakes] = useState(0);
     const [pendingWrong, setPendingWrong] = useState<string | null>(null);
+    const [pendingCorrect, setPendingCorrect] = useState<string | null>(null);
     const [wrongNote, setWrongNote] = useState<string | null>(null);
     const [advancing, setAdvancing] = useState(false);
     const reportedRef = useRef(false);
@@ -66,7 +68,12 @@ export const BestReplyRenderer = forwardRef<ExerciseRendererHandle, ExerciseRend
       const isCorrect = i === step.correct_index;
       const nextMistakes = mistakes + (isCorrect ? 0 : 1);
       if (isCorrect) {
-        advance(nextMistakes);
+        setPendingCorrect(step.options[i]);
+        setAdvancing(true);
+        setTimeout(() => {
+          setPendingCorrect(null);
+          advance(nextMistakes);
+        }, CORRECT_FLASH_MS);
         return;
       }
       setPendingWrong(step.options[i]);
@@ -89,7 +96,13 @@ export const BestReplyRenderer = forwardRef<ExerciseRendererHandle, ExerciseRend
             <OptionCard
               label={option}
               wrong={pendingWrong === option}
-              tone={pendingWrong !== null && i === step.correct_index ? 'sun' : undefined}
+              tone={
+                pendingCorrect === option
+                  ? 'leaf'
+                  : pendingWrong !== null && i === step.correct_index
+                    ? 'sun'
+                    : undefined
+              }
               disabled={advancing || checked}
               onPress={() => pick(i)}
             />
