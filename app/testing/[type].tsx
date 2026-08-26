@@ -90,7 +90,9 @@ export default function TestingDetail() {
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.title}>{exerciseType}</Text>
 
-        {exerciseType !== 'fill_blank' && <Text style={styles.prompt}>{exercise.prompt}</Text>}
+        {exerciseType !== 'fill_blank' && exerciseType !== 'listening_word_order' && (
+          <Text style={styles.prompt}>{exercise.prompt}</Text>
+        )}
 
         <View key={`${exerciseType}-${index}-${run}`}>
           {renderSandboxRenderer(exerciseType, props, rendererRef)}

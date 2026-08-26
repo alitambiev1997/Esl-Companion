@@ -1,10 +1,10 @@
 import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
-import { Chip } from '@/src/components/ui/chip';
+import { OptionCard } from '@/src/components/ui/option-card';
 import { TapAnswerBank } from '@/src/components/ui/tap-answer-bank';
 import type {
   ExerciseRendererHandle,
   ExerciseRendererProps,
-  WordOrderContent,
+  SentenceOrderContent,
 } from '@/src/features/lesson/content';
 
 function shuffle<T>(items: T[]): T[] {
@@ -24,10 +24,10 @@ function shuffledSequence(seq: string[]): string[] {
   return result;
 }
 
-export const WordOrderRenderer = forwardRef<ExerciseRendererHandle, ExerciseRendererProps>(
-  function WordOrderRenderer({ exercise, checked, onCheck, onCanCheckChange }, ref) {
-    const content = exercise.content as unknown as WordOrderContent;
-    const [bankOrder] = useState(() => shuffledSequence(content.words));
+export const SentenceOrderRenderer = forwardRef<ExerciseRendererHandle, ExerciseRendererProps>(
+  function SentenceOrderRenderer({ exercise, checked, onCheck, onCanCheckChange }, ref) {
+    const content = exercise.content as unknown as SentenceOrderContent;
+    const [order] = useState(() => shuffledSequence(content.correct_sequence));
     const [answer, setAnswer] = useState<string[]>([]);
 
     useImperativeHandle(ref, () => ({
@@ -41,30 +41,32 @@ export const WordOrderRenderer = forwardRef<ExerciseRendererHandle, ExerciseRend
           {
             correct: isCorrect,
             explanation: content.explanation,
-            correctAnswer: null,
-            chips: content.correct_sequence,
+            correctAnswer: content.correct_sequence.join(' • '),
+            chips: null,
           }
         );
       },
     }));
 
     useEffect(() => {
-      onCanCheckChange(answer.length === bankOrder.length);
-    }, [answer, bankOrder, onCanCheckChange]);
+      onCanCheckChange(answer.length === order.length);
+    }, [answer, order, onCanCheckChange]);
 
     return (
       <TapAnswerBank
-        items={bankOrder}
+        items={order}
         answer={answer}
         checked={checked}
-        renderBankItem={(word, disabled, onPress) => (
-          <Chip label={word} centered disabled={disabled} onPress={onPress} />
+        stacked
+        emptyHint="Tap the sentences below"
+        renderBankItem={(line, disabled, onPress) => (
+          <OptionCard label={line} align="left" disabled={disabled} onPress={onPress} />
         )}
-        renderAnswerItem={(word, onPress) => (
-          <Chip label={word} centered disabled={checked} onPress={onPress} />
+        renderAnswerItem={(line, onPress) => (
+          <OptionCard label={line} align="left" disabled={checked} onPress={onPress} />
         )}
-        onTapBank={(word) => setAnswer((prev) => [...prev, word])}
-        onTapAnswer={(word) => setAnswer((prev) => prev.filter((w) => w !== word))}
+        onTapBank={(line) => setAnswer((prev) => [...prev, line])}
+        onTapAnswer={(line) => setAnswer((prev) => prev.filter((w) => w !== line))}
       />
     );
   }

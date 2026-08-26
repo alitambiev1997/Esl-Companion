@@ -12,6 +12,8 @@ export const exerciseMeta: Record<ExerciseType, string> = {
   flashcard: 'Flip a card to check the meaning.',
   inline_choice: 'Pick the word that fits in the sentence.',
   context_fill: 'Complete the dialogue with the right word.',
+  listening_word_order: 'Listen, then order the words you hear.',
+  sentence_order: 'Put the sentences in the correct order.',
 };
 
 export const contentShapes: Record<ExerciseType, string> = {
@@ -66,6 +68,15 @@ export const contentShapes: Record<ExerciseType, string> = {
   dialogue: { speaker: string, side: 'left' | 'right', text: string }[],
   options: string[],
   correct_index: number,
+  explanation: string
+}`,
+  listening_word_order: `{
+  text_to_speak: string,
+  correct_sequence: string[],
+  explanation: string
+}`,
+  sentence_order: `{
+  correct_sequence: string[],
   explanation: string
 }`,
   flashcard: 'no renderer yet',
@@ -289,6 +300,48 @@ export const samplesByType: Record<ExerciseType, SampleSpec[]> = {
         options: ['room', 'towel', 'key', 'bill'],
         correct_index: 0,
         explanation: 'The hotel can give you a different room.',
+      },
+    },
+  ],
+  listening_word_order: [
+    {
+      prompt: 'Listen and order the words.',
+      content: {
+        text_to_speak: 'I need a wake-up call at seven in the morning.',
+        correct_sequence: ['I', 'need', 'a', 'wake-up', 'call', 'at', 'seven', 'in', 'the', 'morning.'],
+        explanation: 'You ask reception for a wake-up call.',
+      },
+    },
+    {
+      prompt: 'Listen and order the words.',
+      content: {
+        text_to_speak: 'Could you call me a taxi to the airport?',
+        correct_sequence: ['Could', 'you', 'call', 'me', 'a', 'taxi', 'to', 'the', 'airport', '?'],
+        explanation: 'A polite way to ask the receptionist for a taxi.',
+      },
+    },
+  ],
+  sentence_order: [
+    {
+      prompt: 'Put the sentences in the correct order.',
+      content: {
+        correct_sequence: [
+          'Good evening, welcome to the Grand Hotel.',
+          'I have a reservation under the name Novak.',
+          'Your room is 412 on the third floor.',
+        ],
+        explanation: 'The receptionist greets you, then checks your reservation.',
+      },
+    },
+    {
+      prompt: 'Put the sentences in the correct order.',
+      content: {
+        correct_sequence: [
+          'Breakfast is served from 7 to 10.',
+          'The pool is open until 9 pm.',
+          'Wi-Fi is free in all rooms.',
+        ],
+        explanation: 'Hotel information in the order the receptionist gives it.',
       },
     },
   ],

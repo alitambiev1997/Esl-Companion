@@ -70,6 +70,17 @@ export interface ContextFillContent {
   explanation: string | null;
 }
 
+export interface ListeningWordOrderContent {
+  text_to_speak: string;
+  correct_sequence: string[];
+  explanation: string | null;
+}
+
+export interface SentenceOrderContent {
+  correct_sequence: string[];
+  explanation: string | null;
+}
+
 export interface FeedbackBannerInfo {
   correct: boolean;
   title?: string | null;

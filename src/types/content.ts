@@ -9,7 +9,9 @@ export type ExerciseType =
   | 'speaking_recording'
   | 'flashcard'
   | 'inline_choice'
-  | 'context_fill';
+  | 'context_fill'
+  | 'listening_word_order'
+  | 'sentence_order';
 
 export interface Program {
   id: string;

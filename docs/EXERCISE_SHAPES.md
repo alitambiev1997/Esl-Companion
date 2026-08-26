@@ -243,6 +243,52 @@ Example:
 }
 ```
 
+## listening_word_order
+
+```json
+{
+  "text_to_speak": "string",
+  "correct_sequence": ["string", "..."],
+  "explanation": "string"
+}
+```
+
+Listening only — no text prompt. Audio auto-plays once (Play / Slow buttons). The bank is `correct_sequence` shuffled once on mount (if the shuffle matches the answer order, the first two items are swapped).
+
+Example:
+
+```json
+{
+  "text_to_speak": "I need a wake-up call at seven in the morning.",
+  "correct_sequence": ["I", "need", "a", "wake-up", "call", "at", "seven", "in", "the", "morning."],
+  "explanation": "You ask reception for a wake-up call."
+}
+```
+
+## sentence_order
+
+```json
+{
+  "correct_sequence": ["full sentence or line", "..."],
+  "explanation": "string"
+}
+```
+
+Entries are full sentences shown as full-width multiline cards (left-aligned), stacked in the bank and answer line. The bank is shuffled once on mount.
+
+Example:
+
+```json
+{
+  "correct_sequence": [
+    "Good evening, welcome to the Grand Hotel.",
+    "I have a reservation under the name Novak.",
+    "Your room is 412 on the third floor."
+  ],
+  "explanation": "The receptionist greets you, then checks your reservation."
+}
+```
+
 ## flashcard
 
 No renderer yet. Shape TBD.

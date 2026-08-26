@@ -26,11 +26,13 @@ import { ContextFillRenderer } from '@/src/features/lesson/renderers/context-fil
 import { FillBlankRenderer } from '@/src/features/lesson/renderers/fill-blank';
 import { InlineChoiceRenderer } from '@/src/features/lesson/renderers/inline-choice';
 import { ListeningDictationRenderer } from '@/src/features/lesson/renderers/listening-dictation';
+import { ListeningWordOrderRenderer } from '@/src/features/lesson/renderers/listening-word-order';
 import { ListeningMultipleChoiceRenderer } from '@/src/features/lesson/renderers/listening-multiple-choice';
 import { MatchingRenderer } from '@/src/features/lesson/renderers/matching';
 import { SpeakingRecordingRenderer } from '@/src/features/lesson/renderers/speaking-recording';
 import { MultipleChoiceRenderer } from '@/src/features/lesson/renderers/multiple-choice';
 import { ReadingComprehensionRenderer } from '@/src/features/lesson/renderers/reading-comprehension';
+import { SentenceOrderRenderer } from '@/src/features/lesson/renderers/sentence-order';
 import { WordOrderRenderer } from '@/src/features/lesson/renderers/word-order';
 import { supabase } from '@/src/lib/supabase';
 import { colors, fonts, radius } from '@/src/theme/tokens';
@@ -364,7 +366,7 @@ export default function LessonPlayer() {
   const exercise = exercises[index];
   const isPlaceholder =
     exercise &&
-    !['multiple_choice', 'inline_choice', 'context_fill', 'fill_blank', 'word_order', 'matching', 'listening_multiple_choice', 'listening_dictation', 'reading_comprehension', 'speaking_recording'].includes(
+    !['multiple_choice', 'inline_choice', 'context_fill', 'fill_blank', 'word_order', 'matching', 'listening_multiple_choice', 'listening_dictation', 'listening_word_order', 'sentence_order', 'reading_comprehension', 'speaking_recording'].includes(
       exercise.type
     );
   const isUngraded = exercise?.type === 'speaking_recording';
@@ -453,7 +455,7 @@ export default function LessonPlayer() {
 
         {exercise && (
           <>
-            {exercise.type !== 'fill_blank' && (
+            {exercise.type !== 'fill_blank' && exercise.type !== 'listening_word_order' && (
               <Text style={styles.prompt}>{exercise.prompt}</Text>
             )}
 
@@ -480,6 +482,12 @@ export default function LessonPlayer() {
             )}
             {exercise.type === 'reading_comprehension' && (
               <ReadingComprehensionRenderer key={exercise.id} ref={rendererRef} {...rendererProps(exercise)} />
+            )}
+            {exercise.type === 'listening_word_order' && (
+              <ListeningWordOrderRenderer key={exercise.id} ref={rendererRef} {...rendererProps(exercise)} />
+            )}
+            {exercise.type === 'sentence_order' && (
+              <SentenceOrderRenderer key={exercise.id} ref={rendererRef} {...rendererProps(exercise)} />
             )}
             {exercise.type === 'listening_dictation' && (
               <ListeningDictationRenderer key={exercise.id} ref={rendererRef} {...rendererProps(exercise)} />
