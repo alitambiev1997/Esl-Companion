@@ -28,6 +28,9 @@ Source of truth for UI/UX. Work that violates these is wrong even if it compiles
 17. No self-grading. The app always checks objectively.
 18. No new packages without explicit approval.
 
+## Activity content rules
+- form_fill: a field is answerable only if exactly one holds — LISTENING (text_to_speak present and contains the fact; options are facts like names/numbers) or GRAMMAR (options differ grammatically, one correct). Never fact options without audio; never audio that omits facts.
+
 ## New activity type checklist
 - [ ] content shape documented in docs/EXERCISE_SHAPES.md
 - [ ] two samples added to src/dev/sampleExercises.ts

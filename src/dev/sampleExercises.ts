@@ -117,7 +117,7 @@ export const contentShapes: Record<ExerciseType, string> = {
   form_fill: `{
   title?: string,
   text_to_speak?: string,
-  fields: { prompt: string, options: string[], correct_index: number }[],
+  fields: { prompt: string, options: string[], correct_index: number, explanation?: string }[],
   explanation?: string
 }`,
   flashcard: 'no renderer yet',
@@ -500,29 +500,60 @@ export const samplesByType: Record<ExerciseType, SampleSpec[]> = {
   ],
   form_fill: [
     {
-      prompt: 'Fill in the check-in form.',
+      prompt: 'Listen to the guest and fill in the form.',
       content: {
         title: 'Check-in',
-        text_to_speak: 'Good evening. Your room is ready. Please complete the check-in form.',
+        text_to_speak:
+          'Good evening. My name is Anna Novak. I would like a double room for three nights, please.',
         fields: [
-          { prompt: 'First name: ___', options: ['Anna', 'Ana', 'Anne', 'Hana'], correct_index: 0 },
-          { prompt: 'Number of nights: ___', options: ['two', 'three', 'four', 'five'], correct_index: 1 },
-          { prompt: 'Room type: ___', options: ['double', 'single', 'suite', 'twin'], correct_index: 0 },
+          {
+            prompt: 'First name: ___',
+            options: ['Anna', 'Ana', 'Anne', 'Hana'],
+            correct_index: 0,
+            explanation: 'You hear: "My name is Anna Novak."',
+          },
+          {
+            prompt: 'Number of nights: ___',
+            options: ['two', 'three', 'four', 'five'],
+            correct_index: 1,
+            explanation: 'You hear: "for three nights".',
+          },
+          {
+            prompt: 'Room type: ___',
+            options: ['double', 'single', 'suite', 'twin'],
+            correct_index: 0,
+            explanation: 'You hear: "a double room".',
+          },
         ],
-        explanation: 'The receptionist confirms your details.',
+        explanation: 'The guest tells you her details at check-in.',
       },
     },
     {
-      prompt: 'Fill in the room service order.',
+      prompt: 'Choose the correct grammar.',
       content: {
-        title: 'Room service',
+        title: 'Room request',
         text_to_speak: null,
         fields: [
-          { prompt: 'I would like to order a ___.', options: ['pizza', 'burger', 'salad', 'soup'], correct_index: 0 },
-          { prompt: 'And a glass of ___.', options: ['water', 'wine', 'juice', 'milk'], correct_index: 0 },
-          { prompt: 'Room number ___.', options: ['412', '214', '421', '124'], correct_index: 0 },
+          {
+            prompt: 'I would like to ___ a double room.',
+            options: ['book', 'booking', 'books'],
+            correct_index: 0,
+            explanation: 'After "would like to" use the base form: "to book".',
+          },
+          {
+            prompt: 'My name ___ Anna Novak.',
+            options: ['is', 'are', 'am'],
+            correct_index: 0,
+            explanation: '"My name" is singular, so the verb is "is".',
+          },
+          {
+            prompt: 'I will pay ___ card.',
+            options: ['by', 'with', 'on'],
+            correct_index: 0,
+            explanation: '"Pay by card" is the fixed phrase.',
+          },
         ],
-        explanation: 'Ordering room service.',
+        explanation: 'Choose the grammatically correct option in each sentence.',
       },
     },
   ],

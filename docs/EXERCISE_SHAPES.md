@@ -421,27 +421,47 @@ Example:
   "title": "string (optional)",
   "text_to_speak": "string (optional)",
   "fields": [
-    { "prompt": "string with ___ blank", "options": ["string", "..."], "correct_index": 0 },
+    { "prompt": "string with ___ blank", "options": ["string", "..."], "correct_index": 0, "explanation": "string (optional)" },
     "..."
   ],
   "explanation": "string (optional)"
 }
 ```
 
-A realistic card with several blanks. Each field renders its prompt with an underlined slot that fills with the selected option; options appear as a wrapping row of compact OptionCards. If `text_to_speak` is present, Speaker + Slow buttons sit on top (auto-play once). Check enables when every field is answered; on wrong, the banner lists each wrong field with its correct answer (`is_correct` = all fields correct).
+A realistic card with several blanks. Each field renders its prompt with an underlined slot that fills with the selected option; options appear as a wrapping row of small Chips directly below. If `text_to_speak` is present, Speaker + Slow buttons sit on top (auto-play once). Check enables when every field is answered; after Check every slot shows the correct word (wrong lines coral tint, correct lines leaf tint), and on wrong the banner lists each miss with its explanation.
 
-Example:
+**Answerability rule** — a field is answerable only if exactly one of these holds:
+- **LISTENING mode**: `text_to_speak` is present AND contains the fact the field asks about. Options are facts (names, numbers).
+- **GRAMMAR mode**: options differ grammatically; only one is correct English in that sentence.
+Never fact options without audio. Never audio that omits facts.
+
+Example (listening):
 
 ```json
 {
   "title": "Check-in",
-  "text_to_speak": "Good evening. Your room is ready. Please complete the check-in form.",
+  "text_to_speak": "Good evening. My name is Anna Novak. I would like a double room for three nights, please.",
   "fields": [
-    { "prompt": "First name: ___", "options": ["Anna", "Ana", "Anne", "Hana"], "correct_index": 0 },
-    { "prompt": "Number of nights: ___", "options": ["two", "three", "four", "five"], "correct_index": 1 },
-    { "prompt": "Room type: ___", "options": ["double", "single", "suite", "twin"], "correct_index": 0 }
+    { "prompt": "First name: ___", "options": ["Anna", "Ana", "Anne", "Hana"], "correct_index": 0, "explanation": "You hear: \"My name is Anna Novak.\"" },
+    { "prompt": "Number of nights: ___", "options": ["two", "three", "four", "five"], "correct_index": 1, "explanation": "You hear: \"for three nights\"." },
+    { "prompt": "Room type: ___", "options": ["double", "single", "suite", "twin"], "correct_index": 0, "explanation": "You hear: \"a double room\"." }
   ],
-  "explanation": "The receptionist confirms your details."
+  "explanation": "The guest tells you her details at check-in."
+}
+```
+
+Example (grammar, no audio):
+
+```json
+{
+  "title": "Room request",
+  "text_to_speak": null,
+  "fields": [
+    { "prompt": "I would like to ___ a double room.", "options": ["book", "booking", "books"], "correct_index": 0, "explanation": "After \"would like to\" use the base form: \"to book\"." },
+    { "prompt": "My name ___ Anna Novak.", "options": ["is", "are", "am"], "correct_index": 0, "explanation": "\"My name\" is singular, so the verb is \"is\"." },
+    { "prompt": "I will pay ___ card.", "options": ["by", "with", "on"], "correct_index": 0, "explanation": "\"Pay by card\" is the fixed phrase." }
+  ],
+  "explanation": "Choose the grammatically correct option in each sentence."
 }
 ```
 

@@ -124,6 +124,7 @@ export interface FormField {
   prompt: string;
   options: string[];
   correct_index: number;
+  explanation?: string | null;
 }
 
 export interface FormFillContent {

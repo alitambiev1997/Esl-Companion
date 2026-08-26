@@ -31,7 +31,13 @@ export const FormFillRenderer = forwardRef<ExerciseRendererHandle, ExerciseRende
         );
         const wrongLines = content.fields
           .filter((field, i) => answers[i] !== field.correct_index)
-          .map((field) => field.prompt.replace('___', `"${field.options[field.correct_index]}"`));
+          .map((field) => {
+            const line = field.prompt.replace(
+              '___',
+              `"${field.options[field.correct_index]}"`
+            );
+            return field.explanation ? `${line} — ${field.explanation}` : line;
+          });
         onCheck(
           { answers },
           allCorrect,
