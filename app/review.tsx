@@ -356,7 +356,7 @@ export default function Review() {
 
   return (
     <View style={styles.container}>
-      <TopBar title="Review" />
+      <TopBar title="Review" showBack />
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.dueChip}>
           <Text style={styles.dueChipText}>{session.cards.length} due</Text>
