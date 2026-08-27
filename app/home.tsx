@@ -338,8 +338,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.paper,
   },
   content: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingTop: 24,
+    paddingBottom: 24,
     paddingHorizontal: 16,
-    paddingVertical: 24,
   },
   headerRow: {
     flexDirection: 'row',

@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, fonts } from '@/src/theme/tokens';
 
 export function TopBar({
@@ -14,8 +15,9 @@ export function TopBar({
   right?: ReactNode;
 }) {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   return (
-    <View style={styles.bar}>
+    <View style={[styles.bar, { paddingTop: insets.top, height: 56 + insets.top }]}>
       {showBack ? (
         <Pressable style={styles.side} onPress={() => router.back()} hitSlop={8}>
           <Ionicons name="chevron-back" size={26} color={colors.sky} />
@@ -35,7 +37,6 @@ export function TopBar({
 
 const styles = StyleSheet.create({
   bar: {
-    height: 56,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,

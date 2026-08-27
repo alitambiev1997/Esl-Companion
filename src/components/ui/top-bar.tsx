@@ -1,10 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useRef } from 'react';
 import { Alert, Animated, Pressable, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, radius } from '@/src/theme/tokens';
 
 export function TopBar({ progress, onClose }: { progress: number; onClose: () => void }) {
   const fill = useRef(new Animated.Value(progress)).current;
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     Animated.timing(fill, { toValue: progress, duration: 300, useNativeDriver: false }).start();
@@ -18,7 +20,7 @@ export function TopBar({ progress, onClose }: { progress: number; onClose: () =>
   };
 
   return (
-    <View style={styles.bar}>
+    <View style={[styles.bar, { paddingTop: insets.top + 12, paddingBottom: 12 }]}>
       <Pressable style={styles.close} onPress={confirmLeave} hitSlop={8}>
         <Ionicons name="close" size={24} color={colors.ink} />
       </Pressable>
@@ -41,7 +43,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 12,
   },
   close: {
     marginRight: 16,

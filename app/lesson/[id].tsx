@@ -8,6 +8,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/src/features/auth/useAuth';
 import { MascotBadge } from '@/components/mascot-badge';
 import { BottomBar } from '@/src/components/ui/bottom-bar';
@@ -64,6 +65,7 @@ type LoadState =
 export default function LessonPlayer() {
   const { id, from } = useLocalSearchParams<{ id: string; from?: string }>();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { user, loading: authLoading } = useAuth();
 
   const [loadState, setLoadState] = useState<LoadState>({ status: 'loading' });
@@ -334,7 +336,7 @@ export default function LessonPlayer() {
         {result.passed && result.medal ? (
           <>
             <Confetti origin={origin} />
-            <View style={styles.mascotCorner} pointerEvents="none">
+            <View style={[styles.mascotCorner, { top: insets.top + 12 }]} pointerEvents="none">
               <MascotBadge size={56} />
             </View>
             <View
