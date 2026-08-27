@@ -96,6 +96,7 @@ export default function Course() {
   const [loadState, setLoadState] = useState<LoadState>({ status: 'loading' });
   const [retry, setRetry] = useState(0);
   const [pathWidth, setPathWidth] = useState(0);
+  const [levelTitle, setLevelTitle] = useState<string | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -129,11 +130,17 @@ export default function Course() {
         .from('lesson_progress')
         .select('lesson_id,status,score')
         .eq('user_id', user.id);
+      const levelQuery = supabase
+        .from('levels')
+        .select('title')
+        .eq('id', levelId)
+        .maybeSingle();
 
-      const [unitsRes, lessonsRes, progressRes] = await Promise.all([
+      const [unitsRes, lessonsRes, progressRes, levelRes] = await Promise.all([
         unitsQuery,
         lessonsQuery,
         progressQuery,
+        levelQuery,
       ]);
 
       if (!mounted) return;
@@ -156,6 +163,9 @@ export default function Course() {
         LessonProgress,
         'lesson_id' | 'status' | 'score'
       >[];
+      if (!levelRes.error && levelRes.data) {
+        setLevelTitle(levelRes.data.title);
+      }
 
       if (units.length === 0) {
         setLoadState({ status: 'empty', message: 'No units available yet.' });
@@ -254,16 +264,28 @@ export default function Course() {
 
   return (
     <View style={styles.screen}>
-      <TopBar title="Your course" />
+      <TopBar
+        title="Your course"
+        right={
+          levelTitle ? (
+            <View style={styles.levelChip}>
+              <Text style={styles.levelChipText}>{levelTitle}</Text>
+            </View>
+          ) : undefined
+        }
+      />
       <ScrollView contentContainerStyle={styles.content}>
 
-      {loadState.units.map((unit) => {
+      {loadState.units.map((unit, unitIndex) => {
         const n = unit.lessons.length;
         const pathHeight = (n - 1) * ROW_H + NODE + LABEL_SPACE;
 
         return (
           <View key={unit.id} style={styles.unitSection}>
             <View style={styles.unitCard}>
+              <View style={styles.unitChip}>
+                <Text style={styles.unitChipText}>UNIT {unitIndex + 1}</Text>
+              </View>
               <Text style={styles.unitTitle}>{unit.title}</Text>
               {unit.description && (
                 <Text style={styles.unitDescription}>{unit.description}</Text>
@@ -357,6 +379,18 @@ const styles = StyleSheet.create({
   unitSection: {
     marginBottom: 24,
   },
+  levelChip: {
+    backgroundColor: colors.skyTint,
+    borderRadius: radius.bubble,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+  },
+  levelChipText: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.sky,
+  },
   unitCard: {
     backgroundColor: colors.white,
     borderWidth: 2,
@@ -364,6 +398,20 @@ const styles = StyleSheet.create({
     borderRadius: radius.card,
     padding: 16,
     marginBottom: 16,
+  },
+  unitChip: {
+    alignSelf: 'flex-start',
+    backgroundColor: colors.skyTint,
+    borderRadius: radius.bubble,
+    paddingHorizontal: 10,
+    paddingVertical: 2,
+    marginBottom: 8,
+  },
+  unitChipText: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.sky,
   },
   unitTitle: {
     fontFamily: fonts.display,
