@@ -11,6 +11,8 @@ import {
 } from 'react-native';
 import { supabase } from '@/src/lib/supabase';
 import { ensureReviewItems } from '@/src/lib/review';
+import { lightHaptic } from '@/src/lib/haptics';
+import { useHapticsStore } from '@/src/store/haptics';
 import { colors, fonts, radius } from '@/src/theme/tokens';
 import { useAuth } from '@/src/features/auth/useAuth';
 import { MascotBadge } from '@/components/mascot-badge';
@@ -64,6 +66,8 @@ export default function Home() {
   const [dash, setDash] = useState<DashState>({ status: 'loading' });
   const [signOutError, setSignOutError] = useState<string | null>(null);
   const [signingOut, setSigningOut] = useState(false);
+  const hapticsEnabled = useHapticsStore((state) => state.enabled);
+  const toggleHaptics = useHapticsStore((state) => state.toggle);
 
   useEffect(() => {
     if (loading) return;
@@ -254,6 +258,13 @@ export default function Home() {
               <Text style={styles.levelChipText}>{levelTitle}</Text>
             </View>
           )}
+          <Pressable style={styles.muteButton} onPress={toggleHaptics} hitSlop={8}>
+            <Ionicons
+              name={hapticsEnabled ? 'volume-high' : 'volume-mute'}
+              size={22}
+              color={colors.greyDark}
+            />
+          </Pressable>
         </View>
 
         {dash.status === 'loading' && (
@@ -285,7 +296,13 @@ export default function Home() {
             </View>
 
             {dash.reviewDue > 0 && (
-              <Pressable style={styles.card} onPress={() => router.push('/review')}>
+              <Pressable
+                style={styles.card}
+                onPress={() => {
+                  lightHaptic();
+                  router.push('/review');
+                }}
+              >
                 <View style={[styles.cardDot, styles.cardDotLeaf]} />
                 <View style={styles.cardText}>
                   <Text style={styles.cardTitle}>Review due</Text>
@@ -296,7 +313,13 @@ export default function Home() {
             )}
 
             {dash.nextLesson && (
-              <Pressable style={styles.card} onPress={() => router.push('/course')}>
+              <Pressable
+                style={styles.card}
+                onPress={() => {
+                  lightHaptic();
+                  router.push('/course');
+                }}
+              >
                 <View style={[styles.cardDot, styles.cardDotSky]} />
                 <View style={styles.cardText}>
                   <Text style={styles.cardTitle}>Continue learning</Text>
@@ -310,7 +333,13 @@ export default function Home() {
 
         {signOutError && <Text style={styles.errorText}>{signOutError}</Text>}
 
-        <Pressable style={styles.buttonSecondary} onPress={() => router.push('/course')}>
+        <Pressable
+          style={styles.buttonSecondary}
+          onPress={() => {
+            lightHaptic();
+            router.push('/course');
+          }}
+        >
           <Text style={styles.buttonSecondaryText}>Your course</Text>
         </Pressable>
 
@@ -368,6 +397,9 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: colors.sky,
+  },
+  muteButton: {
+    marginLeft: 8,
   },
   statsRow: {
     flexDirection: 'row',

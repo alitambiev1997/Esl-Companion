@@ -16,6 +16,7 @@ import { FeedbackBanner } from '@/src/components/ui/feedback-banner';
 import { Toast } from '@/src/components/ui/toast';
 import { TopBar } from '@/src/components/ui/top-bar';
 import { addDailyActivity } from '@/src/lib/activity';
+import { errorHaptic, successHaptic } from '@/src/lib/haptics';
 import { PrimaryButton } from '@/src/features/lesson/flow-buttons';
 import { Confetti, MedalStamp } from '@/src/features/lesson/celebration';
 import type {
@@ -170,6 +171,11 @@ export default function LessonPlayer() {
 
       if (isCorrect && exercise.is_required !== false) {
         setCorrectCount((n) => n + 1);
+      }
+      if (isCorrect) {
+        successHaptic();
+      } else {
+        errorHaptic();
       }
       setBanner(info);
       setPhase('checked');
@@ -408,6 +414,7 @@ export default function LessonPlayer() {
             label={exercise?.type === 'speaking_recording' ? 'I said it out loud' : exercise?.type === 'flashcard_flip' ? 'Got it' : index === exercises.length - 1 ? 'Finish' : 'Continue'}
             onPress={() => (isUngraded ? handleUngradedContinue(exercise) : handleContinue())}
             disabled={busy}
+            haptic
           />
         </BottomBar>
       );

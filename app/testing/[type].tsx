@@ -14,6 +14,7 @@ import type {
   FeedbackBannerInfo,
 } from '@/src/features/lesson/content';
 import { PrimaryButton } from '@/src/features/lesson/flow-buttons';
+import { errorHaptic, successHaptic } from '@/src/lib/haptics';
 import { colors, fonts, radius } from '@/src/theme/tokens';
 import type { ExerciseType } from '@/src/types/content';
 
@@ -73,6 +74,11 @@ export default function TestingDetail() {
     isLast: index === samples.length - 1,
     onCheck: (userAnswer, isCorrect, info) => {
       console.log('[sandbox]', exerciseType, JSON.stringify(userAnswer), 'correct:', isCorrect);
+      if (isCorrect) {
+        successHaptic();
+      } else {
+        errorHaptic();
+      }
       setBanner(info);
       setChecked(true);
     },
@@ -129,6 +135,7 @@ export default function TestingDetail() {
           <PrimaryButton
             label={exerciseType === 'flashcard_flip' ? 'Got it' : 'I said it out loud'}
             onPress={advance}
+            haptic
           />
         </BottomBar>
       ) : ['matching', 'error_spot', 'stress_tap', 'silent_letter', 'image_choice', 'best_reply'].includes(exerciseType) ? (

@@ -3,13 +3,20 @@ import { Nunito_400Regular } from '@expo-google-fonts/nunito';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { useHapticsStore } from '@/src/store/haptics';
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
     Baloo2_700Bold,
     Nunito_400Regular,
   });
+  const loadHaptics = useHapticsStore((state) => state.load);
+
+  useEffect(() => {
+    loadHaptics();
+  }, [loadHaptics]);
 
   if (!fontsLoaded) {
     return <View style={styles.loading} />;

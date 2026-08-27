@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import { TopBar } from '@/src/components/ui/TopBar';
+import { lightHaptic } from '@/src/lib/haptics';
 import { useAuth } from '@/src/features/auth/useAuth';
 import { medalColor, medalForScore } from '@/src/lib/medals';
 import { supabase } from '@/src/lib/supabase';
@@ -344,7 +345,14 @@ export default function Course() {
 
         <Pressable
           style={styles.buttonPrimary}
-          onPress={() => (router.canGoBack() ? router.back() : router.replace('/home'))}
+          onPress={() => {
+            lightHaptic();
+            if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.replace('/home');
+            }
+          }}
         >
           <Text style={styles.buttonPrimaryText}>Back to home</Text>
         </Pressable>

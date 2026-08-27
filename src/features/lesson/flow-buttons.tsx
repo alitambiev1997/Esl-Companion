@@ -1,17 +1,22 @@
 import { Pressable, StyleSheet, Text } from 'react-native';
+import { lightHaptic } from '@/src/lib/haptics';
 import { colors, fonts, radius } from '@/src/theme/tokens';
 
 interface FlowButtonProps {
   label: string;
   onPress: () => void;
   disabled?: boolean;
+  haptic?: boolean;
 }
 
-export function PrimaryButton({ label, onPress, disabled }: FlowButtonProps) {
+export function PrimaryButton({ label, onPress, disabled, haptic }: FlowButtonProps) {
   return (
     <Pressable
       style={[styles.button, disabled && styles.buttonDisabled]}
-      onPress={onPress}
+      onPress={() => {
+        if (haptic) lightHaptic();
+        onPress();
+      }}
       disabled={disabled}
     >
       <Text style={styles.buttonText}>{label}</Text>

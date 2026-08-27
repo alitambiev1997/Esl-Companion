@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import { Animated, Pressable, StyleSheet, Text } from 'react-native';
+import { tapHaptic } from '@/src/lib/haptics';
 import { colors, fonts } from '@/src/theme/tokens';
 
 export function OptionCard({
@@ -33,7 +34,10 @@ export function OptionCard({
   return (
     <Animated.View style={{ transform: [{ scale }] }}>
       <Pressable
-        onPress={onPress}
+        onPress={() => {
+          tapHaptic();
+          onPress();
+        }}
         disabled={disabled}
         onPressIn={onPressIn}
         onPressOut={onPressOut}

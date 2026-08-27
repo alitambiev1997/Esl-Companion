@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { lightHaptic } from '@/src/lib/haptics';
 import { colors, fonts } from '@/src/theme/tokens';
 
 export function TopBar({
@@ -19,7 +20,14 @@ export function TopBar({
   return (
     <View style={[styles.bar, { paddingTop: insets.top, height: 56 + insets.top }]}>
       {showBack ? (
-        <Pressable style={styles.side} onPress={() => router.back()} hitSlop={8}>
+        <Pressable
+          style={styles.side}
+          onPress={() => {
+            lightHaptic();
+            router.back();
+          }}
+          hitSlop={8}
+        >
           <Ionicons name="chevron-back" size={26} color={colors.sky} />
         </Pressable>
       ) : (

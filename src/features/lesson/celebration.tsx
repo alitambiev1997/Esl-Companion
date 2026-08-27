@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
+import { successHaptic } from '@/src/lib/haptics';
 import { medalColor, type Medal } from '@/src/lib/medals';
 import { colors, fonts } from '@/src/theme/tokens';
 
@@ -146,7 +147,7 @@ export function MedalStamp({ medal }: { medal: Medal }) {
         Animated.spring(scale, { toValue: 1, friction: 4, useNativeDriver: true }),
       ]),
       Animated.timing(rotation, { toValue: 1, duration: 300, useNativeDriver: true }),
-    ]).start();
+    ]).start(() => successHaptic());
   }, [scale, rotation]);
 
   return (

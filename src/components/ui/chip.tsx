@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import { Animated, Pressable, StyleSheet, Text } from 'react-native';
+import { tapHaptic } from '@/src/lib/haptics';
 import { colors, fonts, radius } from '@/src/theme/tokens';
 
 export function Chip({
@@ -35,7 +36,10 @@ export function Chip({
   return (
     <Animated.View style={[{ transform: [{ scale }] }, backgroundColor ? { backgroundColor } : null]}>
       <Pressable
-        onPress={onPress}
+        onPress={() => {
+          tapHaptic();
+          onPress();
+        }}
         disabled={disabled}
         onPressIn={onPressIn}
         onPressOut={onPressOut}

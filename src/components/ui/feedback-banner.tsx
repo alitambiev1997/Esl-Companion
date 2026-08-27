@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Chip } from '@/src/components/ui/chip';
+import { lightHaptic } from '@/src/lib/haptics';
 import { colors, fonts } from '@/src/theme/tokens';
 
 export function FeedbackBanner({
@@ -58,7 +59,10 @@ export function FeedbackBanner({
       )}
       <Pressable
         style={[styles.button, { backgroundColor: correct ? colors.leaf : colors.coral }]}
-        onPress={onContinue}
+        onPress={() => {
+          lightHaptic();
+          onContinue();
+        }}
       >
         <Text style={styles.buttonText}>{continueLabel ?? 'Continue'}</Text>
       </Pressable>

@@ -1,3 +1,21 @@
+import { MascotBadge } from '@/components/mascot-badge';
+import { BottomBar } from '@/src/components/ui/bottom-bar';
+import { FeedbackBanner } from '@/src/components/ui/feedback-banner';
+import { TopBar } from '@/src/components/ui/TopBar';
+import { useAuth } from '@/src/features/auth/useAuth';
+import type {
+  ExerciseRendererHandle,
+  FeedbackBannerInfo,
+} from '@/src/features/lesson/content';
+import { PrimaryButton } from '@/src/features/lesson/flow-buttons';
+import { MultipleChoiceRenderer } from '@/src/features/lesson/renderers/multiple-choice';
+import { addDailyActivity } from '@/src/lib/activity';
+import { errorHaptic, successHaptic } from '@/src/lib/haptics';
+import { ensureReviewItems } from '@/src/lib/review';
+import { applyGrade } from '@/src/lib/srs';
+import { supabase } from '@/src/lib/supabase';
+import { colors, fonts, radius } from '@/src/theme/tokens';
+import type { Exercise } from '@/src/types/content';
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -9,23 +27,6 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useAuth } from '@/src/features/auth/useAuth';
-import { BottomBar } from '@/src/components/ui/bottom-bar';
-import { FeedbackBanner } from '@/src/components/ui/feedback-banner';
-import { MascotBadge } from '@/components/mascot-badge';
-import { TopBar } from '@/src/components/ui/TopBar';
-import { MultipleChoiceRenderer } from '@/src/features/lesson/renderers/multiple-choice';
-import type {
-  ExerciseRendererHandle,
-  FeedbackBannerInfo,
-} from '@/src/features/lesson/content';
-import { PrimaryButton } from '@/src/features/lesson/flow-buttons';
-import { addDailyActivity } from '@/src/lib/activity';
-import { ensureReviewItems } from '@/src/lib/review';
-import { supabase } from '@/src/lib/supabase';
-import { applyGrade } from '@/src/lib/srs';
-import { colors, fonts, radius } from '@/src/theme/tokens';
-import type { Exercise } from '@/src/types/content';
 
 interface ReviewCard {
   id: string;
@@ -281,6 +282,9 @@ export default function Review() {
 
       if (isCorrect) {
         setCorrectCount((n) => n + 1);
+        successHaptic();
+      } else {
+        errorHaptic();
       }
       setPhase('checked');
     } catch (error) {
@@ -356,7 +360,7 @@ export default function Review() {
 
   return (
     <View style={styles.container}>
-      <TopBar title="Review" showBack />
+      <TopBar title="Home" showBack />
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.dueChip}>
           <Text style={styles.dueChipText}>{session.cards.length} due</Text>
