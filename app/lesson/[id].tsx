@@ -11,6 +11,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/src/features/auth/useAuth';
 import { MascotBadge } from '@/components/mascot-badge';
+import { ParrotNudge } from '@/src/components/ui/parrot-nudge';
 import { BottomBar } from '@/src/components/ui/bottom-bar';
 import { FeedbackBanner } from '@/src/components/ui/feedback-banner';
 import { Toast } from '@/src/components/ui/toast';
@@ -343,7 +344,7 @@ export default function LessonPlayer() {
           <>
             <Confetti origin={origin} />
             <View style={[styles.mascotCorner, { top: insets.top + 12 }]} pointerEvents="none">
-              <MascotBadge size={56} />
+              <MascotBadge size={56} bob bounceKey={0} />
             </View>
             <View
               style={styles.ceremonyBlock}
@@ -422,15 +423,18 @@ export default function LessonPlayer() {
     if (isMatching) {
       if (phase === 'checked' && banner) {
         return (
-          <FeedbackBanner
-            correct={banner.correct}
-            title={banner.title ?? undefined}
-            explanation={banner.explanation}
-            correctAnswer={banner.correctAnswer}
-            chips={banner.chips ?? undefined}
-            tip={banner.tip ?? undefined}
-            onContinue={handleContinue}
-          />
+          <View style={styles.bannerWrap}>
+            <ParrotNudge correct={banner.correct} bounceKey={banner.correct ? 0 : undefined} />
+            <FeedbackBanner
+              correct={banner.correct}
+              title={banner.title ?? undefined}
+              explanation={banner.explanation}
+              correctAnswer={banner.correctAnswer}
+              chips={banner.chips ?? undefined}
+              tip={banner.tip ?? undefined}
+              onContinue={handleContinue}
+            />
+          </View>
         );
       }
       return (
@@ -442,6 +446,26 @@ export default function LessonPlayer() {
     if (isTapGraded) {
       if (phase === 'checked' && banner) {
         return (
+          <View style={styles.bannerWrap}>
+            <ParrotNudge correct={banner.correct} bounceKey={banner.correct ? 0 : undefined} />
+            <FeedbackBanner
+              correct={banner.correct}
+              title={banner.title ?? undefined}
+              explanation={banner.explanation}
+              correctAnswer={banner.correctAnswer}
+              chips={banner.chips ?? undefined}
+              tip={banner.tip ?? undefined}
+              onContinue={handleContinue}
+            />
+          </View>
+        );
+      }
+      return null;
+    }
+    if (phase === 'checked' && banner) {
+      return (
+        <View style={styles.bannerWrap}>
+          <ParrotNudge correct={banner.correct} bounceKey={banner.correct ? 0 : undefined} />
           <FeedbackBanner
             correct={banner.correct}
             title={banner.title ?? undefined}
@@ -451,21 +475,7 @@ export default function LessonPlayer() {
             tip={banner.tip ?? undefined}
             onContinue={handleContinue}
           />
-        );
-      }
-      return null;
-    }
-    if (phase === 'checked' && banner) {
-      return (
-        <FeedbackBanner
-          correct={banner.correct}
-          title={banner.title ?? undefined}
-          explanation={banner.explanation}
-          correctAnswer={banner.correctAnswer}
-          chips={banner.chips ?? undefined}
-          tip={banner.tip ?? undefined}
-          onContinue={handleContinue}
-        />
+        </View>
       );
     }
     return (
@@ -653,6 +663,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: colors.white,
+  },
+  bannerWrap: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   buttonPrimary: {
     backgroundColor: colors.sun,

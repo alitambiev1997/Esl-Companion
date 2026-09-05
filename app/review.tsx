@@ -1,6 +1,7 @@
 import { MascotBadge } from '@/components/mascot-badge';
 import { BottomBar } from '@/src/components/ui/bottom-bar';
 import { FeedbackBanner } from '@/src/components/ui/feedback-banner';
+import { ParrotNudge } from '@/src/components/ui/parrot-nudge';
 import { TopBar } from '@/src/components/ui/TopBar';
 import { useAuth } from '@/src/features/auth/useAuth';
 import type {
@@ -399,13 +400,16 @@ export default function Review() {
         </Animated.View>
       </ScrollView>
       {phase === 'checked' && banner ? (
-        <FeedbackBanner
-          correct={banner.correct}
-          explanation={banner.explanation}
-          correctAnswer={banner.correctAnswer}
-          chips={banner.chips ?? undefined}
-          onContinue={handleContinue}
-        />
+        <View style={styles.bannerWrap}>
+          <ParrotNudge correct={banner.correct} bounceKey={banner.correct ? 0 : undefined} />
+          <FeedbackBanner
+            correct={banner.correct}
+            explanation={banner.explanation}
+            correctAnswer={banner.correctAnswer}
+            chips={banner.chips ?? undefined}
+            onContinue={handleContinue}
+          />
+        </View>
       ) : (
         <BottomBar>
           <PrimaryButton
@@ -509,6 +513,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: colors.ink,
+  },
+  bannerWrap: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   buttonSecondary: {
     backgroundColor: colors.sky,

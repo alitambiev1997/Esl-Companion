@@ -1,6 +1,7 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ParrotNudge } from '@/src/components/ui/parrot-nudge';
 import { TopBar } from '@/src/components/ui/TopBar';
 import { BottomBar } from '@/src/components/ui/bottom-bar';
 import { FeedbackBanner } from '@/src/components/ui/feedback-banner';
@@ -116,16 +117,19 @@ export default function TestingDetail() {
         )}
       </ScrollView>
       {checked && banner ? (
-        <FeedbackBanner
-          correct={banner.correct}
-          title={banner.title ?? undefined}
-          explanation={banner.explanation}
-          correctAnswer={banner.correctAnswer}
-          chips={banner.chips ?? undefined}
-          tip={banner.tip ?? undefined}
-          continueLabel={index === samples.length - 1 ? 'Back to testing' : undefined}
-          onContinue={advance}
-        />
+        <View style={styles.bannerWrap}>
+          <ParrotNudge correct={banner.correct} bounceKey={banner.correct ? 0 : undefined} />
+          <FeedbackBanner
+            correct={banner.correct}
+            title={banner.title ?? undefined}
+            explanation={banner.explanation}
+            correctAnswer={banner.correctAnswer}
+            chips={banner.chips ?? undefined}
+            tip={banner.tip ?? undefined}
+            continueLabel={index === samples.length - 1 ? 'Back to testing' : undefined}
+            onContinue={advance}
+          />
+        </View>
       ) : exerciseType === 'matching' ? (
         <BottomBar>
           <Text style={styles.pairsLeft}>Pairs left: {pairsLeft}</Text>
@@ -229,5 +233,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.ink,
     textAlign: 'center',
+  },
+  bannerWrap: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
 });

@@ -66,6 +66,8 @@ export default function Home() {
   const [dash, setDash] = useState<DashState>({ status: 'loading' });
   const [signOutError, setSignOutError] = useState<string | null>(null);
   const [signingOut, setSigningOut] = useState(false);
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
   const hapticsEnabled = useHapticsStore((state) => state.enabled);
   const toggleHaptics = useHapticsStore((state) => state.toggle);
 
@@ -248,9 +250,9 @@ export default function Home() {
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.headerRow}>
-          <MascotBadge size={48} />
+          <MascotBadge size={48} bob />
           <View style={styles.headerText}>
-            <Text style={styles.welcome}>Welcome</Text>
+            <Text style={styles.welcome}>{greeting}</Text>
             <Text style={styles.email}>{user.email ?? 'No email on file'}</Text>
           </View>
           {levelTitle && (

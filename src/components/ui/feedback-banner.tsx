@@ -1,8 +1,9 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Chip } from '@/src/components/ui/chip';
 import { lightHaptic } from '@/src/lib/haptics';
+import { correctLine, wrongLine } from '@/src/lib/voice';
 import { colors, fonts } from '@/src/theme/tokens';
 
 export function FeedbackBanner({
@@ -26,6 +27,7 @@ export function FeedbackBanner({
 }) {
   const insets = useSafeAreaInsets();
   const slide = useRef(new Animated.Value(1)).current;
+  const [poolTitle] = useState(() => (correct ? correctLine() : wrongLine()));
 
   useEffect(() => {
     Animated.spring(slide, { toValue: 0, useNativeDriver: true }).start();
@@ -44,7 +46,7 @@ export function FeedbackBanner({
         },
       ]}
     >
-      <Text style={styles.title}>{title ?? (correct ? 'Nicely done!' : 'Not quite')}</Text>
+      <Text style={styles.title}>{title ?? poolTitle}</Text>
       {explanation && <Text style={styles.text}>{explanation}</Text>}
       {tip && <Text style={styles.tip}>{tip}</Text>}
       {!correct && chips && chips.length > 0 && (
