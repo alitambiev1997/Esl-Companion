@@ -27,7 +27,7 @@
       "package": "com.alitambievsteam.eslcompanion"
     },
     "web": {
-      "output": "static",
+      "output": "single",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
