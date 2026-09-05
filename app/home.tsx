@@ -16,6 +16,8 @@ import { useHapticsStore } from '@/src/store/haptics';
 import { colors, fonts, radius } from '@/src/theme/tokens';
 import { useAuth } from '@/src/features/auth/useAuth';
 import { MascotBadge } from '@/components/mascot-badge';
+import { PopNumber } from '@/src/components/ui/pop-number';
+import { StaggerIn } from '@/src/components/ui/stagger-in';
 import type { Lesson, LessonProgress, Unit } from '@/src/types/content';
 
 interface NextLesson {
@@ -286,70 +288,84 @@ export default function Home() {
 
         {dash.status === 'ready' && (
           <>
-            <View style={styles.statsRow}>
-              <View style={[styles.statCard, styles.statStreak, styles.statCardMargin]}>
-                <Text style={[styles.statValue, styles.statStreakValue]}>{dash.streak}</Text>
-                <Text style={styles.statLabel}>Day streak</Text>
-              </View>
-              <View style={[styles.statCard, styles.statMedals]}>
-                <Text style={[styles.statValue, styles.statMedalsValue]}>{dash.medalCount}</Text>
-                <Text style={styles.statLabel}>Medals</Text>
-              </View>
-            </View>
-
-            {dash.reviewDue > 0 && (
-              <Pressable
-                style={styles.card}
-                onPress={() => {
-                  lightHaptic();
-                  router.push('/review');
-                }}
-              >
-                <View style={[styles.cardDot, styles.cardDotLeaf]} />
-                <View style={styles.cardText}>
-                  <Text style={styles.cardTitle}>Review due</Text>
-                  <Text style={styles.cardCaption}>{dash.reviewDue} words waiting</Text>
+            <StaggerIn delay={0}>
+              <View style={styles.statsRow}>
+                <View style={[styles.statCard, styles.statStreak, styles.statCardMargin]}>
+                  <PopNumber value={dash.streak}>
+                    <Text style={[styles.statValue, styles.statStreakValue]}>{dash.streak}</Text>
+                  </PopNumber>
+                  <Text style={styles.statLabel}>Day streak</Text>
                 </View>
-                <Ionicons name="chevron-forward" size={22} color={colors.sky} />
-              </Pressable>
-            )}
-
-            {dash.nextLesson && (
-              <Pressable
-                style={styles.card}
-                onPress={() => {
-                  lightHaptic();
-                  router.push('/course');
-                }}
-              >
-                <View style={[styles.cardDot, styles.cardDotSky]} />
-                <View style={styles.cardText}>
-                  <Text style={styles.cardTitle}>Continue learning</Text>
-                  <Text style={styles.cardCaption}>{dash.nextLesson.title}</Text>
+                <View style={[styles.statCard, styles.statMedals]}>
+                  <PopNumber value={dash.medalCount}>
+                    <Text style={[styles.statValue, styles.statMedalsValue]}>{dash.medalCount}</Text>
+                  </PopNumber>
+                  <Text style={styles.statLabel}>Medals</Text>
                 </View>
-                <Ionicons name="chevron-forward" size={22} color={colors.sky} />
-              </Pressable>
-            )}
+              </View>
+            </StaggerIn>
+
+            <StaggerIn delay={60}>
+              {dash.reviewDue > 0 && (
+                <Pressable
+                  style={styles.card}
+                  onPress={() => {
+                    lightHaptic();
+                    router.push('/review');
+                  }}
+                >
+                  <View style={[styles.cardDot, styles.cardDotLeaf]} />
+                  <View style={styles.cardText}>
+                    <Text style={styles.cardTitle}>Review due</Text>
+                    <Text style={styles.cardCaption}>{dash.reviewDue} words waiting</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={22} color={colors.sky} />
+                </Pressable>
+              )}
+            </StaggerIn>
+
+            <StaggerIn delay={120}>
+              {dash.nextLesson && (
+                <Pressable
+                  style={styles.card}
+                  onPress={() => {
+                    lightHaptic();
+                    router.push('/course');
+                  }}
+                >
+                  <View style={[styles.cardDot, styles.cardDotSky]} />
+                  <View style={styles.cardText}>
+                    <Text style={styles.cardTitle}>Continue learning</Text>
+                    <Text style={styles.cardCaption}>{dash.nextLesson.title}</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={22} color={colors.sky} />
+                </Pressable>
+              )}
+            </StaggerIn>
           </>
         )}
 
         {signOutError && <Text style={styles.errorText}>{signOutError}</Text>}
 
-        <Pressable
-          style={styles.buttonSecondary}
-          onPress={() => {
-            lightHaptic();
-            router.push('/course');
-          }}
-        >
-          <Text style={styles.buttonSecondaryText}>Your course</Text>
-        </Pressable>
+        <StaggerIn delay={180}>
+          <Pressable
+            style={styles.buttonSecondary}
+            onPress={() => {
+              lightHaptic();
+              router.push('/course');
+            }}
+          >
+            <Text style={styles.buttonSecondaryText}>Your course</Text>
+          </Pressable>
+        </StaggerIn>
 
-        <Pressable style={styles.signOut} onPress={onSignOut} disabled={signingOut}>
-          <Text style={styles.signOutText}>
-            {signingOut ? 'Signing out...' : 'Sign out'}
-          </Text>
-        </Pressable>
+        <StaggerIn delay={240}>
+          <Pressable style={styles.signOut} onPress={onSignOut} disabled={signingOut}>
+            <Text style={styles.signOutText}>
+              {signingOut ? 'Signing out...' : 'Sign out'}
+            </Text>
+          </Pressable>
+        </StaggerIn>
       </ScrollView>
     </View>
   );

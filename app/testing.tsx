@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { StaggerIn } from '@/src/components/ui/stagger-in';
 import { TopBar } from '@/src/components/ui/TopBar';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { exerciseMeta, samplesByType } from '@/src/dev/sampleExercises';
@@ -26,11 +27,11 @@ export default function Testing() {
         <View key={group.title} style={styles.group}>
           <Text style={styles.groupTitle}>{group.title}</Text>
 
-          {group.types.map((type) => {
+          {group.types.map((type, typeIndex) => {
             const ready = samplesByType[type].length > 0;
             return (
+              <StaggerIn key={type} delay={typeIndex * 60}>
               <Pressable
-                key={type}
                 style={styles.tile}
                 onPress={() =>
                   router.push({
@@ -47,6 +48,7 @@ export default function Testing() {
                 </View>
                 <Text style={styles.tileDescription}>{exerciseMeta[type]}</Text>
               </Pressable>
+              </StaggerIn>
             );
           })}
         </View>

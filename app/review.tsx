@@ -179,11 +179,25 @@ export default function Review() {
   const [canCheck, setCanCheck] = useState(false);
   const [banner, setBanner] = useState<FeedbackBannerInfo | null>(null);
   const cardAnim = useRef(new Animated.Value(0)).current;
+  const wiggle = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     cardAnim.setValue(0);
     Animated.timing(cardAnim, { toValue: 1, duration: 200, useNativeDriver: true }).start();
   }, [cardAnim, index]);
+
+  useEffect(() => {
+    Animated.sequence([
+      Animated.timing(wiggle, { toValue: 1, duration: 150, useNativeDriver: true }),
+      Animated.timing(wiggle, { toValue: -1, duration: 300, useNativeDriver: true }),
+      Animated.timing(wiggle, { toValue: 0, duration: 150, useNativeDriver: true }),
+    ]).start();
+  }, [wiggle]);
+
+  const wiggleRotate = wiggle.interpolate({
+    inputRange: [-1, 0, 1],
+    outputRange: ['-2deg', '0deg', '2deg'],
+  });
 
   const readySession = session.status === 'ready' ? session : null;
   const card = readySession?.cards[index] ?? null;
@@ -363,9 +377,11 @@ export default function Review() {
     <View style={styles.container}>
       <TopBar title="Home" showBack />
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.dueChip}>
+        <Animated.View
+          style={[styles.dueChip, { transform: [{ rotate: wiggleRotate }] }]}
+        >
           <Text style={styles.dueChipText}>{session.cards.length} due</Text>
-        </View>
+        </Animated.View>
 
         <Animated.View
           style={{

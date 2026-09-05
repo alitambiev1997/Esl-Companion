@@ -11,6 +11,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { StaggerIn } from '@/src/components/ui/stagger-in';
 import { TopBar } from '@/src/components/ui/TopBar';
 import { lightHaptic } from '@/src/lib/haptics';
 import { useAuth } from '@/src/features/auth/useAuth';
@@ -330,11 +331,13 @@ export default function Course() {
                     key={lesson.id}
                     style={[styles.nodePosition, { left: c.x - NODE_SLOT_W / 2, top: c.y - NODE / 2 }]}
                   >
+                    <StaggerIn delay={i * 40}>
                     <CourseNode
                       lesson={lesson}
                       isCurrent={lesson.status === 'current'}
                       onPress={() => onLessonPress(lesson)}
                     />
+                    </StaggerIn>
                   </View>
                 );
               })}

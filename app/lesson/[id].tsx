@@ -2,6 +2,7 @@ import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Animated,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -90,6 +91,12 @@ export default function LessonPlayer() {
   const [banner, setBanner] = useState<FeedbackBannerInfo | null>(null);
   const [pairsLeft, setPairsLeft] = useState(0);
   const [hintMessage, setHintMessage] = useState<string | null>(null);
+  const slideAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    slideAnim.setValue(1);
+    Animated.timing(slideAnim, { toValue: 0, duration: 200, useNativeDriver: true }).start();
+  }, [slideAnim, index]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -506,7 +513,16 @@ export default function LessonPlayer() {
         )}
 
         {exercise && (
-          <>
+          <Animated.View
+            style={{
+              opacity: slideAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }),
+              transform: [
+                {
+                  translateX: slideAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 24] }),
+                },
+              ],
+            }}
+          >
             {exercise.type !== 'fill_blank' && exercise.type !== 'listening_word_order' && exercise.type !== 'image_choice' && (
               <Text style={styles.prompt}>{exercise.prompt}</Text>
             )}
@@ -582,7 +598,7 @@ export default function LessonPlayer() {
 
             {attemptError && <Text style={styles.errorText}>{attemptError}</Text>}
             {saveError && <Text style={styles.errorText}>{saveError}</Text>}
-          </>
+          </Animated.View>
         )}
       </ScrollView>
       {exercise && bottomArea()}
