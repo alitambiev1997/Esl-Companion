@@ -1,7 +1,7 @@
 import { ParrotBadge } from '@/src/components/ParrotBadge';
 import { BottomBar } from '@/src/components/ui/bottom-bar';
 import { FeedbackBanner } from '@/src/components/ui/feedback-banner';
-import { ParrotNudge } from '@/src/components/ui/parrot-nudge';
+import { ParrotSeat } from '@/src/components/ui/parrot-seat';
 import { TopBar } from '@/src/components/ui/TopBar';
 import { useAuth } from '@/src/features/auth/useAuth';
 import type {
@@ -375,7 +375,8 @@ export default function Review() {
 
   return (
     <View style={styles.container}>
-      <TopBar title="Home" showBack />
+      <TopBar title="Review" showBack />
+      <ParrotSeat checked={phase === 'checked'} correct={banner?.correct ?? false} />
       <ScrollView contentContainerStyle={styles.content}>
         <Animated.View
           style={[styles.dueChip, { transform: [{ rotate: wiggleRotate }] }]}
@@ -416,16 +417,13 @@ export default function Review() {
         </Animated.View>
       </ScrollView>
       {phase === 'checked' && banner ? (
-        <View style={styles.bannerWrap}>
-          <ParrotNudge correct={banner.correct} bounceKey={banner.correct ? 0 : undefined} />
-          <FeedbackBanner
-            correct={banner.correct}
-            explanation={banner.explanation}
-            correctAnswer={banner.correctAnswer}
-            chips={banner.chips ?? undefined}
-            onContinue={handleContinue}
-          />
-        </View>
+        <FeedbackBanner
+          correct={banner.correct}
+          explanation={banner.explanation}
+          correctAnswer={banner.correctAnswer}
+          chips={banner.chips ?? undefined}
+          onContinue={handleContinue}
+        />
       ) : (
         <BottomBar>
           <PrimaryButton
@@ -529,12 +527,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: colors.ink,
-  },
-  bannerWrap: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
   },
   buttonSecondary: {
     backgroundColor: colors.sky,

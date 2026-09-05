@@ -12,7 +12,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/src/features/auth/useAuth';
 import { ParrotBadge } from '@/src/components/ParrotBadge';
-import { ParrotNudge } from '@/src/components/ui/parrot-nudge';
+import { ParrotSeat } from '@/src/components/ui/parrot-seat';
 import { BottomBar } from '@/src/components/ui/bottom-bar';
 import { FeedbackBanner } from '@/src/components/ui/feedback-banner';
 import { Toast } from '@/src/components/ui/toast';
@@ -430,18 +430,15 @@ export default function LessonPlayer() {
     if (isMatching) {
       if (phase === 'checked' && banner) {
         return (
-          <View style={styles.bannerWrap}>
-            <ParrotNudge correct={banner.correct} bounceKey={banner.correct ? 0 : undefined} />
-            <FeedbackBanner
-              correct={banner.correct}
-              title={banner.title ?? undefined}
-              explanation={banner.explanation}
-              correctAnswer={banner.correctAnswer}
-              chips={banner.chips ?? undefined}
-              tip={banner.tip ?? undefined}
-              onContinue={handleContinue}
-            />
-          </View>
+          <FeedbackBanner
+            correct={banner.correct}
+            title={banner.title ?? undefined}
+            explanation={banner.explanation}
+            correctAnswer={banner.correctAnswer}
+            chips={banner.chips ?? undefined}
+            tip={banner.tip ?? undefined}
+            onContinue={handleContinue}
+          />
         );
       }
       return (
@@ -453,26 +450,6 @@ export default function LessonPlayer() {
     if (isTapGraded) {
       if (phase === 'checked' && banner) {
         return (
-          <View style={styles.bannerWrap}>
-            <ParrotNudge correct={banner.correct} bounceKey={banner.correct ? 0 : undefined} />
-            <FeedbackBanner
-              correct={banner.correct}
-              title={banner.title ?? undefined}
-              explanation={banner.explanation}
-              correctAnswer={banner.correctAnswer}
-              chips={banner.chips ?? undefined}
-              tip={banner.tip ?? undefined}
-              onContinue={handleContinue}
-            />
-          </View>
-        );
-      }
-      return null;
-    }
-    if (phase === 'checked' && banner) {
-      return (
-        <View style={styles.bannerWrap}>
-          <ParrotNudge correct={banner.correct} bounceKey={banner.correct ? 0 : undefined} />
           <FeedbackBanner
             correct={banner.correct}
             title={banner.title ?? undefined}
@@ -482,7 +459,21 @@ export default function LessonPlayer() {
             tip={banner.tip ?? undefined}
             onContinue={handleContinue}
           />
-        </View>
+        );
+      }
+      return null;
+    }
+    if (phase === 'checked' && banner) {
+      return (
+        <FeedbackBanner
+            correct={banner.correct}
+            title={banner.title ?? undefined}
+            explanation={banner.explanation}
+            correctAnswer={banner.correctAnswer}
+            chips={banner.chips ?? undefined}
+            tip={banner.tip ?? undefined}
+            onContinue={handleContinue}
+          />
       );
     }
     return (
@@ -503,6 +494,7 @@ export default function LessonPlayer() {
         progress={exercises.length === 0 ? 0 : (index + 1) / exercises.length}
         onClose={() => (router.canGoBack() ? router.back() : router.replace('/home'))}
       />
+      <ParrotSeat checked={phase === 'checked'} correct={banner?.correct ?? false} />
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.title}>{lesson.title}</Text>
 
@@ -679,12 +671,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: colors.white,
-  },
-  bannerWrap: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
   },
   buttonPrimary: {
     backgroundColor: colors.sun,
