@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { Platform, StyleSheet, TextInput, View } from 'react-native';
 import { SlowButton, SpeakerButton } from '@/src/components/ui/speaker-button';
 import type {
   ExerciseRendererHandle,
@@ -25,6 +25,7 @@ export const ListeningDictationRenderer = forwardRef<
   const [text, setText] = useState('');
 
   useEffect(() => {
+    if (Platform.OS === 'web') return;
     speak(content.text_to_speak);
     return () => stopSpeech();
   }, [content.text_to_speak]);

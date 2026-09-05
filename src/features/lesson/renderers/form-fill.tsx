@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 import { Chip } from '@/src/components/ui/chip';
 import { SlowButton, SpeakerButton } from '@/src/components/ui/speaker-button';
 import type {
@@ -18,6 +18,7 @@ export const FormFillRenderer = forwardRef<ExerciseRendererHandle, ExerciseRende
     );
 
     useEffect(() => {
+      if (Platform.OS === 'web') return;
       if (!content.text_to_speak) return;
       speak(content.text_to_speak);
       return () => stopSpeech();

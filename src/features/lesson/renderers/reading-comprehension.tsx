@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { ChatBubbles, type ChatLine } from '@/src/components/ui/chat-bubbles';
 import { OptionCard } from '@/src/components/ui/option-card';
 import type {
@@ -33,6 +33,7 @@ export const ReadingComprehensionRenderer = forwardRef<
   const passage = () => content.text_to_speak ?? lines.map((line) => line.text).join(' ');
 
   useEffect(() => {
+    if (Platform.OS === 'web') return;
     speak(passage());
     return () => stopSpeech();
     // eslint-disable-next-line react-hooks/exhaustive-deps

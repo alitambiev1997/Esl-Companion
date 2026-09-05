@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useImperativeHandle } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 import { ContentImage } from '@/src/components/ui/content-image';
 import { OptionCard } from '@/src/components/ui/option-card';
 import { SlowButton, SpeakerButton } from '@/src/components/ui/speaker-button';
@@ -17,6 +17,7 @@ export const ImageChoiceRenderer = forwardRef<ExerciseRendererHandle, ExerciseRe
     const content = exercise.content as unknown as ImageChoiceContent;
 
     useEffect(() => {
+      if (Platform.OS === 'web') return;
       if (!content.text_to_speak) return;
       speak(content.text_to_speak);
       return () => stopSpeech();

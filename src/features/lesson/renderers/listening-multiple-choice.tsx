@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { OptionCard } from '@/src/components/ui/option-card';
 import { SlowButton, SpeakerButton } from '@/src/components/ui/speaker-button';
 import type {
@@ -23,6 +23,7 @@ export const ListeningMultipleChoiceRenderer = forwardRef<
   const [selected, setSelected] = useState<number | null>(null);
 
   useEffect(() => {
+    if (Platform.OS === 'web') return;
     speak(content.text_to_speak);
     return () => stopSpeech();
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { Chip } from '@/src/components/ui/chip';
 import { SlowButton, SpeakerButton } from '@/src/components/ui/speaker-button';
 import { TapAnswerBank } from '@/src/components/ui/tap-answer-bank';
@@ -36,6 +36,7 @@ export const ListeningWordOrderRenderer = forwardRef<
   const [answer, setAnswer] = useState<string[]>([]);
 
   useEffect(() => {
+    if (Platform.OS === 'web') return;
     speak(content.text_to_speak);
     return () => stopSpeech();
     // eslint-disable-next-line react-hooks/exhaustive-deps

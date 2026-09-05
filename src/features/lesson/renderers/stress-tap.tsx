@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useImperativeHandle } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { Chip } from '@/src/components/ui/chip';
 import { SlowButton, SpeakerButton } from '@/src/components/ui/speaker-button';
 import type {
@@ -14,6 +14,7 @@ export const StressTapRenderer = forwardRef<ExerciseRendererHandle, ExerciseRend
     const content = exercise.content as unknown as StressTapContent;
 
     useEffect(() => {
+      if (Platform.OS === 'web') return;
       speak(content.text_to_speak);
       return () => stopSpeech();
       // eslint-disable-next-line react-hooks/exhaustive-deps
