@@ -8,6 +8,7 @@ export const colors = {
   grey: '#E8E8E8',
   greyDark: '#C8CDD2',
   pathGrey: '#B9C1CA',
+  shell: '#EAEEF4',
   white: '#FFFFFF',
   bronze: '#CD7F32',
   silver: '#C0C0C0',

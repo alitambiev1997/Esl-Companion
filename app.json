@@ -27,6 +27,7 @@
       "package": "com.alitambievsteam.eslcompanion"
     },
     "web": {
+      "name": "AQAP English",
       "output": "single",
       "favicon": "./assets/images/favicon.png"
     },

@@ -4,8 +4,11 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { useHapticsStore } from '@/src/store/haptics';
+import { colors } from '@/src/theme/tokens';
+
+const isWeb = Platform.OS === 'web';
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -18,11 +21,17 @@ export default function RootLayout() {
     loadHaptics();
   }, [loadHaptics]);
 
+  useEffect(() => {
+    if (!isWeb) return;
+    document.title = 'AQAP English';
+    document.body.style.background = colors.shell;
+  }, []);
+
   if (!fontsLoaded) {
     return <View style={styles.loading} />;
   }
 
-  return (
+  const app = (
     <>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
@@ -41,10 +50,30 @@ export default function RootLayout() {
       <StatusBar style="auto" />
     </>
   );
+
+  if (!isWeb) return app;
+
+  return (
+    <View style={styles.webShell}>
+      <View style={styles.webColumn}>{app}</View>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
   loading: {
     flex: 1,
+  },
+  webShell: {
+    flex: 1,
+    alignItems: 'center',
+    backgroundColor: colors.shell,
+  },
+  webColumn: {
+    flex: 1,
+    width: '100%',
+    maxWidth: 480,
+    backgroundColor: colors.paper,
+    boxShadow: '0 0 0 1px rgba(18, 40, 60, 0.06), 0 16px 48px rgba(18, 40, 60, 0.12)',
   },
 });

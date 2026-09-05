@@ -1,50 +1,36 @@
-# Welcome to your Expo app 👋
+# AQAP English
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Free ESL companion app for adult learners (MVP phase). Native (Expo/React Native) plus a web practice site gated by class codes.
 
-## Get started
+## Stack
 
-1. Install dependencies
+- Expo SDK 54, React Native, TypeScript, Expo Router
+- Supabase (Auth, Postgres, Storage)
+- TanStack Query-ready architecture, Zustand (light UI state), Zod, React Hook Form
 
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Run it
 
 ```bash
-npm run reset-project
+npm install
+npx expo start          # native (Expo Go / emulator)
+npx expo start --web    # web practice site (dev)
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Requires a `.env` with `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY`.
 
-## Learn more
+## Web build
 
-To learn more about developing your project with Expo, look at the following resources:
+```bash
+npx expo export --platform web   # outputs dist/
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Deploy `dist/` to any static host (Netlify, Vercel). The `public/_redirects` file provides the SPA fallback so deep links work.
 
-## Join the community
+## Web practice site
 
-Join our community of developers creating universal apps.
+A no-account version of the course for classroom use. Open the URL, enter a class code, and play the same lessons as the app.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- Live: <URL> (pending first deploy)
+- Class codes: `AQAP-A2` (CEFR A2)
+
+It deliberately lacks: accounts/sign-in, review (SRS) sessions, progress tracking (progress lives only in the browser's localStorage), and any server-side writes. Lesson attempts and scores are computed and stored locally per browser; nothing is uploaded.
