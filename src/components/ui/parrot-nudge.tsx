@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Animated, StyleSheet, Text, View } from 'react-native';
 import { MascotBadge } from '@/components/mascot-badge';
 import { correctLine, wrongLine } from '@/src/lib/voice';
 import { colors, fonts, radius } from '@/src/theme/tokens';
@@ -12,14 +12,29 @@ export function ParrotNudge({
   bounceKey?: number;
 }) {
   const [line] = useState(() => (correct ? correctLine() : wrongLine()));
+  const drop = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(drop, { toValue: 1, duration: 450, useNativeDriver: true }).start();
+  }, [drop]);
 
   return (
-    <View style={styles.row}>
-      <MascotBadge size={48} bounceKey={bounceKey} />
+    <Animated.View
+      style={[
+        styles.row,
+        {
+          opacity: drop,
+          transform: [
+            { translateY: drop.interpolate({ inputRange: [0, 1], outputRange: [-60, 0] }) },
+          ],
+        },
+      ]}
+    >
+      <MascotBadge size={96} bounceKey={bounceKey} />
       <View style={styles.bubble}>
         <Text style={styles.text}>{line}</Text>
       </View>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -31,12 +46,13 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   bubble: {
+    flex: 1,
     backgroundColor: colors.white,
     borderWidth: 2,
     borderColor: colors.grey,
     borderRadius: radius.bubble,
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 10,
     marginLeft: 10,
     marginBottom: 4,
   },
