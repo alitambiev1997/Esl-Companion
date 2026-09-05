@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Animated,
@@ -96,11 +96,12 @@ export default function Course() {
   const router = useRouter();
   const { user, profile, loading: authLoading } = useAuth();
   const [loadState, setLoadState] = useState<LoadState>({ status: 'loading' });
-  const [retry, setRetry] = useState(0);
   const [pathWidth, setPathWidth] = useState(0);
   const [levelTitle, setLevelTitle] = useState<string | null>(null);
+  const loadStateRef = useRef(loadState);
+  loadStateRef.current = loadState;
 
-  useEffect(() => {
+  const loadCourse = useCallback(() => {
     if (authLoading) return;
     if (!user) {
       router.replace('/login');
@@ -112,7 +113,9 @@ export default function Course() {
     }
 
     let mounted = true;
-    setLoadState({ status: 'loading' });
+    if (loadStateRef.current.status !== 'ready') {
+      setLoadState({ status: 'loading' });
+    }
 
     (async () => {
       const levelId = profile.current_level_id as string;
@@ -224,7 +227,13 @@ export default function Course() {
     return () => {
       mounted = false;
     };
-  }, [authLoading, user, profile, router, retry]);
+  }, [authLoading, user, profile, router]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadCourse();
+    }, [loadCourse])
+  );
 
   const onLessonPress = (lesson: LessonRow) => {
     if (lesson.status === 'locked') return;
@@ -246,7 +255,7 @@ export default function Course() {
     return (
       <View style={styles.container}>
         <Text style={styles.errorText}>{loadState.message}</Text>
-        <Pressable style={styles.buttonSecondary} onPress={() => setRetry((n) => n + 1)}>
+        <Pressable style={styles.buttonSecondary} onPress={() => loadCourse()}>
           <Text style={styles.buttonSecondaryText}>Try again</Text>
         </Pressable>
       </View>

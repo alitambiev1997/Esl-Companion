@@ -32,6 +32,7 @@
 21. Every answer has a source of truth: audio contains the fact, or grammar distinguishes options. Never arbitrary facts.
 22. No new packages without explicit approval.
 23. Mascot seat is fixed: top-right in lessons; feedback banner owns the bottom. Never place the mascot in the bottom flow.
+24. Screens showing progress or unlock state refresh on focus, not only on mount.
 
 ## New activity checklist
 - [ ] shape in docs/EXERCISE_SHAPES.md
