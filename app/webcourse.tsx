@@ -115,6 +115,13 @@ export default function WebCourse() {
     router.replace('/gate');
   };
 
+  const onLessonPress = (lesson: Lesson) => {
+    router.push({
+      pathname: '/lesson/[id]',
+      params: { id: lesson.id, from: 'webcourse' },
+    });
+  };
+
   if (loadState.status === 'loading') {
     return (
       <View style={styles.container}>
@@ -159,7 +166,7 @@ export default function WebCourse() {
           units={loadState.units}
           lessons={loadState.lessons}
           progressMap={loadState.progressMap}
-          onLessonPress={() => {}}
+          onLessonPress={onLessonPress}
         />
       </ScrollView>
     </View>

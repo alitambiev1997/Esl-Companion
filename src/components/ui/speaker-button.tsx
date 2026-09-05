@@ -1,8 +1,12 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { Pressable, StyleSheet } from 'react-native';
-import { colors } from '@/src/theme/tokens';
+import { Pressable, StyleSheet, Text } from 'react-native';
+import { isSpeechAvailable } from '@/src/lib/tts';
+import { colors, fonts } from '@/src/theme/tokens';
 
 export function SpeakerButton({ onPress }: { onPress: () => void }) {
+  if (!isSpeechAvailable()) {
+    return <Text style={styles.caption}>Audio isn&apos;t supported in this browser.</Text>;
+  }
   return (
     <Pressable style={styles.speaker} onPress={onPress}>
       <Ionicons name="volume-high" size={32} color={colors.white} />
@@ -11,6 +15,7 @@ export function SpeakerButton({ onPress }: { onPress: () => void }) {
 }
 
 export function SlowButton({ onPress }: { onPress: () => void }) {
+  if (!isSpeechAvailable()) return null;
   return (
     <Pressable style={styles.slow} onPress={onPress}>
       <MaterialCommunityIcons name="turtle" size={24} color={colors.sky} />
@@ -36,5 +41,11 @@ const styles = StyleSheet.create({
     borderColor: colors.sky,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  caption: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    color: colors.ink,
+    opacity: 0.7,
   },
 });

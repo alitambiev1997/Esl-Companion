@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Animated,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -49,6 +50,7 @@ import { SilentLetterRenderer } from '@/src/features/lesson/renderers/silent-let
 import { WordOrderRenderer } from '@/src/features/lesson/renderers/word-order';
 import { WordSortRenderer } from '@/src/features/lesson/renderers/word-sort';
 import { supabase } from '@/src/lib/supabase';
+import { readWebProgress, writeWebProgress } from '@/src/lib/web-progress';
 import { colors, fonts, radius } from '@/src/theme/tokens';
 import type { Exercise, Lesson } from '@/src/types/content';
 
@@ -69,6 +71,7 @@ export default function LessonPlayer() {
   const { id, from } = useLocalSearchParams<{ id: string; from?: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const isWeb = Platform.OS === 'web';
   const { user, loading: authLoading } = useAuth();
 
   const [loadState, setLoadState] = useState<LoadState>({ status: 'loading' });
@@ -92,6 +95,7 @@ export default function LessonPlayer() {
   const [pairsLeft, setPairsLeft] = useState(0);
   const [hintMessage, setHintMessage] = useState<string | null>(null);
   const slideAnim = useRef(new Animated.Value(0)).current;
+  const webAttemptsRef = useRef<{ exerciseId: string; isCorrect: boolean; at: number }[]>([]);
 
   useEffect(() => {
     slideAnim.setValue(1);
@@ -99,10 +103,12 @@ export default function LessonPlayer() {
   }, [slideAnim, index]);
 
   useEffect(() => {
-    if (authLoading) return;
-    if (!user) {
-      router.replace('/login');
-      return;
+    if (!isWeb) {
+      if (authLoading) return;
+      if (!user) {
+        router.replace('/login');
+        return;
+      }
     }
 
     let mounted = true;
@@ -150,7 +156,7 @@ export default function LessonPlayer() {
     return () => {
       mounted = false;
     };
-  }, [authLoading, user, id, router, retry]);
+  }, [authLoading, user, id, router, retry, isWeb]);
 
   const handleCheck = async (
     exercise: Exercise,
@@ -158,6 +164,28 @@ export default function LessonPlayer() {
     isCorrect: boolean,
     info: FeedbackBannerInfo
   ) => {
+    if (isWeb) {
+      console.log('[web] attempt', {
+        exerciseId: exercise.id,
+        userAnswer,
+        isCorrect,
+        at: Date.now(),
+      });
+      webAttemptsRef.current.push({ exerciseId: exercise.id, isCorrect, at: Date.now() });
+
+      if (isCorrect && exercise.is_required !== false) {
+        setCorrectCount((n) => n + 1);
+      }
+      if (isCorrect) {
+        successHaptic();
+      } else {
+        errorHaptic();
+      }
+      setBanner(info);
+      setPhase('checked');
+      return;
+    }
+
     if (!user) return;
 
     setBusy(true);
@@ -195,6 +223,13 @@ export default function LessonPlayer() {
   };
 
   const handleUngradedContinue = async (exercise: Exercise) => {
+    if (isWeb) {
+      console.log('[web] ungraded continue', { exerciseId: exercise.id, at: Date.now() });
+      webAttemptsRef.current.push({ exerciseId: exercise.id, isCorrect: true, at: Date.now() });
+      await handleContinue();
+      return;
+    }
+
     if (!user) return;
 
     setBusy(true);
@@ -241,13 +276,27 @@ export default function LessonPlayer() {
   };
 
   const finishLesson = async (exercises: Exercise[]) => {
-    if (!user || loadState.status !== 'ready') return;
+    if (loadState.status !== 'ready') return;
 
     const passScore = loadState.lesson.pass_score ?? 60;
     const total = exercises.filter((e) => e.is_required !== false).length;
     const score = total === 0 ? 0 : Math.round((correctCount / total) * 100);
     const passed = score >= passScore;
     const medal = medalForScore(score);
+
+    if (isWeb) {
+      const existing = readWebProgress();
+      const prev = existing[id];
+      const bestScore = Math.max(prev?.score ?? 0, score);
+      writeWebProgress({
+        ...existing,
+        [id]: { score: bestScore, medal: medalColor(medal) ?? '', at: Date.now() },
+      });
+      setResult({ score, passed, medal });
+      return;
+    }
+
+    if (!user) return;
 
     setBusy(true);
     setSaveError(null);
@@ -368,7 +417,13 @@ export default function LessonPlayer() {
             </Text>
             <Pressable
               style={styles.buttonPrimary}
-              onPress={() => (from === 'course' ? router.back() : router.replace('/course'))}
+              onPress={() =>
+                isWeb
+                  ? router.replace('/webcourse')
+                  : from === 'course'
+                    ? router.back()
+                    : router.replace('/course')
+              }
             >
               <Text style={styles.buttonPrimaryText}>Continue</Text>
             </Pressable>
@@ -492,7 +547,13 @@ export default function LessonPlayer() {
       <Stack.Screen options={{ title: lesson.title }} />
       <TopBar
         progress={exercises.length === 0 ? 0 : (index + 1) / exercises.length}
-        onClose={() => (router.canGoBack() ? router.back() : router.replace('/home'))}
+        onClose={() =>
+          router.canGoBack()
+            ? router.back()
+            : isWeb
+              ? router.replace('/webcourse')
+              : router.replace('/home')
+        }
       />
       <ParrotSeat checked={phase === 'checked'} correct={banner?.correct ?? false} />
       <ScrollView contentContainerStyle={styles.content}>
