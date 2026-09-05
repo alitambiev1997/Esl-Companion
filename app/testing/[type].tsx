@@ -117,19 +117,16 @@ export default function TestingDetail() {
         )}
       </ScrollView>
       {checked && banner ? (
-        <View style={styles.bannerWrap}>
-          <ParrotNudge correct={banner.correct} bounceKey={banner.correct ? 0 : undefined} />
-          <FeedbackBanner
-            correct={banner.correct}
-            title={banner.title ?? undefined}
-            explanation={banner.explanation}
-            correctAnswer={banner.correctAnswer}
-            chips={banner.chips ?? undefined}
-            tip={banner.tip ?? undefined}
-            continueLabel={index === samples.length - 1 ? 'Back to testing' : undefined}
-            onContinue={advance}
-          />
-        </View>
+        <FeedbackBanner
+          correct={banner.correct}
+          title={banner.title ?? undefined}
+          explanation={banner.explanation}
+          correctAnswer={banner.correctAnswer}
+          chips={banner.chips ?? undefined}
+          tip={banner.tip ?? undefined}
+          continueLabel={index === samples.length - 1 ? 'Back to testing' : undefined}
+          onContinue={advance}
+        />
       ) : exerciseType === 'matching' ? (
         <BottomBar>
           <Text style={styles.pairsLeft}>Pairs left: {pairsLeft}</Text>
@@ -152,6 +149,9 @@ export default function TestingDetail() {
             disabled={!canCheck}
           />
         </BottomBar>
+      )}
+      {checked && banner && (
+        <ParrotNudge correct={banner.correct} bounceKey={banner.correct ? 0 : undefined} />
       )}
       <Toast message={hintMessage} />
     </View>
@@ -233,11 +233,5 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.ink,
     textAlign: 'center',
-  },
-  bannerWrap: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
   },
 });

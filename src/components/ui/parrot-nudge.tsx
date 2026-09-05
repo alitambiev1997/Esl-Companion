@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MascotBadge } from '@/components/mascot-badge';
 import { correctLine, wrongLine } from '@/src/lib/voice';
 import { colors, fonts, radius } from '@/src/theme/tokens';
@@ -12,6 +13,7 @@ export function ParrotNudge({
   bounceKey?: number;
 }) {
   const [line] = useState(() => (correct ? correctLine() : wrongLine()));
+  const insets = useSafeAreaInsets();
   const drop = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -21,11 +23,12 @@ export function ParrotNudge({
   return (
     <Animated.View
       style={[
-        styles.row,
+        styles.container,
+        { top: insets.top + 56 + 8 },
         {
           opacity: drop,
           transform: [
-            { translateY: drop.interpolate({ inputRange: [0, 1], outputRange: [-60, 0] }) },
+            { translateY: drop.interpolate({ inputRange: [0, 1], outputRange: [-120, 0] }) },
           ],
         },
       ]}
@@ -39,11 +42,13 @@ export function ParrotNudge({
 }
 
 const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    paddingHorizontal: 20,
-    paddingBottom: 8,
+  container: {
+    position: 'absolute',
+    right: 20,
+    flexDirection: 'row-reverse',
+    alignItems: 'flex-start',
+    zIndex: 10,
+    elevation: 4,
   },
   bubble: {
     flex: 1,
@@ -53,8 +58,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.bubble,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    marginLeft: 10,
-    marginBottom: 4,
+    marginRight: 10,
+    marginTop: 8,
   },
   text: {
     fontFamily: fonts.body,

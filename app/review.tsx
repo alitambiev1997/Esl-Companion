@@ -416,16 +416,13 @@ export default function Review() {
         </Animated.View>
       </ScrollView>
       {phase === 'checked' && banner ? (
-        <View style={styles.bannerWrap}>
-          <ParrotNudge correct={banner.correct} bounceKey={banner.correct ? 0 : undefined} />
-          <FeedbackBanner
-            correct={banner.correct}
-            explanation={banner.explanation}
-            correctAnswer={banner.correctAnswer}
-            chips={banner.chips ?? undefined}
-            onContinue={handleContinue}
-          />
-        </View>
+        <FeedbackBanner
+          correct={banner.correct}
+          explanation={banner.explanation}
+          correctAnswer={banner.correctAnswer}
+          chips={banner.chips ?? undefined}
+          onContinue={handleContinue}
+        />
       ) : (
         <BottomBar>
           <PrimaryButton
@@ -434,6 +431,9 @@ export default function Review() {
             disabled={!canCheck || busy}
           />
         </BottomBar>
+      )}
+      {phase === 'checked' && banner && (
+        <ParrotNudge correct={banner.correct} bounceKey={banner.correct ? 0 : undefined} />
       )}
     </View>
   );
@@ -529,12 +529,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: colors.ink,
-  },
-  bannerWrap: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
   },
   buttonSecondary: {
     backgroundColor: colors.sky,
