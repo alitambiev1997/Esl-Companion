@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Animated, Image, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { colors } from '@/src/theme/tokens';
 
-export function MascotBadge({
+export function ParrotBadge({
   size = 72,
   backgroundColor = colors.sun,
   style,

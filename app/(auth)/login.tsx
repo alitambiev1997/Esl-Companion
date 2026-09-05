@@ -5,7 +5,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { z } from 'zod';
 import { KeyboardFormWrapper } from '@/components/keyboard-form-wrapper';
-import { MascotBadge } from '@/components/mascot-badge';
+import { ParrotBadge } from '@/src/components/ParrotBadge';
 import { TopBar } from '@/src/components/ui/TopBar';
 import { supabase } from '@/src/lib/supabase';
 import { colors, fonts, radius } from '@/src/theme/tokens';
@@ -45,7 +45,7 @@ export default function Login() {
       <TopBar title="Log in" />
       <KeyboardFormWrapper>
       <View style={styles.hero}>
-        <MascotBadge size={96} />
+        <ParrotBadge size={96} />
         <Text style={styles.title}>Welcome back</Text>
         <Text style={styles.tagline}>English with joy - step by step.</Text>
       </View>

@@ -15,7 +15,7 @@ import { lightHaptic } from '@/src/lib/haptics';
 import { useHapticsStore } from '@/src/store/haptics';
 import { colors, fonts, radius } from '@/src/theme/tokens';
 import { useAuth } from '@/src/features/auth/useAuth';
-import { MascotBadge } from '@/components/mascot-badge';
+import { ParrotBadge } from '@/src/components/ParrotBadge';
 import { PopNumber } from '@/src/components/ui/pop-number';
 import { StaggerIn } from '@/src/components/ui/stagger-in';
 import type { Lesson, LessonProgress, Unit } from '@/src/types/content';
@@ -252,7 +252,7 @@ export default function Home() {
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.headerRow}>
-          <MascotBadge size={48} bob />
+          <ParrotBadge size={48} bob />
           <View style={styles.headerText}>
             <Text style={styles.welcome}>{greeting}</Text>
             <Text style={styles.email}>{user.email ?? 'No email on file'}</Text>

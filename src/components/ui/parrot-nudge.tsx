@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { MascotBadge } from '@/components/mascot-badge';
+import { ParrotBadge } from '@/src/components/ParrotBadge';
 import { correctLine, wrongLine } from '@/src/lib/voice';
 import { colors, fonts, radius } from '@/src/theme/tokens';
 
@@ -13,42 +12,38 @@ export function ParrotNudge({
   bounceKey?: number;
 }) {
   const [line] = useState(() => (correct ? correctLine() : wrongLine()));
-  const insets = useSafeAreaInsets();
   const drop = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.timing(drop, { toValue: 1, duration: 450, useNativeDriver: true }).start();
+    Animated.timing(drop, { toValue: 1, duration: 400, useNativeDriver: true }).start();
   }, [drop]);
 
   return (
     <Animated.View
       style={[
-        styles.container,
-        { top: insets.top + 56 + 8 },
+        styles.row,
         {
           opacity: drop,
           transform: [
-            { translateY: drop.interpolate({ inputRange: [0, 1], outputRange: [-120, 0] }) },
+            { translateY: drop.interpolate({ inputRange: [0, 1], outputRange: [-40, 0] }) },
           ],
         },
       ]}
     >
-      <MascotBadge size={96} bounceKey={bounceKey} />
       <View style={styles.bubble}>
         <Text style={styles.text}>{line}</Text>
       </View>
+      <ParrotBadge size={64} bounceKey={bounceKey} />
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    position: 'absolute',
-    right: 20,
-    flexDirection: 'row-reverse',
-    alignItems: 'flex-start',
-    zIndex: 10,
-    elevation: 4,
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingBottom: 8,
   },
   bubble: {
     flex: 1,
@@ -56,15 +51,12 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: colors.grey,
     borderRadius: radius.bubble,
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     paddingVertical: 10,
-    marginRight: 10,
-    marginTop: 8,
   },
   text: {
     fontFamily: fonts.body,
     fontSize: 14,
-    fontWeight: '600',
     color: colors.ink,
   },
 });

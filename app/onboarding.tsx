@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useAuth } from '@/src/features/auth/useAuth';
 import { TopBar } from '@/src/components/ui/TopBar';
-import { MascotBadge } from '@/components/mascot-badge';
+import { ParrotBadge } from '@/src/components/ParrotBadge';
 import { OptionCard } from '@/src/components/ui/option-card';
 import {
   getOnboardingCopy,
@@ -148,7 +148,7 @@ export default function Onboarding() {
         {step === 'language' && (
           <>
             <View style={styles.mascotTop}>
-              <MascotBadge size={96} bob />
+              <ParrotBadge size={96} bob />
             </View>
             <Text style={styles.title}>{languageStepCopy.titleLine1}</Text>
             <Text style={styles.subtitle}>{languageStepCopy.titleLine2}</Text>

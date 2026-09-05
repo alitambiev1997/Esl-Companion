@@ -1,4 +1,4 @@
-import { MascotBadge } from '@/components/mascot-badge';
+import { ParrotBadge } from '@/src/components/ParrotBadge';
 import { BottomBar } from '@/src/components/ui/bottom-bar';
 import { FeedbackBanner } from '@/src/components/ui/feedback-banner';
 import { ParrotNudge } from '@/src/components/ui/parrot-nudge';
@@ -356,7 +356,7 @@ export default function Review() {
     return (
       <View style={styles.container}>
         <View style={styles.endBox}>
-          <MascotBadge size={72} />
+          <ParrotBadge size={72} />
           <Text style={styles.endTitle}>
             {session.correct} of {session.reviewed} correct
           </Text>
@@ -416,13 +416,16 @@ export default function Review() {
         </Animated.View>
       </ScrollView>
       {phase === 'checked' && banner ? (
-        <FeedbackBanner
-          correct={banner.correct}
-          explanation={banner.explanation}
-          correctAnswer={banner.correctAnswer}
-          chips={banner.chips ?? undefined}
-          onContinue={handleContinue}
-        />
+        <View style={styles.bannerWrap}>
+          <ParrotNudge correct={banner.correct} bounceKey={banner.correct ? 0 : undefined} />
+          <FeedbackBanner
+            correct={banner.correct}
+            explanation={banner.explanation}
+            correctAnswer={banner.correctAnswer}
+            chips={banner.chips ?? undefined}
+            onContinue={handleContinue}
+          />
+        </View>
       ) : (
         <BottomBar>
           <PrimaryButton
@@ -431,9 +434,6 @@ export default function Review() {
             disabled={!canCheck || busy}
           />
         </BottomBar>
-      )}
-      {phase === 'checked' && banner && (
-        <ParrotNudge correct={banner.correct} bounceKey={banner.correct ? 0 : undefined} />
       )}
     </View>
   );
@@ -529,6 +529,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: colors.ink,
+  },
+  bannerWrap: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   buttonSecondary: {
     backgroundColor: colors.sky,
