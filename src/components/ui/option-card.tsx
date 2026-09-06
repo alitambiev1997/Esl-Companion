@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { Animated, Pressable, StyleSheet, Text } from 'react-native';
 import { tapHaptic } from '@/src/lib/haptics';
+import { hoverStyle } from '@/src/lib/web-hover';
 import { colors, fonts } from '@/src/theme/tokens';
 
 export function OptionCard({
@@ -41,14 +42,15 @@ export function OptionCard({
         disabled={disabled}
         onPressIn={onPressIn}
         onPressOut={onPressOut}
-        style={[
-        styles.card,
-        compact && styles.compact,
-        selected && styles.selected,
-        wrong && styles.wrong,
-        tone === 'leaf' && styles.toneLeaf,
-        tone === 'sun' && styles.toneSun,
-      ]}
+        style={({ hovered }) => [
+          styles.card,
+          compact && styles.compact,
+          selected && styles.selected,
+          wrong && styles.wrong,
+          tone === 'leaf' && styles.toneLeaf,
+          tone === 'sun' && styles.toneSun,
+          hoverStyle(hovered),
+        ]}
       >
         <Text style={[styles.label, align === 'left' && styles.labelLeft]}>{label}</Text>
       </Pressable>

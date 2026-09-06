@@ -11,8 +11,10 @@ import {
   View,
 } from 'react-native';
 import { ParrotBadge } from '@/src/components/ParrotBadge';
+import { useIsDesktop } from '@/src/hooks/useIsDesktop';
 import { getClassCode, saveClassCode, saveClassLevelId } from '@/src/lib/class-code';
 import { supabase } from '@/src/lib/supabase';
+import { hoverStyle } from '@/src/lib/web-hover';
 import { colors, fonts, radius } from '@/src/theme/tokens';
 import type { Level } from '@/src/types/content';
 
@@ -45,6 +47,7 @@ function Reveal({ children }: { children: React.ReactNode }) {
 
 export default function Gate() {
   const router = useRouter();
+  const isDesktop = useIsDesktop();
   const storedCode = getClassCode();
   const [coursesOpen, setCoursesOpen] = useState(false);
   const [levelsState, setLevelsState] = useState<LevelsState>({ status: 'idle' });
@@ -111,127 +114,163 @@ export default function Gate() {
 
   return (
     <View style={styles.screen}>
-      <View style={styles.card}>
-        <ParrotBadge size={96} />
-        <Text style={styles.appName}>AQAP English</Text>
+      <View style={[styles.card, isDesktop && styles.cardDesktop]}>
+        {isDesktop && (
+          <View style={styles.brandPanel}>
+            <ParrotBadge size={120} />
+            <Text style={[styles.appName, styles.appNameDesktop]}>AQAP English</Text>
+            <Text style={styles.tagline}>Practice English with your class.</Text>
+            <View style={styles.captionList}>
+              <Text style={styles.captionLine}>Real situations</Text>
+              <Text style={styles.captionLine}>21 activity types</Text>
+              <Text style={styles.captionLine}>No account needed</Text>
+            </View>
+          </View>
+        )}
 
-        <View style={styles.choices}>
-          <Pressable style={styles.choice} onPress={() => router.replace('/placement')}>
-            <Text style={styles.choiceTitle}>Test your level</Text>
-            <Text style={styles.choiceCaption}>Find out where to start</Text>
-          </Pressable>
+        <View style={styles.rightPanel}>
+          {!isDesktop && (
+            <>
+              <ParrotBadge size={96} />
+              <Text style={styles.appName}>AQAP English</Text>
+            </>
+          )}
 
-          <Pressable style={[styles.choice, coursesOpen && styles.choiceOpen]} onPress={toggleCourses}>
-            <View style={styles.choiceRow}>
-              <View style={styles.choiceTexts}>
-                <Text style={styles.choiceTitle}>Choose your course</Text>
-                <Text style={styles.choiceCaption}>Enter your class code</Text>
+          <View style={styles.choices}>
+            <Pressable
+              style={({ hovered }) => [styles.choice, hoverStyle(hovered)]}
+              onPress={() => router.replace('/placement')}
+            >
+              <Text style={styles.choiceTitle}>Test your level</Text>
+              <Text style={styles.choiceCaption}>Find out where to start</Text>
+            </Pressable>
+
+            <Pressable
+              style={({ hovered }) => [
+                styles.choice,
+                coursesOpen && styles.choiceOpen,
+                hoverStyle(hovered),
+              ]}
+              onPress={toggleCourses}
+            >
+              <View style={styles.choiceRow}>
+                <View style={styles.choiceTexts}>
+                  <Text style={styles.choiceTitle}>Choose your course</Text>
+                  <Text style={styles.choiceCaption}>Enter your class code</Text>
+                </View>
+                <Animated.View
+                  style={{
+                    transform: [
+                      {
+                        rotate: chevron.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: ['0deg', '180deg'],
+                        }),
+                      },
+                    ],
+                  }}
+                >
+                  <Ionicons name="chevron-down" size={24} color={colors.sky} />
+                </Animated.View>
               </View>
-              <Animated.View
-                style={{
-                  transform: [
-                    {
-                      rotate: chevron.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: ['0deg', '180deg'],
-                      }),
-                    },
-                  ],
-                }}
-              >
-                <Ionicons name="chevron-down" size={24} color={colors.sky} />
-              </Animated.View>
-            </View>
-          </Pressable>
-        </View>
+            </Pressable>
+          </View>
 
-        {coursesOpen && (
-          <Reveal>
-            <View style={styles.levelsList}>
-              {levelsState.status === 'loading' && (
-                <View style={styles.panel}>
-                  <ActivityIndicator size="small" color={colors.sky} />
-                </View>
-              )}
-              {levelsState.status === 'error' && (
-                <View style={styles.panel}>
-                  <Text style={styles.hintText}>{levelsState.message}</Text>
-                  <Pressable onPress={loadLevels}>
-                    <Text style={styles.linkText}>Try again</Text>
-                  </Pressable>
-                </View>
-              )}
-              {levelsState.status === 'ready' && levelsState.levels.length === 0 && (
-                <View style={styles.panel}>
-                  <Text style={styles.hintText}>No courses available yet.</Text>
-                </View>
-              )}
-              {levelsState.status === 'ready' &&
-                levelsState.levels.map((level) => {
-                  const open = openLevelId === level.id;
-                  return (
-                    <View key={level.id}>
-                      <Pressable
-                        style={[styles.levelCard, open && styles.levelCardOpen]}
-                        onPress={() => toggleLevel(level.id)}
-                      >
-                        <Text style={styles.levelTitle}>
-                          {level.cefr_level ?? level.title ?? ''}
-                        </Text>
-                        {level.description && (
-                          <Text style={styles.levelCaption}>{level.description}</Text>
-                        )}
-                      </Pressable>
-                      {open && (
-                        <Reveal>
-                          <View style={styles.codePanel}>
-                            <TextInput
-                              style={styles.input}
-                              value={code}
-                              onChangeText={(text) => {
-                                setCode(text);
-                                setHint(null);
-                              }}
-                              placeholder="Enter code"
-                              autoCapitalize="characters"
-                              autoCorrect={false}
-                              placeholderTextColor={colors.greyDark}
-                            />
-                            {hint && <Text style={styles.hintText}>{hint}</Text>}
-                            <Animated.View
-                              style={{
-                                transform: [
-                                  {
-                                    translateX: shake.interpolate({
-                                      inputRange: [-1, 0, 1],
-                                      outputRange: [-10, 0, 10],
-                                    }),
-                                  },
-                                ],
-                              }}
-                            >
-                              <Pressable
-                                style={styles.enterButton}
-                                onPress={() => submitCode(level)}
+          {coursesOpen && (
+            <Reveal>
+              <View style={[styles.levelsList, isDesktop && styles.levelsGrid]}>
+                {levelsState.status === 'loading' && (
+                  <View style={styles.panel}>
+                    <ActivityIndicator size="small" color={colors.sky} />
+                  </View>
+                )}
+                {levelsState.status === 'error' && (
+                  <View style={styles.panel}>
+                    <Text style={styles.hintText}>{levelsState.message}</Text>
+                    <Pressable onPress={loadLevels}>
+                      <Text style={styles.linkText}>Try again</Text>
+                    </Pressable>
+                  </View>
+                )}
+                {levelsState.status === 'ready' && levelsState.levels.length === 0 && (
+                  <View style={styles.panel}>
+                    <Text style={styles.hintText}>No courses available yet.</Text>
+                  </View>
+                )}
+                {levelsState.status === 'ready' &&
+                  levelsState.levels.map((level) => {
+                    const open = openLevelId === level.id;
+                    return (
+                      <View key={level.id} style={isDesktop && styles.gridCell}>
+                        <Pressable
+                          style={({ hovered }) => [
+                            styles.levelCard,
+                            open && styles.levelCardOpen,
+                            hoverStyle(hovered),
+                          ]}
+                          onPress={() => toggleLevel(level.id)}
+                        >
+                          <Text style={[styles.levelTitle, isDesktop && styles.levelTitleDesktop]}>
+                            {level.cefr_level ?? level.title ?? ''}
+                          </Text>
+                          {level.description && (
+                            <Text style={styles.levelCaption}>{level.description}</Text>
+                          )}
+                        </Pressable>
+                        {open && (
+                          <Reveal>
+                            <View style={styles.codePanel}>
+                              <TextInput
+                                style={styles.input}
+                                value={code}
+                                onChangeText={(text) => {
+                                  setCode(text);
+                                  setHint(null);
+                                }}
+                                placeholder="Enter code"
+                                autoCapitalize="characters"
+                                autoCorrect={false}
+                                placeholderTextColor={colors.greyDark}
+                              />
+                              {hint && <Text style={styles.hintText}>{hint}</Text>}
+                              <Animated.View
+                                style={{
+                                  transform: [
+                                    {
+                                      translateX: shake.interpolate({
+                                        inputRange: [-1, 0, 1],
+                                        outputRange: [-10, 0, 10],
+                                      }),
+                                    },
+                                  ],
+                                }}
                               >
-                                <Text style={styles.enterButtonText}>Enter</Text>
-                              </Pressable>
-                            </Animated.View>
-                          </View>
-                        </Reveal>
-                      )}
-                    </View>
-                  );
-                })}
-            </View>
-          </Reveal>
-        )}
+                                <Pressable
+                                  style={({ hovered }) => [
+                                    styles.enterButton,
+                                    hoverStyle(hovered),
+                                  ]}
+                                  onPress={() => submitCode(level)}
+                                >
+                                  <Text style={styles.enterButtonText}>Enter</Text>
+                                </Pressable>
+                              </Animated.View>
+                            </View>
+                          </Reveal>
+                        )}
+                      </View>
+                    );
+                  })}
+              </View>
+            </Reveal>
+          )}
 
-        {storedCode && (
-          <Pressable style={styles.continueRow} onPress={() => router.replace('/webcourse')}>
-            <Text style={styles.linkText}>Continue as {storedCode}</Text>
-          </Pressable>
-        )}
+          {storedCode && (
+            <Pressable style={styles.continueRow} onPress={() => router.replace('/webcourse')}>
+              <Text style={styles.linkText}>Continue as {storedCode}</Text>
+            </Pressable>
+          )}
+        </View>
       </View>
     </View>
   );
@@ -255,12 +294,52 @@ const styles = StyleSheet.create({
     padding: 24,
     alignItems: 'center',
   },
+  cardDesktop: {
+    flexDirection: 'row',
+    maxWidth: 960,
+    padding: 0,
+    alignItems: 'stretch',
+    overflow: 'hidden',
+  },
+  brandPanel: {
+    flex: 0.95,
+    backgroundColor: colors.skyTint,
+    padding: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rightPanel: {
+    flex: 1.25,
+    padding: 28,
+    justifyContent: 'center',
+  },
   appName: {
     fontFamily: fonts.display,
     fontSize: 28,
     color: colors.ink,
     marginTop: 16,
     marginBottom: 20,
+  },
+  appNameDesktop: {
+    fontSize: 36,
+  },
+  tagline: {
+    fontFamily: fonts.body,
+    fontSize: 17,
+    color: colors.ink,
+    opacity: 0.8,
+    textAlign: 'center',
+  },
+  captionList: {
+    marginTop: 16,
+    alignItems: 'center',
+    gap: 6,
+  },
+  captionLine: {
+    fontFamily: fonts.body,
+    fontSize: 15,
+    color: colors.sky,
+    fontWeight: '600',
   },
   choices: {
     alignSelf: 'stretch',
@@ -307,6 +386,13 @@ const styles = StyleSheet.create({
     marginTop: 12,
     gap: 12,
   },
+  levelsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  gridCell: {
+    width: '48%',
+  },
   panel: {
     alignSelf: 'stretch',
     alignItems: 'center',
@@ -331,6 +417,9 @@ const styles = StyleSheet.create({
     fontFamily: fonts.display,
     fontSize: 22,
     color: colors.ink,
+  },
+  levelTitleDesktop: {
+    fontSize: 26,
   },
   levelCaption: {
     fontFamily: fonts.body,

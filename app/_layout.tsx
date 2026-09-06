@@ -6,11 +6,13 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { useHapticsStore } from '@/src/store/haptics';
+import { useIsDesktop } from '@/src/hooks/useIsDesktop';
 import { colors } from '@/src/theme/tokens';
 
 const isWeb = Platform.OS === 'web';
 
 export default function RootLayout() {
+  const isDesktop = useIsDesktop();
   const [fontsLoaded] = useFonts({
     Baloo2_700Bold,
     Nunito_400Regular,
@@ -56,7 +58,7 @@ export default function RootLayout() {
 
   return (
     <View style={styles.webShell}>
-      <View style={styles.webColumn}>{app}</View>
+      <View style={[styles.webColumn, { maxWidth: isDesktop ? 1120 : 480 }]}>{app}</View>
     </View>
   );
 }
@@ -73,7 +75,6 @@ const styles = StyleSheet.create({
   webColumn: {
     flex: 1,
     width: '100%',
-    maxWidth: 480,
     backgroundColor: colors.paper,
     boxShadow: '0 0 0 1px rgba(18, 40, 60, 0.06), 0 16px 48px rgba(18, 40, 60, 0.12)',
   },

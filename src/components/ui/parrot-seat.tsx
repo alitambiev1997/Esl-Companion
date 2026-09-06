@@ -4,7 +4,15 @@ import { ParrotBadge } from '@/src/components/ParrotBadge';
 import { correctLine, wrongLine } from '@/src/lib/voice';
 import { colors, fonts, radius } from '@/src/theme/tokens';
 
-export function ParrotSeat({ checked, correct }: { checked: boolean; correct: boolean }) {
+export function ParrotSeat({
+  checked,
+  correct,
+  bubbleMaxWidth,
+}: {
+  checked: boolean;
+  correct: boolean;
+  bubbleMaxWidth?: number;
+}) {
   const [line, setLine] = useState<string | null>(null);
   const [bounceKey, setBounceKey] = useState(0);
   const prevChecked = useRef(false);
@@ -20,7 +28,7 @@ export function ParrotSeat({ checked, correct }: { checked: boolean; correct: bo
   return (
     <View style={styles.row}>
       {checked && line && (
-        <View style={styles.bubble}>
+        <View style={[styles.bubble, bubbleMaxWidth ? { maxWidth: bubbleMaxWidth } : null]}>
           <Text style={styles.text}>{line}</Text>
         </View>
       )}

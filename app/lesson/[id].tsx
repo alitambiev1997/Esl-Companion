@@ -8,12 +8,14 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/src/features/auth/useAuth';
 import { ParrotBadge } from '@/src/components/ParrotBadge';
 import { ParrotSeat } from '@/src/components/ui/parrot-seat';
+import { useIsDesktop } from '@/src/hooks/useIsDesktop';
 import { BottomBar } from '@/src/components/ui/bottom-bar';
 import { FeedbackBanner } from '@/src/components/ui/feedback-banner';
 import { Toast } from '@/src/components/ui/toast';
@@ -73,6 +75,8 @@ export default function LessonPlayer() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const isWeb = Platform.OS === 'web';
+  const isDesktop = useIsDesktop();
+  const { width: windowWidth } = useWindowDimensions();
   const { user, loading: authLoading } = useAuth();
 
   const [loadState, setLoadState] = useState<LoadState>({ status: 'loading' });
@@ -450,6 +454,9 @@ export default function LessonPlayer() {
 
   const { lesson, exercises } = loadState;
   const exercise = exercises[index];
+  const shellWidth = Math.min(windowWidth, 1120);
+  const gutterWidth = (shellWidth - 640) / 2;
+  const bubbleCap = Math.max(64, Math.round(gutterWidth - 92));
   const isPlaceholder =
     exercise &&
     !['multiple_choice', 'inline_choice', 'context_fill', 'error_spot', 'stress_tap', 'silent_letter', 'word_sort', 'form_fill', 'image_choice', 'document_reader', 'best_reply', 'fill_blank', 'word_order', 'matching', 'listening_multiple_choice', 'listening_dictation', 'listening_word_order', 'sentence_order', 'reading_comprehension', 'speaking_recording', 'flashcard_flip'].includes(
@@ -559,9 +566,23 @@ export default function LessonPlayer() {
               : router.replace('/home')
         }
       />
-      <ParrotSeat checked={phase === 'checked'} correct={banner?.correct ?? false} />
-      <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>{lesson.title}</Text>
+      {!isDesktop && (
+        <ParrotSeat checked={phase === 'checked'} correct={banner?.correct ?? false} />
+      )}
+      {isDesktop && (
+        <View style={[styles.desktopSeat, { top: insets.top + 84 }]} pointerEvents="none">
+          <ParrotSeat
+            checked={phase === 'checked'}
+            correct={banner?.correct ?? false}
+            bubbleMaxWidth={bubbleCap}
+          />
+        </View>
+      )}
+      <ScrollView
+        style={isDesktop ? styles.exerciseColumn : undefined}
+        contentContainerStyle={styles.content}
+      >
+        <Text style={[styles.title, isDesktop && styles.titleDesktop]}>{lesson.title}</Text>
 
         {exercises.length === 0 && (
           <View style={styles.stateBox}>
@@ -678,6 +699,19 @@ const styles = StyleSheet.create({
     fontSize: 28,
     color: colors.ink,
     marginBottom: 16,
+  },
+  titleDesktop: {
+    fontSize: 36,
+  },
+  desktopSeat: {
+    position: 'absolute',
+    right: 24,
+    zIndex: 10,
+  },
+  exerciseColumn: {
+    width: '100%',
+    maxWidth: 640,
+    alignSelf: 'center',
   },
   prompt: {
     fontFamily: fonts.body,

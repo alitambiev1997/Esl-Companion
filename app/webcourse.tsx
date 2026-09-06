@@ -3,9 +3,11 @@ import { useCallback, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { PathMap, type ProgressMap } from '@/src/components/PathMap';
 import { TopBar } from '@/src/components/ui/TopBar';
+import { useIsDesktop } from '@/src/hooks/useIsDesktop';
 import { clearClassCode, clearClassLevelId, getClassCode, getClassLevelId } from '@/src/lib/class-code';
 import { supabase } from '@/src/lib/supabase';
 import { readWebProgress } from '@/src/lib/web-progress';
+import { hoverStyle } from '@/src/lib/web-hover';
 import { colors, fonts, radius } from '@/src/theme/tokens';
 import type { Lesson, Unit } from '@/src/types/content';
 
@@ -17,7 +19,9 @@ type LoadState =
 
 export default function WebCourse() {
   const router = useRouter();
+  const isDesktop = useIsDesktop();
   const [loadState, setLoadState] = useState<LoadState>({ status: 'loading' });
+  const [levelTitle, setLevelTitle] = useState<string | null>(null);
   const loadStateRef = useRef(loadState);
   loadStateRef.current = loadState;
 
@@ -38,7 +42,7 @@ export default function WebCourse() {
     (async () => {
       const levelQuery = supabase
         .from('levels')
-        .select('id')
+        .select('id,title')
         .eq('id', levelId)
         .eq('is_published', true)
         .maybeSingle();
@@ -58,6 +62,7 @@ export default function WebCourse() {
         setLoadState({ status: 'empty', message: 'This code is not linked to a course yet.' });
         return;
       }
+      setLevelTitle(levelRes.data.title);
 
       const unitsQuery = supabase
         .from('units')
@@ -152,23 +157,78 @@ export default function WebCourse() {
     );
   }
 
+  const completedCount = Object.values(loadState.progressMap).filter((p) => p.completed).length;
+
   return (
     <View style={styles.screen}>
       <TopBar title="Your course" />
-      <View style={styles.codeRow}>
-        <Text style={styles.codeText}>code: {storedCode}</Text>
-        <Pressable onPress={switchCode} hitSlop={8}>
-          <Text style={styles.switchText}>switch code</Text>
-        </Pressable>
-      </View>
-      <ScrollView contentContainerStyle={styles.content}>
-        <PathMap
-          units={loadState.units}
-          lessons={loadState.lessons}
-          progressMap={loadState.progressMap}
-          onLessonPress={onLessonPress}
-        />
-      </ScrollView>
+      {isDesktop ? (
+        <View style={styles.desktopRow}>
+          <ScrollView style={styles.mapColumn} contentContainerStyle={styles.content}>
+            <PathMap
+              units={loadState.units}
+              lessons={loadState.lessons}
+              progressMap={loadState.progressMap}
+              onLessonPress={onLessonPress}
+            />
+          </ScrollView>
+          <View style={styles.sidePanel}>
+            {levelTitle && <Text style={styles.panelTitle}>{levelTitle}</Text>}
+            <Text style={styles.panelCaption}>
+              {completedCount} of {loadState.lessons.length} lessons done
+            </Text>
+            <View style={styles.legend}>
+              <View style={styles.legendRow}>
+                <View style={[styles.legendDot, { backgroundColor: colors.bronze }]} />
+                <Text style={styles.legendLabel}>Bronze</Text>
+              </View>
+              <View style={styles.legendRow}>
+                <View style={[styles.legendDot, { backgroundColor: colors.silver }]} />
+                <Text style={styles.legendLabel}>Silver</Text>
+              </View>
+              <View style={styles.legendRow}>
+                <View style={[styles.legendDot, { backgroundColor: colors.gold }]} />
+                <Text style={styles.legendLabel}>Gold</Text>
+              </View>
+              <View style={styles.legendRow}>
+                <View style={[styles.legendDot, { backgroundColor: colors.platinum }]} />
+                <Text style={styles.legendLabel}>Platinum</Text>
+              </View>
+            </View>
+            <View style={styles.panelButtons}>
+              <Pressable
+                style={({ hovered }) => [styles.panelButton, styles.panelButtonSky, hoverStyle(hovered)]}
+                onPress={switchCode}
+              >
+                <Text style={styles.panelButtonSkyText}>Switch code</Text>
+              </Pressable>
+              <Pressable
+                style={({ hovered }) => [styles.panelButton, styles.panelButtonSun, hoverStyle(hovered)]}
+                onPress={() => router.replace('/placement')}
+              >
+                <Text style={styles.panelButtonSunText}>Test your level</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      ) : (
+        <>
+          <View style={styles.codeRow}>
+            <Text style={styles.codeText}>code: {storedCode}</Text>
+            <Pressable onPress={switchCode} hitSlop={8}>
+              <Text style={styles.switchText}>switch code</Text>
+            </Pressable>
+          </View>
+          <ScrollView contentContainerStyle={styles.content}>
+            <PathMap
+              units={loadState.units}
+              lessons={loadState.lessons}
+              progressMap={loadState.progressMap}
+              onLessonPress={onLessonPress}
+            />
+          </ScrollView>
+        </>
+      )}
     </View>
   );
 }
@@ -208,6 +268,80 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.sky,
     textDecorationLine: 'underline',
+  },
+  desktopRow: {
+    flex: 1,
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    gap: 24,
+  },
+  mapColumn: {
+    flex: 1,
+    maxWidth: 560,
+  },
+  sidePanel: {
+    width: 320,
+    paddingTop: 24,
+  },
+  panelTitle: {
+    fontFamily: fonts.display,
+    fontSize: 26,
+    color: colors.ink,
+  },
+  panelCaption: {
+    fontFamily: fonts.body,
+    fontSize: 17,
+    color: colors.ink,
+    opacity: 0.7,
+    marginTop: 4,
+    marginBottom: 20,
+  },
+  legend: {
+    gap: 10,
+    marginBottom: 24,
+  },
+  legendRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  legendDot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+  },
+  legendLabel: {
+    fontFamily: fonts.body,
+    fontSize: 15,
+    color: colors.ink,
+  },
+  panelButtons: {
+    gap: 12,
+  },
+  panelButton: {
+    borderRadius: radius.button,
+    paddingVertical: 14,
+    minHeight: 52,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  panelButtonSky: {
+    backgroundColor: colors.sky,
+  },
+  panelButtonSkyText: {
+    fontFamily: fonts.body,
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.white,
+  },
+  panelButtonSun: {
+    backgroundColor: colors.sun,
+  },
+  panelButtonSunText: {
+    fontFamily: fonts.body,
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.ink,
   },
   stateText: {
     fontFamily: fonts.body,
