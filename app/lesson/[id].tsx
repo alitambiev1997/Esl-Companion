@@ -50,6 +50,7 @@ import { SilentLetterRenderer } from '@/src/features/lesson/renderers/silent-let
 import { WordOrderRenderer } from '@/src/features/lesson/renderers/word-order';
 import { WordSortRenderer } from '@/src/features/lesson/renderers/word-sort';
 import { supabase } from '@/src/lib/supabase';
+import { getClassCode } from '@/src/lib/class-code';
 import { readWebProgress, writeWebProgress } from '@/src/lib/web-progress';
 import { colors, fonts, radius } from '@/src/theme/tokens';
 import type { Exercise, Lesson } from '@/src/types/content';
@@ -285,13 +286,16 @@ export default function LessonPlayer() {
     const medal = medalForScore(score);
 
     if (isWeb) {
-      const existing = readWebProgress();
-      const prev = existing[id];
-      const bestScore = Math.max(prev?.score ?? 0, score);
-      writeWebProgress({
-        ...existing,
-        [id]: { score: bestScore, medal: medalColor(medal) ?? '', at: Date.now() },
-      });
+      const code = getClassCode();
+      if (code) {
+        const existing = readWebProgress(code);
+        const prev = existing[id];
+        const bestScore = Math.max(prev?.score ?? 0, score);
+        writeWebProgress(code, {
+          ...existing,
+          [id]: { score: bestScore, medal: medalColor(medal) ?? '', at: Date.now() },
+        });
+      }
       setResult({ score, passed, medal });
       return;
     }

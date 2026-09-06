@@ -5,7 +5,7 @@ import { PathMap, type ProgressMap } from '@/src/components/PathMap';
 import { TopBar } from '@/src/components/ui/TopBar';
 import { CLASS_CODES, clearClassCode, getClassCode } from '@/src/lib/class-code';
 import { supabase } from '@/src/lib/supabase';
-import { clearWebProgress, readWebProgress } from '@/src/lib/web-progress';
+import { readWebProgress } from '@/src/lib/web-progress';
 import { colors, fonts, radius } from '@/src/theme/tokens';
 import type { Lesson, Unit } from '@/src/types/content';
 
@@ -45,7 +45,7 @@ export default function WebCourse() {
 
       const [levelRes, progressMap] = await Promise.all([
         levelQuery,
-        Promise.resolve(readWebProgress()),
+        Promise.resolve(readWebProgress(storedCode ?? '')),
       ]);
 
       if (!mounted) return;
@@ -101,7 +101,7 @@ export default function WebCourse() {
     return () => {
       mounted = false;
     };
-  }, [cefr, router]);
+  }, [cefr, router, storedCode]);
 
   useFocusEffect(
     useCallback(() => {
@@ -111,7 +111,6 @@ export default function WebCourse() {
 
   const switchCode = () => {
     clearClassCode();
-    clearWebProgress();
     router.replace('/gate');
   };
 

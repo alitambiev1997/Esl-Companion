@@ -4,20 +4,21 @@ export type WebProgressEntry = {
   at: number;
 };
 
-const WEB_PROGRESS_KEY = 'aqap_progress';
-
 type WebStorage = {
   getItem: (key: string) => string | null;
   setItem: (key: string, value: string) => void;
-  removeItem: (key: string) => void;
 };
 
 function webStorage(): WebStorage | undefined {
   return (globalThis as { localStorage?: WebStorage }).localStorage;
 }
 
-export function readWebProgress(): Record<string, WebProgressEntry> {
-  const raw = webStorage()?.getItem(WEB_PROGRESS_KEY);
+function progressKey(code: string): string {
+  return `aqap_progress_${code}`;
+}
+
+export function readWebProgress(code: string): Record<string, WebProgressEntry> {
+  const raw = webStorage()?.getItem(progressKey(code));
   if (!raw) return {};
   try {
     const parsed = JSON.parse(raw) as Record<string, WebProgressEntry>;
@@ -27,10 +28,9 @@ export function readWebProgress(): Record<string, WebProgressEntry> {
   }
 }
 
-export function writeWebProgress(entries: Record<string, WebProgressEntry>): void {
-  webStorage()?.setItem(WEB_PROGRESS_KEY, JSON.stringify(entries));
-}
-
-export function clearWebProgress(): void {
-  webStorage()?.removeItem(WEB_PROGRESS_KEY);
+export function writeWebProgress(
+  code: string,
+  entries: Record<string, WebProgressEntry>
+): void {
+  webStorage()?.setItem(progressKey(code), JSON.stringify(entries));
 }

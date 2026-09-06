@@ -33,6 +33,7 @@
 22. No new packages without explicit approval.
 23. Mascot seat is fixed: top-right in lessons; feedback banner owns the bottom. Never place the mascot in the bottom flow.
 24. Screens showing progress or unlock state refresh on focus, not only on mount.
+25. Web: every URL must survive a reload; progress lives in localStorage per class code and is never wiped by navigation.
 
 ## New activity checklist
 - [ ] shape in docs/EXERCISE_SHAPES.md
