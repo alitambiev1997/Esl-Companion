@@ -45,6 +45,7 @@ export default function RootLayout() {
         <Stack.Screen name="testing" />
         <Stack.Screen name="testing/[type]" />
         <Stack.Screen name="gate" />
+        <Stack.Screen name="placement" />
         <Stack.Screen name="webcourse" />
       </Stack>
       <StatusBar style="auto" />

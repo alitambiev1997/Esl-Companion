@@ -1,21 +1,94 @@
 import { useRouter } from 'expo-router';
-import { useRef, useState } from 'react';
-import { Animated, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  Animated,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { ParrotBadge } from '@/src/components/ParrotBadge';
-import { CLASS_CODES, saveClassCode } from '@/src/lib/class-code';
+import { getClassCode, saveClassCode, saveClassLevelId } from '@/src/lib/class-code';
+import { supabase } from '@/src/lib/supabase';
 import { colors, fonts, radius } from '@/src/theme/tokens';
+import type { Level } from '@/src/types/content';
+
+type LevelsState =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'error'; message: string }
+  | { status: 'ready'; levels: Level[] };
+
+function Collapsible({ open, children }: { open: boolean; children: React.ReactNode }) {
+  const height = useRef(new Animated.Value(0)).current;
+  const [measured, setMeasured] = useState(0);
+
+  useEffect(() => {
+    Animated.timing(height, {
+      toValue: open ? measured : 0,
+      duration: 300,
+      useNativeDriver: false,
+    }).start();
+  }, [open, measured, height]);
+
+  return (
+    <Animated.View style={{ height, overflow: 'hidden' }}>
+      <View
+        onLayout={(e) => {
+          if (measured === 0) setMeasured(e.nativeEvent.layout.height);
+        }}
+      >
+        {children}
+      </View>
+    </Animated.View>
+  );
+}
 
 export default function Gate() {
   const router = useRouter();
+  const storedCode = getClassCode();
+  const [coursesOpen, setCoursesOpen] = useState(false);
+  const [levelsState, setLevelsState] = useState<LevelsState>({ status: 'idle' });
+  const [openLevelId, setOpenLevelId] = useState<string | null>(null);
   const [code, setCode] = useState('');
   const [hint, setHint] = useState<string | null>(null);
   const shake = useRef(new Animated.Value(0)).current;
 
-  const submit = () => {
+  const loadLevels = async () => {
+    setLevelsState({ status: 'loading' });
+    const { data, error } = await supabase
+      .from('levels')
+      .select('id,title,cefr_level,description')
+      .eq('is_published', true)
+      .order('cefr_level');
+    if (error) {
+      setLevelsState({ status: 'error', message: error.message });
+      return;
+    }
+    setLevelsState({ status: 'ready', levels: (data as Level[]) ?? [] });
+  };
+
+  const toggleCourses = () => {
+    const next = !coursesOpen;
+    setCoursesOpen(next);
+    if (next && levelsState.status === 'idle') {
+      loadLevels();
+    }
+  };
+
+  const toggleLevel = (levelId: string) => {
+    setOpenLevelId((current) => (current === levelId ? null : levelId));
+    setCode('');
+    setHint(null);
+  };
+
+  const submitCode = (level: Level) => {
     const normalized = code.trim().toUpperCase();
-    const cefr = CLASS_CODES[normalized];
-    if (!cefr) {
-      setHint('That code is not valid. Try again.');
+    const expected = `AQAP-${(level.cefr_level ?? '').toUpperCase()}`;
+    if (!normalized || normalized !== expected) {
+      setHint("That code doesn't match this course. Try again.");
       shake.setValue(0);
       Animated.sequence([
         Animated.timing(shake, { toValue: 1, duration: 60, useNativeDriver: true }),
@@ -26,40 +99,108 @@ export default function Gate() {
       return;
     }
     saveClassCode(normalized);
+    saveClassLevelId(level.id);
     router.replace('/webcourse');
   };
 
   return (
     <View style={styles.screen}>
-      <Animated.View
-        style={[
-          styles.card,
-          {
-            transform: [
-              { translateX: shake.interpolate({ inputRange: [-1, 0, 1], outputRange: [-10, 0, 10] }) },
-            ],
-          },
-        ]}
-      >
+      <View style={styles.card}>
         <ParrotBadge size={96} />
-        <Text style={styles.title}>Enter your class code</Text>
-        <TextInput
-          style={styles.input}
-          value={code}
-          onChangeText={(text) => {
-            setCode(text);
-            setHint(null);
-          }}
-          placeholder="e.g. AQAP-A2"
-          autoCapitalize="characters"
-          autoCorrect={false}
-          placeholderTextColor={colors.greyDark}
-        />
-        {hint && <Text style={styles.hint}>{hint}</Text>}
-        <Pressable style={styles.button} onPress={submit}>
-          <Text style={styles.buttonText}>Enter</Text>
-        </Pressable>
-      </Animated.View>
+        <Text style={styles.appName}>AQAP English</Text>
+
+        <View style={styles.choices}>
+          <Pressable
+            style={styles.choice}
+            onPress={() => router.replace('/placement')}
+          >
+            <Text style={styles.choiceTitle}>Test your level</Text>
+            <Text style={styles.choiceCaption}>Find out where to start</Text>
+          </Pressable>
+
+          <Pressable style={[styles.choice, coursesOpen && styles.choiceOpen]} onPress={toggleCourses}>
+            <Text style={styles.choiceTitle}>Choose your course</Text>
+            <Text style={styles.choiceCaption}>Enter your class code</Text>
+          </Pressable>
+        </View>
+
+        <Collapsible open={coursesOpen}>
+          {levelsState.status === 'loading' && (
+            <View style={styles.panel}>
+              <ActivityIndicator size="small" color={colors.sky} />
+            </View>
+          )}
+          {levelsState.status === 'error' && (
+            <View style={styles.panel}>
+              <Text style={styles.hintText}>{levelsState.message}</Text>
+              <Pressable onPress={loadLevels}>
+                <Text style={styles.linkText}>Try again</Text>
+              </Pressable>
+            </View>
+          )}
+          {levelsState.status === 'ready' && levelsState.levels.length === 0 && (
+            <View style={styles.panel}>
+              <Text style={styles.hintText}>No courses available yet.</Text>
+            </View>
+          )}
+          {levelsState.status === 'ready' &&
+            levelsState.levels.map((level) => {
+              const open = openLevelId === level.id;
+              return (
+                <View key={level.id} style={styles.levelBlock}>
+                  <Pressable
+                    style={[styles.levelCard, open && styles.levelCardOpen]}
+                    onPress={() => toggleLevel(level.id)}
+                  >
+                    <Text style={styles.levelTitle}>{level.cefr_level ?? level.title ?? ''}</Text>
+                    {level.description && (
+                      <Text style={styles.levelCaption}>{level.description}</Text>
+                    )}
+                  </Pressable>
+                  <Collapsible open={open}>
+                    <View style={styles.codePanel}>
+                      <TextInput
+                        style={styles.input}
+                        value={code}
+                        onChangeText={(text) => {
+                          setCode(text);
+                          setHint(null);
+                        }}
+                        placeholder="Enter code"
+                        autoCapitalize="characters"
+                        autoCorrect={false}
+                        placeholderTextColor={colors.greyDark}
+                      />
+                      {hint && <Text style={styles.hintText}>{hint}</Text>}
+                      <Animated.View
+                        style={{
+                          transform: [
+                            {
+                              translateX: shake.interpolate({
+                                inputRange: [-1, 0, 1],
+                                outputRange: [-10, 0, 10],
+                              }),
+                            },
+                          ],
+                        }}
+                      >
+                        <Pressable style={styles.enterButton} onPress={() => submitCode(level)}>
+                          <Text style={styles.enterButtonText}>Enter</Text>
+                        </Pressable>
+                      </Animated.View>
+                    </View>
+                  </Collapsible>
+                </View>
+              );
+            })}
+        </Collapsible>
+
+        {storedCode && (
+          <Pressable style={styles.continueRow} onPress={() => router.replace('/webcourse')}>
+            <Text style={styles.linkText}>Continue as {storedCode}</Text>
+          </Pressable>
+        )}
+      </View>
     </View>
   );
 }
@@ -82,46 +223,130 @@ const styles = StyleSheet.create({
     padding: 24,
     alignItems: 'center',
   },
-  title: {
+  appName: {
+    fontFamily: fonts.display,
+    fontSize: 28,
+    color: colors.ink,
+    marginTop: 16,
+    marginBottom: 20,
+  },
+  choices: {
+    alignSelf: 'stretch',
+    gap: 12,
+  },
+  choice: {
+    minHeight: 64,
+    borderRadius: 14,
+    backgroundColor: colors.white,
+    borderWidth: 2,
+    borderColor: colors.grey,
+    borderBottomWidth: 4,
+    borderBottomColor: colors.greyDark,
+    padding: 14,
+    justifyContent: 'center',
+  },
+  choiceOpen: {
+    borderColor: colors.sky,
+    borderBottomColor: colors.sky,
+    backgroundColor: colors.skyTint,
+  },
+  choiceTitle: {
+    fontFamily: fonts.body,
+    fontSize: 17,
+    fontWeight: '600',
+    color: colors.ink,
+  },
+  choiceCaption: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: colors.ink,
+    opacity: 0.7,
+    marginTop: 2,
+  },
+  panel: {
+    alignSelf: 'stretch',
+    alignItems: 'center',
+    paddingVertical: 16,
+    gap: 8,
+  },
+  levelBlock: {
+    alignSelf: 'stretch',
+    marginBottom: 8,
+  },
+  levelCard: {
+    borderRadius: 14,
+    backgroundColor: colors.white,
+    borderWidth: 2,
+    borderColor: colors.grey,
+    borderBottomWidth: 4,
+    borderBottomColor: colors.greyDark,
+    padding: 14,
+  },
+  levelCardOpen: {
+    borderColor: colors.sun,
+    borderBottomColor: colors.sun,
+    backgroundColor: colors.sunTint,
+  },
+  levelTitle: {
     fontFamily: fonts.display,
     fontSize: 22,
     color: colors.ink,
-    marginTop: 16,
-    marginBottom: 16,
+  },
+  levelCaption: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: colors.ink,
+    opacity: 0.7,
+    marginTop: 2,
+  },
+  codePanel: {
+    paddingHorizontal: 12,
+    paddingTop: 12,
+    paddingBottom: 4,
+    gap: 8,
   },
   input: {
-    width: '100%',
     backgroundColor: colors.white,
     borderWidth: 2,
     borderColor: colors.grey,
     borderRadius: 14,
-    height: 52,
+    height: 48,
     paddingHorizontal: 12,
     fontSize: 16,
     fontFamily: fonts.body,
     color: colors.ink,
     textAlign: 'center',
   },
-  hint: {
+  hintText: {
     fontFamily: fonts.body,
     fontSize: 13,
     color: colors.coral,
-    marginTop: 8,
+    textAlign: 'center',
   },
-  button: {
-    alignSelf: 'stretch',
+  enterButton: {
     backgroundColor: colors.sun,
     borderRadius: radius.button,
-    paddingVertical: 14,
-    minHeight: 52,
+    paddingVertical: 13,
+    minHeight: 48,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 16,
   },
-  buttonText: {
+  enterButtonText: {
     fontFamily: fonts.body,
     fontSize: 16,
     fontWeight: '600',
     color: colors.ink,
+  },
+  continueRow: {
+    alignSelf: 'stretch',
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  linkText: {
+    fontFamily: fonts.body,
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.sky,
+    textDecorationLine: 'underline',
   },
 });

@@ -3,7 +3,7 @@ import { useCallback, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { PathMap, type ProgressMap } from '@/src/components/PathMap';
 import { TopBar } from '@/src/components/ui/TopBar';
-import { CLASS_CODES, clearClassCode, getClassCode } from '@/src/lib/class-code';
+import { clearClassCode, clearClassLevelId, getClassCode, getClassLevelId } from '@/src/lib/class-code';
 import { supabase } from '@/src/lib/supabase';
 import { readWebProgress } from '@/src/lib/web-progress';
 import { colors, fonts, radius } from '@/src/theme/tokens';
@@ -22,10 +22,10 @@ export default function WebCourse() {
   loadStateRef.current = loadState;
 
   const storedCode = getClassCode();
-  const cefr = storedCode ? (CLASS_CODES[storedCode] ?? null) : null;
+  const levelId = getClassLevelId();
 
   const loadCourse = useCallback(() => {
-    if (!cefr) {
+    if (!storedCode || !levelId) {
       router.replace('/gate');
       return;
     }
@@ -39,13 +39,13 @@ export default function WebCourse() {
       const levelQuery = supabase
         .from('levels')
         .select('id')
-        .eq('cefr_level', cefr)
+        .eq('id', levelId)
         .eq('is_published', true)
         .maybeSingle();
 
       const [levelRes, progressMap] = await Promise.all([
         levelQuery,
-        Promise.resolve(readWebProgress(storedCode ?? '')),
+        Promise.resolve(readWebProgress(storedCode)),
       ]);
 
       if (!mounted) return;
@@ -101,7 +101,7 @@ export default function WebCourse() {
     return () => {
       mounted = false;
     };
-  }, [cefr, router, storedCode]);
+  }, [storedCode, levelId, router]);
 
   useFocusEffect(
     useCallback(() => {
@@ -111,6 +111,7 @@ export default function WebCourse() {
 
   const switchCode = () => {
     clearClassCode();
+    clearClassLevelId();
     router.replace('/gate');
   };
 
