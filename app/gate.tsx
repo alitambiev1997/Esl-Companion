@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -21,27 +22,23 @@ type LevelsState =
   | { status: 'error'; message: string }
   | { status: 'ready'; levels: Level[] };
 
-function Collapsible({ open, children }: { open: boolean; children: React.ReactNode }) {
-  const height = useRef(new Animated.Value(0)).current;
-  const [measured, setMeasured] = useState(0);
+function Reveal({ children }: { children: React.ReactNode }) {
+  const progress = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.timing(height, {
-      toValue: open ? measured : 0,
-      duration: 300,
-      useNativeDriver: false,
-    }).start();
-  }, [open, measured, height]);
+    Animated.timing(progress, { toValue: 1, duration: 200, useNativeDriver: true }).start();
+  }, [progress]);
 
   return (
-    <Animated.View style={{ height, overflow: 'hidden' }}>
-      <View
-        onLayout={(e) => {
-          if (measured === 0) setMeasured(e.nativeEvent.layout.height);
-        }}
-      >
-        {children}
-      </View>
+    <Animated.View
+      style={{
+        opacity: progress,
+        transform: [
+          { translateY: progress.interpolate({ inputRange: [0, 1], outputRange: [12, 0] }) },
+        ],
+      }}
+    >
+      {children}
     </Animated.View>
   );
 }
@@ -55,6 +52,15 @@ export default function Gate() {
   const [code, setCode] = useState('');
   const [hint, setHint] = useState<string | null>(null);
   const shake = useRef(new Animated.Value(0)).current;
+  const chevron = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(chevron, {
+      toValue: coursesOpen ? 1 : 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  }, [coursesOpen, chevron]);
 
   const loadLevels = async () => {
     setLevelsState({ status: 'loading' });
@@ -110,90 +116,116 @@ export default function Gate() {
         <Text style={styles.appName}>AQAP English</Text>
 
         <View style={styles.choices}>
-          <Pressable
-            style={styles.choice}
-            onPress={() => router.replace('/placement')}
-          >
+          <Pressable style={styles.choice} onPress={() => router.replace('/placement')}>
             <Text style={styles.choiceTitle}>Test your level</Text>
             <Text style={styles.choiceCaption}>Find out where to start</Text>
           </Pressable>
 
           <Pressable style={[styles.choice, coursesOpen && styles.choiceOpen]} onPress={toggleCourses}>
-            <Text style={styles.choiceTitle}>Choose your course</Text>
-            <Text style={styles.choiceCaption}>Enter your class code</Text>
+            <View style={styles.choiceRow}>
+              <View style={styles.choiceTexts}>
+                <Text style={styles.choiceTitle}>Choose your course</Text>
+                <Text style={styles.choiceCaption}>Enter your class code</Text>
+              </View>
+              <Animated.View
+                style={{
+                  transform: [
+                    {
+                      rotate: chevron.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: ['0deg', '180deg'],
+                      }),
+                    },
+                  ],
+                }}
+              >
+                <Ionicons name="chevron-down" size={24} color={colors.sky} />
+              </Animated.View>
+            </View>
           </Pressable>
         </View>
 
-        <Collapsible open={coursesOpen}>
-          {levelsState.status === 'loading' && (
-            <View style={styles.panel}>
-              <ActivityIndicator size="small" color={colors.sky} />
-            </View>
-          )}
-          {levelsState.status === 'error' && (
-            <View style={styles.panel}>
-              <Text style={styles.hintText}>{levelsState.message}</Text>
-              <Pressable onPress={loadLevels}>
-                <Text style={styles.linkText}>Try again</Text>
-              </Pressable>
-            </View>
-          )}
-          {levelsState.status === 'ready' && levelsState.levels.length === 0 && (
-            <View style={styles.panel}>
-              <Text style={styles.hintText}>No courses available yet.</Text>
-            </View>
-          )}
-          {levelsState.status === 'ready' &&
-            levelsState.levels.map((level) => {
-              const open = openLevelId === level.id;
-              return (
-                <View key={level.id} style={styles.levelBlock}>
-                  <Pressable
-                    style={[styles.levelCard, open && styles.levelCardOpen]}
-                    onPress={() => toggleLevel(level.id)}
-                  >
-                    <Text style={styles.levelTitle}>{level.cefr_level ?? level.title ?? ''}</Text>
-                    {level.description && (
-                      <Text style={styles.levelCaption}>{level.description}</Text>
-                    )}
-                  </Pressable>
-                  <Collapsible open={open}>
-                    <View style={styles.codePanel}>
-                      <TextInput
-                        style={styles.input}
-                        value={code}
-                        onChangeText={(text) => {
-                          setCode(text);
-                          setHint(null);
-                        }}
-                        placeholder="Enter code"
-                        autoCapitalize="characters"
-                        autoCorrect={false}
-                        placeholderTextColor={colors.greyDark}
-                      />
-                      {hint && <Text style={styles.hintText}>{hint}</Text>}
-                      <Animated.View
-                        style={{
-                          transform: [
-                            {
-                              translateX: shake.interpolate({
-                                inputRange: [-1, 0, 1],
-                                outputRange: [-10, 0, 10],
-                              }),
-                            },
-                          ],
-                        }}
-                      >
-                        <Pressable style={styles.enterButton} onPress={() => submitCode(level)}>
-                          <Text style={styles.enterButtonText}>Enter</Text>
-                        </Pressable>
-                      </Animated.View>
-                    </View>
-                  </Collapsible>
+        {coursesOpen && (
+          <Reveal>
+            <View style={styles.levelsList}>
+              {levelsState.status === 'loading' && (
+                <View style={styles.panel}>
+                  <ActivityIndicator size="small" color={colors.sky} />
                 </View>
-              );
-            })}
-        </Collapsible>
+              )}
+              {levelsState.status === 'error' && (
+                <View style={styles.panel}>
+                  <Text style={styles.hintText}>{levelsState.message}</Text>
+                  <Pressable onPress={loadLevels}>
+                    <Text style={styles.linkText}>Try again</Text>
+                  </Pressable>
+                </View>
+              )}
+              {levelsState.status === 'ready' && levelsState.levels.length === 0 && (
+                <View style={styles.panel}>
+                  <Text style={styles.hintText}>No courses available yet.</Text>
+                </View>
+              )}
+              {levelsState.status === 'ready' &&
+                levelsState.levels.map((level) => {
+                  const open = openLevelId === level.id;
+                  return (
+                    <View key={level.id}>
+                      <Pressable
+                        style={[styles.levelCard, open && styles.levelCardOpen]}
+                        onPress={() => toggleLevel(level.id)}
+                      >
+                        <Text style={styles.levelTitle}>
+                          {level.cefr_level ?? level.title ?? ''}
+                        </Text>
+                        {level.description && (
+                          <Text style={styles.levelCaption}>{level.description}</Text>
+                        )}
+                      </Pressable>
+                      {open && (
+                        <Reveal>
+                          <View style={styles.codePanel}>
+                            <TextInput
+                              style={styles.input}
+                              value={code}
+                              onChangeText={(text) => {
+                                setCode(text);
+                                setHint(null);
+                              }}
+                              placeholder="Enter code"
+                              autoCapitalize="characters"
+                              autoCorrect={false}
+                              placeholderTextColor={colors.greyDark}
+                            />
+                            {hint && <Text style={styles.hintText}>{hint}</Text>}
+                            <Animated.View
+                              style={{
+                                transform: [
+                                  {
+                                    translateX: shake.interpolate({
+                                      inputRange: [-1, 0, 1],
+                                      outputRange: [-10, 0, 10],
+                                    }),
+                                  },
+                                ],
+                              }}
+                            >
+                              <Pressable
+                                style={styles.enterButton}
+                                onPress={() => submitCode(level)}
+                              >
+                                <Text style={styles.enterButtonText}>Enter</Text>
+                              </Pressable>
+                            </Animated.View>
+                          </View>
+                        </Reveal>
+                      )}
+                    </View>
+                  );
+                })}
+            </View>
+          </Reveal>
+        )}
 
         {storedCode && (
           <Pressable style={styles.continueRow} onPress={() => router.replace('/webcourse')}>
@@ -250,6 +282,13 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.sky,
     backgroundColor: colors.skyTint,
   },
+  choiceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  choiceTexts: {
+    flex: 1,
+  },
   choiceTitle: {
     fontFamily: fonts.body,
     fontSize: 17,
@@ -263,15 +302,16 @@ const styles = StyleSheet.create({
     opacity: 0.7,
     marginTop: 2,
   },
+  levelsList: {
+    alignSelf: 'stretch',
+    marginTop: 12,
+    gap: 12,
+  },
   panel: {
     alignSelf: 'stretch',
     alignItems: 'center',
     paddingVertical: 16,
     gap: 8,
-  },
-  levelBlock: {
-    alignSelf: 'stretch',
-    marginBottom: 8,
   },
   levelCard: {
     borderRadius: 14,
@@ -300,10 +340,8 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   codePanel: {
-    paddingHorizontal: 12,
-    paddingTop: 12,
-    paddingBottom: 4,
     gap: 8,
+    paddingTop: 12,
   },
   input: {
     backgroundColor: colors.white,
