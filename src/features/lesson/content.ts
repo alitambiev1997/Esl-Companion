@@ -12,7 +12,7 @@ export interface FillBlankContent {
 }
 
 export interface WordOrderContent {
-  words: string[];
+  words?: string[];
   correct_sequence: string[];
   explanation: string | null;
 }

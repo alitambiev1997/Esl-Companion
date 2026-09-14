@@ -7,12 +7,86 @@ defines exactly what each exercise type expects so generated tasks always work.
 ## Content hierarchy
 
 ```
-levels (CEFR: A2, B1, ...)
-└── units (a theme: "Travel", "Work", ...)
-    └── lessons (5-8 exercises each; pass_score default 60)
+levels (Book 1, Book 2, Intensive course for adult etc. )
+└── units 
+    └── lessons (8 exercises each; pass_score default 60)
         └── exercises (sort_order 1..n)
 ```
+## DATABASE CONTRACT 
 
+LESSONS TABLE - exact contract. Use ONLY these columns:
+
+public.lessons
+  id                uuid - auto, never insert
+  unit_id           uuid - required, always looked up, never hardcoded
+  title             text - student-facing lesson name
+  description       text - begin with the category label:
+                    "Introductory - ..." / "Grammatical - ..." /
+                    "Practical - ..." / "Revisionary - ..."
+  estimated_minutes integer - 3 to 8 for a revision set
+  is_published      boolean
+  sort_order        integer 1..10 within the unit
+  created_at        auto, never insert
+
+Unit lookup pattern (books = levels):
+  select u.id from public.units u
+  join public.levels l on l.id = u.level_id
+  where l.cefr_level = 'A1'
+    and u.title = 'Greetings & introduction';
+
+PUBLIC.EXERCISES - exact contract:
+  id          uuid - auto
+  lesson_id   uuid - look up via unit title + lesson title
+  type        text - ONLY one of the 21 implemented names:
+    multiple_choice, fill_blank, word_order, matching,
+    listening_multiple_choice, listening_dictation,
+    speaking_recording, reading_comprehension, inline_choice,
+    context_fill, listening_word_order, sentence_order,
+    flashcard_flip, error_spot, stress_tap, silent_letter,
+    word_sort, form_fill, image_choice, document_reader,
+    best_reply
+  prompt      text - the task line the student sees
+  content     jsonb - EXACTLY the shape from the content guide
+  points      integer - use 10
+  sort_order  integer 1..n within the lesson
+
+RULES
+1. Insert only the listed columns; everything else defaults.
+2. Never create tables or columns; never insert ids/timestamps.
+3. Scripts must be re-runnable: do $$ ... $$ block with
+   where not exists guards on (unit_id, title) / (lesson_id, sort_order).
+4. Lessons may be is_published = true; staging is controlled by
+   the UNIT's is_published flag, not the lesson's.
+5. 8 exercises per lesson; mix types; every answer needs a
+   source of truth (audio contains the fact, or grammar decides).
+6. One script per unit (lessons + exercises together). Start with
+   Unit 1 "Greetings & introduction", 10 lessons.
+7. Before the SQL, print a planning table: lesson #, title,
+   category, exercise types used - so I can sanity-check the mix.
+
+TEMPLATE for the lessons part of the script:
+
+do $$
+declare v_unit uuid;
+begin
+  select u.id into v_unit
+  from public.units u
+  join public.levels l on l.id = u.level_id
+  where l.cefr_level = 'A1' and u.title = 'Greetings & introduction';
+
+  insert into public.lessons
+    (unit_id, title, description, estimated_minutes, is_published, sort_order)
+  select v_unit, x.title, x.description, x.minutes, true, x.sort_order
+  from (values
+    ('Lesson title 1', 'Introductory - ...', 5, 1),
+    ('Lesson title 2', 'Grammatical - ...', 5, 2)
+    -- ...10 rows
+  ) as x(title, description, minutes, sort_order)
+  where not exists (
+    select 1 from public.lessons z
+    where z.unit_id = v_unit and z.title = x.title
+  );
+end $$;
 ## The exercises table
 
 | column       | meaning                                                              |

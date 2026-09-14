@@ -27,7 +27,7 @@ function shuffledSequence(seq: string[]): string[] {
 export const WordOrderRenderer = forwardRef<ExerciseRendererHandle, ExerciseRendererProps>(
   function WordOrderRenderer({ exercise, checked, onCheck, onCanCheckChange }, ref) {
     const content = exercise.content as unknown as WordOrderContent;
-    const [bankOrder] = useState(() => shuffledSequence(content.words));
+    const [bankOrder] = useState(() => shuffledSequence(content.correct_sequence));
     const [answer, setAnswer] = useState<string[]>([]);
 
     useImperativeHandle(ref, () => ({

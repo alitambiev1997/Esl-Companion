@@ -182,7 +182,7 @@ export default function LessonPlayer() {
       });
       webAttemptsRef.current.push({ exerciseId: exercise.id, isCorrect, at: Date.now() });
 
-      if (isCorrect && exercise.is_required !== false) {
+      if (isCorrect && isGraded(exercise)) {
         setCorrectCount((n) => n + 1);
       }
       if (isCorrect) {
@@ -214,7 +214,7 @@ export default function LessonPlayer() {
         return;
       }
 
-      if (isCorrect && exercise.is_required !== false) {
+      if (isCorrect && isGraded(exercise)) {
         setCorrectCount((n) => n + 1);
       }
       if (isCorrect) {
@@ -288,7 +288,7 @@ export default function LessonPlayer() {
     if (loadState.status !== 'ready') return;
 
     const passScore = loadState.lesson.pass_score ?? 60;
-    const total = exercises.filter((e) => e.is_required !== false).length;
+    const total = exercises.filter(isGraded).length;
     const score = total === 0 ? 0 : Math.round((correctCount / total) * 100);
     const passed = score >= passScore;
     const medal = medalForScore(score);
@@ -468,8 +468,9 @@ export default function LessonPlayer() {
     !['multiple_choice', 'inline_choice', 'context_fill', 'error_spot', 'stress_tap', 'silent_letter', 'word_sort', 'form_fill', 'image_choice', 'document_reader', 'best_reply', 'fill_blank', 'word_order', 'matching', 'listening_multiple_choice', 'listening_dictation', 'listening_word_order', 'sentence_order', 'reading_comprehension', 'speaking_recording', 'flashcard_flip'].includes(
       exercise.type
     );
-  const isUngraded =
-    exercise?.type === 'speaking_recording' || exercise?.type === 'flashcard_flip';
+  const isUngraded = exercise?.type === 'speaking_recording' || exercise?.type === 'flashcard_flip';
+  const isGraded = (current: Exercise) =>
+    current.is_required !== false && current.type !== 'speaking_recording' && current.type !== 'flashcard_flip';
   const isMatching = exercise?.type === 'matching';
   const isTapGraded = exercise != null && ['matching', 'error_spot', 'stress_tap', 'silent_letter', 'image_choice', 'best_reply'].includes(exercise.type);
 
