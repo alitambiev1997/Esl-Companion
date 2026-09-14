@@ -173,13 +173,13 @@ punctuation-insensitive). Include irregular/contracted variants if you accept th
 
 ### 4. word_order — build the sentence from word chips
 
-Learner taps words in order. Provide the words AND the exact correct sequence.
+Learner taps words in order. Provide the exact correct sequence; the app builds the
+shuffled chip bank from it (the old `words` field is ignored).
 
 Prompt: `"Put the words in the right order:"`
 
 ```json
 {
-  "words": ["She", "is", "reading", "a", "book"],
   "correct_sequence": ["She", "is", "reading", "a", "book"],
   "explanation": "Subject, verb, then the rest."
 }
