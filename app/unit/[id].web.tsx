@@ -150,7 +150,7 @@ export default function UnitMap() {
 
   return (
     <View style={styles.screen}>
-      <TopBar title={loadState.unit.title} showBack />
+      <TopBar title={loadState.unit.title} showBack onBack={goBack} />
       <ScrollView contentContainerStyle={styles.content}>
         <PathMap
           units={[loadState.unit]}

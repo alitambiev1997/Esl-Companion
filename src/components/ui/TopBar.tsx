@@ -10,10 +10,12 @@ export function TopBar({
   title,
   showBack,
   right,
+  onBack,
 }: {
   title?: string;
   showBack?: boolean;
   right?: ReactNode;
+  onBack?: () => void;
 }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -24,7 +26,11 @@ export function TopBar({
           style={styles.side}
           onPress={() => {
             lightHaptic();
-            router.back();
+            if (onBack) {
+              onBack();
+            } else {
+              router.back();
+            }
           }}
           hitSlop={8}
         >

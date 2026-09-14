@@ -2,6 +2,7 @@ import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Animated,
   Platform,
   Pressable,
@@ -447,8 +448,8 @@ export default function LessonPlayer() {
               onPress={() =>
                 isWeb
                   ? from === 'unit' && unitId
-                    ? router.replace({ pathname: '/unit/[id]', params: { id: unitId } })
-                    : router.replace('/course')
+                    ? router.dismissTo({ pathname: '/unit/[id]', params: { id: unitId } })
+                    : router.dismissTo('/course')
                   : from === 'course'
                     ? router.back()
                     : router.replace('/course')
@@ -490,6 +491,35 @@ export default function LessonPlayer() {
     onContinue: handleContinue,
     onUngradedContinue: handleUngradedContinue,
   });
+
+  const handleClose = () => {
+    const leave = () => {
+      if (isWeb) {
+        if (unitId) {
+          router.dismissTo({ pathname: '/unit/[id]', params: { id: unitId } });
+        } else {
+          router.dismissTo('/course');
+        }
+        return;
+      }
+      if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.replace('/home');
+      }
+    };
+
+    if (isWeb) {
+      if (window.confirm('Leave lesson? This attempt is not saved.')) {
+        leave();
+      }
+      return;
+    }
+    Alert.alert('Leave lesson?', 'This attempt is not saved.', [
+      { text: 'Stay', style: 'cancel' },
+      { text: 'Leave', style: 'destructive', onPress: leave },
+    ]);
+  };
 
   const bottomArea = () => {
     if (isPlaceholder || isUngraded) {
@@ -569,13 +599,7 @@ export default function LessonPlayer() {
       <Stack.Screen options={{ title: lesson.title }} />
       <TopBar
         progress={exercises.length === 0 ? 0 : (index + 1) / exercises.length}
-        onClose={() =>
-          router.canGoBack()
-            ? router.back()
-            : isWeb
-              ? router.replace('/course')
-              : router.replace('/home')
-        }
+        onClose={handleClose}
       />
       {!isDesktop && (
         <ParrotSeat checked={phase === 'checked'} correct={banner?.correct ?? false} />
