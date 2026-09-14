@@ -7,7 +7,7 @@ export default function IndexWeb() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace(getClassCode() ? '/webcourse' : '/gate');
+    router.replace(getClassCode() ? '/course' : '/gate');
   }, [router]);
 
   return (

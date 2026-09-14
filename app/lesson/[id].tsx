@@ -71,7 +71,11 @@ type LoadState =
   | { status: 'ready'; lesson: Lesson; exercises: Exercise[] };
 
 export default function LessonPlayer() {
-  const { id, from } = useLocalSearchParams<{ id: string; from?: string }>();
+  const { id, from, unitId } = useLocalSearchParams<{
+    id: string;
+    from?: string;
+    unitId?: string;
+  }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const isWeb = Platform.OS === 'web';
@@ -427,7 +431,9 @@ export default function LessonPlayer() {
               style={styles.buttonPrimary}
               onPress={() =>
                 isWeb
-                  ? router.replace('/webcourse')
+                  ? from === 'unit' && unitId
+                    ? router.replace({ pathname: '/unit/[id]', params: { id: unitId } })
+                    : router.replace('/course')
                   : from === 'course'
                     ? router.back()
                     : router.replace('/course')
@@ -562,7 +568,7 @@ export default function LessonPlayer() {
           router.canGoBack()
             ? router.back()
             : isWeb
-              ? router.replace('/webcourse')
+              ? router.replace('/course')
               : router.replace('/home')
         }
       />

@@ -51,7 +51,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.paper,
   },
   side: {
-    width: 28,
+    minWidth: 28,
+    alignItems: 'flex-end',
   },
   title: {
     flex: 1,

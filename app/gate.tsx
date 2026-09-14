@@ -109,7 +109,7 @@ export default function Gate() {
     }
     saveClassCode(normalized);
     saveClassLevelId(level.id);
-    router.replace('/webcourse');
+    router.replace('/course');
   };
 
   return (
@@ -266,7 +266,7 @@ export default function Gate() {
           )}
 
           {storedCode && (
-            <Pressable style={styles.continueRow} onPress={() => router.replace('/webcourse')}>
+            <Pressable style={styles.continueRow} onPress={() => router.replace('/course')}>
               <Text style={styles.linkText}>Continue as {storedCode}</Text>
             </Pressable>
           )}
