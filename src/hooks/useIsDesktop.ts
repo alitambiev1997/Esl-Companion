@@ -1,6 +1,5 @@
-import { useWindowDimensions } from 'react-native';
+import { useUiScale } from '@/src/hooks/useUiScale';
 
 export function useIsDesktop(): boolean {
-  const { width } = useWindowDimensions();
-  return width >= 900;
+  return useUiScale().isDesktop;
 }

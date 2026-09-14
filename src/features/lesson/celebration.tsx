@@ -133,7 +133,7 @@ export function Confetti({ origin }: { origin: { x: number; y: number } | null }
   );
 }
 
-export function MedalStamp({ medal }: { medal: Medal }) {
+export function MedalStamp({ medal, size = 160 }: { medal: Medal; size?: number }) {
   const scale = useRef(new Animated.Value(3)).current;
   const rotation = useRef(new Animated.Value(0)).current;
   const color = medalColor(medal) ?? colors.sky;
@@ -152,9 +152,19 @@ export function MedalStamp({ medal }: { medal: Medal }) {
 
   return (
     <Animated.View
-      style={[styles.stamp, { borderColor: color, transform: [{ scale }, { rotate }] }]}
+      style={[
+        styles.stamp,
+        {
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          borderWidth: size >= 200 ? 8 : 6,
+          borderColor: color,
+          transform: [{ scale }, { rotate }],
+        },
+      ]}
     >
-      <Text style={[styles.stampText, { color }]}>
+      <Text style={[styles.stampText, { color, fontSize: size >= 200 ? 36 : 28 }]}>
         {medal.charAt(0).toUpperCase() + medal.slice(1)}
       </Text>
     </Animated.View>
@@ -170,14 +180,11 @@ const styles = StyleSheet.create({
     position: 'absolute',
   },
   stamp: {
-    width: 160,
-    height: 160,
     borderRadius: 80,
     borderWidth: 6,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.white,
-    marginTop: 24,
   },
   stampText: {
     fontFamily: fonts.display,

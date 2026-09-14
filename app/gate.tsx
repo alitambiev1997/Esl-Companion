@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { ParrotBadge } from '@/src/components/ParrotBadge';
 import { useIsDesktop } from '@/src/hooks/useIsDesktop';
+import { useUiScale } from '@/src/hooks/useUiScale';
 import { getClassCode, saveClassCode, saveClassLevelId } from '@/src/lib/class-code';
 import { supabase } from '@/src/lib/supabase';
 import { hoverStyle } from '@/src/lib/web-hover';
@@ -48,6 +49,7 @@ function Reveal({ children }: { children: React.ReactNode }) {
 export default function Gate() {
   const router = useRouter();
   const isDesktop = useIsDesktop();
+  const uiScale = useUiScale();
   const storedCode = getClassCode();
   const [coursesOpen, setCoursesOpen] = useState(false);
   const [levelsState, setLevelsState] = useState<LevelsState>({ status: 'idle' });
@@ -117,7 +119,7 @@ export default function Gate() {
       <View style={[styles.card, isDesktop && styles.cardDesktop]}>
         {isDesktop && (
           <View style={styles.brandPanel}>
-            <ParrotBadge size={120} />
+            <ParrotBadge size={uiScale.parrot} />
             <Text style={[styles.appName, styles.appNameDesktop]}>AQAP English</Text>
             <Text style={styles.tagline}>Practice English with your class.</Text>
             <View style={styles.captionList}>
@@ -131,7 +133,7 @@ export default function Gate() {
         <View style={styles.rightPanel}>
           {!isDesktop && (
             <>
-              <ParrotBadge size={96} />
+              <ParrotBadge size={uiScale.parrot} />
               <Text style={styles.appName}>AQAP English</Text>
             </>
           )}

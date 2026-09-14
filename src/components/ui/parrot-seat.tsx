@@ -8,10 +8,12 @@ export function ParrotSeat({
   checked,
   correct,
   bubbleMaxWidth,
+  parrotSize = 56,
 }: {
   checked: boolean;
   correct: boolean;
   bubbleMaxWidth?: number;
+  parrotSize?: number;
 }) {
   const [line, setLine] = useState<string | null>(null);
   const [bounceKey, setBounceKey] = useState(0);
@@ -29,10 +31,10 @@ export function ParrotSeat({
     <View style={styles.row}>
       {checked && line && (
         <View style={[styles.bubble, bubbleMaxWidth ? { maxWidth: bubbleMaxWidth } : null]}>
-          <Text style={styles.text}>{line}</Text>
+          <Text style={[styles.text, parrotSize >= 96 && styles.textDesktop]}>{line}</Text>
         </View>
       )}
-      <ParrotBadge size={56} bob bounceKey={bounceKey} />
+      <ParrotBadge size={parrotSize} bob bounceKey={bounceKey} />
     </View>
   );
 }
@@ -59,5 +61,8 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     fontSize: 14,
     color: colors.ink,
+  },
+  textDesktop: {
+    fontSize: 16,
   },
 });

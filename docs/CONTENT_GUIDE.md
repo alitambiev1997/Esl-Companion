@@ -120,6 +120,36 @@ end $$;
 - Options arrays: put the correct option at `correct_index`; the app shuffles where it
   wants to. Never rely on array order being preserved.
 - JSON must be valid; escape quotes inside strings (`\"`). No trailing commas, no comments.
+ 
+ ## LESSON COMPOSITION RULE
+
+Titles are student-facing names only ("Meet the People").
+The category (Introductory / Grammatical / Practical /
+Revisionary) is internal: it lives as the first word(s) of the
+description ("Grammatical - ..."), never in the title.
+Descriptions are not shown to students today; if that ever
+changes, strip the label in the UI, not in the data.
+
+Each lesson = one play sequence, sort_order 1..N:
+- Exactly 8 GRADED practice exercises = the score denominator,
+  always, no matter how many total steps the lesson has.
+- up to max 6 flashcard_flip teaching steps (as many as the content
+  needs), UNGRADED, interleaved anywhere in the sequence
+  (e.g. 3 cards, 3 exercises, 1 card, 2 exercises).
+- Optionally one speaking_recording closer. speaking_recording
+  is ungraded wherever it appears.
+- Keep lessons at 15 steps or fewer.
+
+The 8 graded slots use practice types only: multiple_choice,
+inline_choice, matching, word_order, fill_blank, listening_*,
+error_spot, word_sort, form_fill, context_fill, best_reply,
+document_reader, image_choice, reading_comprehension,
+stress_tap, silent_letter, sentence_order.
+
+- correct_index must vary across exercises; never predictable.
+- fill_blank prompt MUST contain ___.
+- word_order: send correct_sequence only; the app shuffles banks.
+- reading_comprehension uses dialogue:[{speaker,side,text}].
 
 ## Type reference
 
@@ -173,13 +203,13 @@ punctuation-insensitive). Include irregular/contracted variants if you accept th
 
 ### 4. word_order — build the sentence from word chips
 
-Learner taps words in order. Provide the exact correct sequence; the app builds the
-shuffled chip bank from it (the old `words` field is ignored).
+Learner taps words in order. Provide the words AND the exact correct sequence.
 
 Prompt: `"Put the words in the right order:"`
 
 ```json
 {
+  "words": ["She", "is", "reading", "a", "book"],
   "correct_sequence": ["She", "is", "reading", "a", "book"],
   "explanation": "Subject, verb, then the rest."
 }

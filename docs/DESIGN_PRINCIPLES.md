@@ -36,6 +36,7 @@
 25. Web: every URL must survive a reload; progress lives in localStorage per class code and is never wiped by navigation.
 26. Desktop grids: cards in a wrapped row stretch to equal heights.
 27. Web tiers: units list → unit map. Every unit is tappable from the start; locks exist only between lessons inside a unit.
+28. Web: primary action visible without scrolling at 100% zoom on 1366x768; mascot and medal scale with breakpoints.
 
 ## New activity checklist
 - [ ] shape in docs/EXERCISE_SHAPES.md

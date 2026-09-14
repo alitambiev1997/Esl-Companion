@@ -16,6 +16,7 @@ import { useAuth } from '@/src/features/auth/useAuth';
 import { ParrotBadge } from '@/src/components/ParrotBadge';
 import { ParrotSeat } from '@/src/components/ui/parrot-seat';
 import { useIsDesktop } from '@/src/hooks/useIsDesktop';
+import { useUiScale } from '@/src/hooks/useUiScale';
 import { BottomBar } from '@/src/components/ui/bottom-bar';
 import { FeedbackBanner } from '@/src/components/ui/feedback-banner';
 import { Toast } from '@/src/components/ui/toast';
@@ -80,6 +81,7 @@ export default function LessonPlayer() {
   const insets = useSafeAreaInsets();
   const isWeb = Platform.OS === 'web';
   const isDesktop = useIsDesktop();
+  const uiScale = useUiScale();
   const { width: windowWidth } = useWindowDimensions();
   const { user, loading: authLoading } = useAuth();
 
@@ -96,7 +98,6 @@ export default function LessonPlayer() {
     width: number;
     height: number;
   } | null>(null);
-  const [blockLayout, setBlockLayout] = useState<{ y: number; height: number } | null>(null);
   const [stampLayout, setStampLayout] = useState<{ y: number; height: number } | null>(null);
   const rendererRef = useRef<ExerciseRendererHandle>(null);
   const [canCheck, setCanCheck] = useState(false);
@@ -383,10 +384,10 @@ export default function LessonPlayer() {
   if (result) {
     const passScore = loadState.status === 'ready' ? (loadState.lesson.pass_score ?? 60) : 60;
     const origin =
-      containerLayout && blockLayout && stampLayout
+      containerLayout && stampLayout
         ? {
             x: containerLayout.width / 2,
-            y: blockLayout.y + stampLayout.y + stampLayout.height / 2,
+            y: stampLayout.y + stampLayout.height / 2,
           }
         : null;
 
@@ -408,27 +409,41 @@ export default function LessonPlayer() {
             title: loadState.status === 'ready' ? loadState.lesson.title : 'Lesson',
           }}
         />
-        {result.passed && result.medal ? (
-          <>
-            <Confetti origin={origin} />
-            <View style={[styles.mascotCorner, { top: insets.top + 12 }]} pointerEvents="none">
-              <ParrotBadge size={56} bob bounceKey={0} />
-            </View>
-            <View
-              style={styles.ceremonyBlock}
-              onLayout={(e) => setBlockLayout(e.nativeEvent.layout)}
-            >
-              <Text style={styles.celebrationTitle}>Lesson complete!</Text>
-              <View onLayout={(e) => setStampLayout(e.nativeEvent.layout)}>
-                <MedalStamp medal={result.medal} />
+        <View style={[styles.resultColumn, result.passed && result.medal ? styles.resultColumnPassed : styles.resultColumnFail]}>
+          {result.passed && result.medal ? (
+            <>
+              <Confetti origin={origin} />
+              <View style={[styles.mascotCorner, { top: insets.top + 12 }]} pointerEvents="none">
+                <ParrotBadge size={uiScale.parrot} bob bounceKey={0} />
               </View>
-            </View>
-            <Text style={styles.scoreText}>Score: {result.score}%</Text>
-            <Text style={[styles.medalName, { color: medalColor(result.medal) ?? colors.sky }]}>
-              {result.medal.charAt(0).toUpperCase() + result.medal.slice(1)}
-            </Text>
-            <Pressable
-              style={styles.buttonPrimary}
+              <Text
+                style={[styles.celebrationTitle, uiScale.isDesktop && styles.titleDesktop]}
+              >
+                Lesson complete!
+              </Text>
+              <View onLayout={(e) => setStampLayout(e.nativeEvent.layout)}>
+                <MedalStamp medal={result.medal} size={uiScale.medal} />
+              </View>
+              <Text style={styles.scoreText}>Score: {result.score}%</Text>
+              <Text style={[styles.medalName, { color: medalColor(result.medal) ?? colors.sky }]}>
+                {result.medal.charAt(0).toUpperCase() + result.medal.slice(1)}
+              </Text>
+            </>
+          ) : (
+            <>
+              <Text style={styles.encouragementText}>
+                Not yet - you need {passScore}%.
+                {'\n'}Try again!
+              </Text>
+              <Text style={styles.scoreText}>Score: {result.score}%</Text>
+            </>
+          )}
+        </View>
+        <BottomBar>
+          {result.passed && result.medal ? (
+            <PrimaryButton
+              label="Continue"
+              haptic
               onPress={() =>
                 isWeb
                   ? from === 'unit' && unitId
@@ -438,22 +453,11 @@ export default function LessonPlayer() {
                     ? router.back()
                     : router.replace('/course')
               }
-            >
-              <Text style={styles.buttonPrimaryText}>Continue</Text>
-            </Pressable>
-          </>
-        ) : (
-          <>
-            <Text style={styles.encouragementText}>
-              Not yet - you need {passScore}%.
-              {'\n'}Try again!
-            </Text>
-            <Text style={styles.scoreText}>Score: {result.score}%</Text>
-            <Pressable style={styles.buttonPrimary} onPress={onTryAgain}>
-              <Text style={styles.buttonPrimaryText}>Try again</Text>
-            </Pressable>
-          </>
-        )}
+            />
+          ) : (
+            <PrimaryButton label="Try again" haptic onPress={onTryAgain} />
+          )}
+        </BottomBar>
       </View>
     );
   }
@@ -462,7 +466,7 @@ export default function LessonPlayer() {
   const exercise = exercises[index];
   const shellWidth = Math.min(windowWidth, 1120);
   const gutterWidth = (shellWidth - 640) / 2;
-  const bubbleCap = Math.max(64, Math.round(gutterWidth - 92));
+  const bubbleCap = Math.max(64, Math.round(gutterWidth - uiScale.parrot - 12 - 24));
   const isPlaceholder =
     exercise &&
     !['multiple_choice', 'inline_choice', 'context_fill', 'error_spot', 'stress_tap', 'silent_letter', 'word_sort', 'form_fill', 'image_choice', 'document_reader', 'best_reply', 'fill_blank', 'word_order', 'matching', 'listening_multiple_choice', 'listening_dictation', 'listening_word_order', 'sentence_order', 'reading_comprehension', 'speaking_recording', 'flashcard_flip'].includes(
@@ -582,6 +586,7 @@ export default function LessonPlayer() {
             checked={phase === 'checked'}
             correct={banner?.correct ?? false}
             bubbleMaxWidth={bubbleCap}
+            parrotSize={uiScale.parrot}
           />
         </View>
       )}
@@ -812,14 +817,20 @@ const styles = StyleSheet.create({
   },
   resultContainer: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    paddingTop: '20%',
     backgroundColor: colors.paper,
   },
-  ceremonyBlock: {
-    width: '100%',
+  resultColumn: {
+    flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    paddingBottom: 120,
+  },
+  resultColumnPassed: {
+    gap: 24,
+  },
+  resultColumnFail: {
+    gap: 16,
   },
   mascotCorner: {
     position: 'absolute',
