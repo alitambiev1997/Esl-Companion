@@ -6,7 +6,7 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { z } from 'zod';
 import { KeyboardFormWrapper } from '@/components/keyboard-form-wrapper';
 import { ParrotBadge } from '@/src/components/ParrotBadge';
-import { TopBar } from '@/src/components/ui/TopBar';
+import { TopBar } from '@/src/components/ui/title-bar';
 import { supabase } from '@/src/lib/supabase';
 import { colors, fonts, radius } from '@/src/theme/tokens';
 

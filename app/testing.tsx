@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { StaggerIn } from '@/src/components/ui/stagger-in';
-import { TopBar } from '@/src/components/ui/TopBar';
+import { TopBar } from '@/src/components/ui/title-bar';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { exerciseMeta, samplesByType } from '@/src/dev/sampleExercises';
 import { colors, fonts, radius } from '@/src/theme/tokens';

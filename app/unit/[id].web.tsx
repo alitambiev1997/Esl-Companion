@@ -2,7 +2,7 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { PathMap, type ProgressMap } from '@/src/components/PathMap';
-import { TopBar } from '@/src/components/ui/TopBar';
+import { TopBar } from '@/src/components/ui/title-bar';
 import { getClassCode, getClassLevelId } from '@/src/lib/class-code';
 import { supabase } from '@/src/lib/supabase';
 import { readWebProgress } from '@/src/lib/web-progress';

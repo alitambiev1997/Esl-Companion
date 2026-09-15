@@ -2,7 +2,7 @@ import { ParrotBadge } from '@/src/components/ParrotBadge';
 import { BottomBar } from '@/src/components/ui/bottom-bar';
 import { FeedbackBanner } from '@/src/components/ui/feedback-banner';
 import { ParrotSeat } from '@/src/components/ui/parrot-seat';
-import { TopBar } from '@/src/components/ui/TopBar';
+import { TopBar } from '@/src/components/ui/title-bar';
 import { useAuth } from '@/src/features/auth/useAuth';
 import type {
   ExerciseRendererHandle,

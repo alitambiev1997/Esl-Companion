@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { TopBar } from '@/src/components/ui/TopBar';
+import { TopBar } from '@/src/components/ui/title-bar';
 import { useIsDesktop } from '@/src/hooks/useIsDesktop';
 import { clearClassCode, getClassCode, getClassLevelId } from '@/src/lib/class-code';
 import { supabase } from '@/src/lib/supabase';

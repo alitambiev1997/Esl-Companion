@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 import { useAuth } from '@/src/features/auth/useAuth';
-import { TopBar } from '@/src/components/ui/TopBar';
+import { TopBar } from '@/src/components/ui/title-bar';
 import { ParrotBadge } from '@/src/components/ParrotBadge';
 import { OptionCard } from '@/src/components/ui/option-card';
 import {

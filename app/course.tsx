@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 import { PathMap, type ProgressMap } from '@/src/components/PathMap';
-import { TopBar } from '@/src/components/ui/TopBar';
+import { TopBar } from '@/src/components/ui/title-bar';
 import { lightHaptic } from '@/src/lib/haptics';
 import { useAuth } from '@/src/features/auth/useAuth';
 import { supabase } from '@/src/lib/supabase';

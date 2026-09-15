@@ -2,7 +2,6 @@ import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Animated,
   Platform,
   Pressable,
@@ -447,9 +446,7 @@ export default function LessonPlayer() {
               haptic
               onPress={() =>
                 isWeb
-                  ? from === 'unit' && unitId
-                    ? router.dismissTo({ pathname: '/unit/[id]', params: { id: unitId } })
-                    : router.dismissTo('/course')
+                  ? leaveLesson()
                   : from === 'course'
                     ? router.back()
                     : router.replace('/course')
@@ -492,33 +489,20 @@ export default function LessonPlayer() {
     onUngradedContinue: handleUngradedContinue,
   });
 
-  const handleClose = () => {
-    const leave = () => {
-      if (isWeb) {
-        if (unitId) {
-          router.dismissTo({ pathname: '/unit/[id]', params: { id: unitId } });
-        } else {
-          router.dismissTo('/course');
-        }
-        return;
-      }
-      if (router.canGoBack()) {
-        router.back();
-      } else {
-        router.replace('/home');
-      }
-    };
-
+  const leaveLesson = () => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
     if (isWeb) {
-      if (window.confirm('Leave lesson? This attempt is not saved.')) {
-        leave();
+      if (unitId) {
+        router.replace({ pathname: '/unit/[id]', params: { id: unitId } });
+      } else {
+        router.replace('/course');
       }
       return;
     }
-    Alert.alert('Leave lesson?', 'This attempt is not saved.', [
-      { text: 'Stay', style: 'cancel' },
-      { text: 'Leave', style: 'destructive', onPress: leave },
-    ]);
+    router.replace('/home');
   };
 
   const bottomArea = () => {
@@ -599,7 +583,7 @@ export default function LessonPlayer() {
       <Stack.Screen options={{ title: lesson.title }} />
       <TopBar
         progress={exercises.length === 0 ? 0 : (index + 1) / exercises.length}
-        onClose={handleClose}
+        onClose={leaveLesson}
       />
       {!isDesktop && (
         <ParrotSeat checked={phase === 'checked'} correct={banner?.correct ?? false} />

@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useRef } from 'react';
-import { Alert, Animated, Pressable, StyleSheet, View } from 'react-native';
+import { Alert, Animated, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, radius } from '@/src/theme/tokens';
 
@@ -29,7 +29,13 @@ export function TopBar({ progress, onClose }: { progress: number; onClose: () =>
   }, [progress, fill, pulse]);
 
   const confirmLeave = () => {
-    Alert.alert('Leave lesson?', undefined, [
+    if (Platform.OS === 'web') {
+      if (window.confirm('Leave lesson? This attempt is not saved.')) {
+        onClose();
+      }
+      return;
+    }
+    Alert.alert('Leave lesson?', 'This attempt is not saved.', [
       { text: 'Stay', style: 'cancel' },
       { text: 'Leave', style: 'destructive', onPress: onClose },
     ]);

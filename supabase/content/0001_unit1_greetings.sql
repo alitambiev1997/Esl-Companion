@@ -15,7 +15,7 @@ begin
     ('Greetings & Farewells', 'Introductory - Greetings, farewells and polite replies', 5, 2),
     ('Subject Pronouns', 'Grammatical - Subject pronouns I, you, he, she, it, we, they', 6, 3),
     ('Possessive Adjectives', 'Grammatical - Possessive adjectives my, your, his, her, its, our, their', 6, 4),
-    ('Unit 1 Review - Part A', 'Revisionary - Mixed practice of greetings, spelling and pronouns', 5, 5),
+    ('Unit 1 Review check', 'Revisionary - Mixed practice of greetings, spelling and pronouns', 5, 5),
     ('Introducing Yourself', 'Practical - Introduce yourself in real dialogues and forms', 6, 6),
     ('Asking Questions', 'Practical - Ask and answer what, how and where questions', 6, 7),
     ('Real People Introductions', 'Practical - Listen to and read authentic introductions', 7, 8),
