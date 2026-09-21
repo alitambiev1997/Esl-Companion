@@ -29,7 +29,10 @@ type ContentState =
 type EditorState =
   | { mode: 'closed' }
   | { mode: 'picker' }
-  | { mode: 'edit'; exercise: ExerciseRow | null; type: StarterType };
+  | { mode: 'edit'; exercise: ExerciseRow | null; type: StarterType }
+  | { mode: 'unsupported'; exercise: ExerciseRow };
+
+const STARTER_TYPE_NAMES = STARTER_TYPES.map((t) => t.type);
 
 function bySortOrder(a: { sort_order: number }, b: { sort_order: number }) {
   return a.sort_order - b.sort_order;
@@ -232,29 +235,38 @@ export function StudioBrowser() {
             </Pressable>
           </View>
           <ScrollView style={styles.paneScroll} contentContainerStyle={styles.paneContent}>
-            {lessonExercises.map((exercise) => (
-              <Pressable
-                key={exercise.id}
-                style={({ hovered }) => [styles.exerciseRow, hoverStyle(hovered)]}
-                onPress={() =>
-                  setEditor({ mode: 'edit', exercise, type: exercise.type as StarterType })
-                }
-              >
-                <Text style={styles.exerciseIndex}>{exercise.sort_order}</Text>
-                <View style={styles.rowMain}>
-                  <View style={styles.exerciseChips}>
-                    <Text style={styles.typeChip}>{typeLabel(exercise.type)}</Text>
-                    {exercise.is_required === false && (
-                      <Text style={styles.optionalChip}>optional</Text>
-                    )}
+            {lessonExercises.map((exercise) => {
+              const editable = STARTER_TYPE_NAMES.includes(exercise.type as StarterType);
+              return (
+                <Pressable
+                  key={exercise.id}
+                  style={({ hovered }) => [styles.exerciseRow, hoverStyle(hovered)]}
+                  onPress={() =>
+                    editable
+                      ? setEditor({ mode: 'edit', exercise, type: exercise.type as StarterType })
+                      : setEditor({ mode: 'unsupported', exercise })
+                  }
+                >
+                  <Text style={styles.exerciseIndex}>{exercise.sort_order}</Text>
+                  <View style={styles.rowMain}>
+                    <View style={styles.exerciseChips}>
+                      <Text style={styles.typeChip}>{typeLabel(exercise.type)}</Text>
+                      {exercise.is_required === false && (
+                        <Text style={styles.optionalChip}>optional</Text>
+                      )}
+                    </View>
+                    <Text style={styles.exercisePrompt} numberOfLines={2}>
+                      {exercise.prompt}
+                    </Text>
                   </View>
-                  <Text style={styles.exercisePrompt} numberOfLines={2}>
-                    {exercise.prompt}
-                  </Text>
-                </View>
-                <Text style={styles.chevron}>›</Text>
-              </Pressable>
-            ))}
+                  {editable ? (
+                    <Text style={styles.chevron}>›</Text>
+                  ) : (
+                    <Text style={styles.soonText}>view</Text>
+                  )}
+                </Pressable>
+              );
+            })}
             {lessonExercises.length === 0 && (
               <Text style={styles.emptyText}>No exercises yet.</Text>
             )}
@@ -289,6 +301,29 @@ export function StudioBrowser() {
               More types coming as the editor grows — the rest of the 21 land in the next
               ticket.
             </Text>
+          </ScrollView>
+        </>
+      )}
+
+      {editor.mode === 'unsupported' && (
+        <>
+          <Pressable onPress={() => setEditor({ mode: 'closed' })} hitSlop={8}>
+            <Text style={styles.backLink}>‹ Exercises</Text>
+          </Pressable>
+          <View style={styles.headerRow}>
+            <Text style={styles.paneTitle}>Exercise preview</Text>
+            <Text style={styles.typeChip}>{typeLabel(editor.exercise.type)}</Text>
+          </View>
+          <ScrollView style={styles.paneScroll} contentContainerStyle={styles.paneContent}>
+            <Text style={styles.previewNote}>
+              Editing {typeLabel(editor.exercise.type)} exercises arrives in the next studio
+              update. Here is the saved content for now:
+            </Text>
+            <View style={styles.jsonCard}>
+              <Text style={styles.jsonText}>
+                {JSON.stringify(editor.exercise.content ?? {}, null, 2)}
+              </Text>
+            </View>
           </ScrollView>
         </>
       )}
@@ -432,6 +467,37 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: colors.greyDark,
     paddingHorizontal: 4,
+  },
+  soonText: {
+    fontFamily: fonts.body,
+    fontSize: 11,
+    color: colors.greyDark,
+    paddingHorizontal: 4,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  previewNote: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    color: colors.ink,
+    opacity: 0.6,
+  },
+  jsonCard: {
+    backgroundColor: colors.white,
+    borderWidth: 2,
+    borderColor: colors.grey,
+    borderRadius: 12,
+    padding: 12,
+  },
+  jsonText: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    color: colors.ink,
   },
   pickerNote: {
     fontFamily: fonts.body,
