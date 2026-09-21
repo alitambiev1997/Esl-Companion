@@ -77,6 +77,7 @@ export function ExercisePreview({ exercise }: { exercise: Exercise }) {
           tip={banner.tip ?? undefined}
           continueLabel="Try again"
           onContinue={reset}
+          inline
         />
       ) : !tapGraded ? (
         <Pressable

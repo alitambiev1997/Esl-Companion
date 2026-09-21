@@ -15,6 +15,7 @@ export function FeedbackBanner({
   title,
   chips,
   tip,
+  inline,
 }: {
   correct: boolean;
   explanation: string | null;
@@ -24,6 +25,7 @@ export function FeedbackBanner({
   title?: string;
   chips?: string[] | null;
   tip?: string | null;
+  inline?: boolean;
 }) {
   const insets = useSafeAreaInsets();
   const slide = useRef(new Animated.Value(1)).current;
@@ -37,6 +39,7 @@ export function FeedbackBanner({
     <Animated.View
       style={[
         styles.banner,
+        inline && styles.bannerInline,
         {
           backgroundColor: correct ? colors.leafTint : colors.coralTint,
           paddingBottom: Math.max(insets.bottom, 20),
@@ -82,6 +85,10 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
     padding: 20,
     paddingTop: 24,
+  },
+  bannerInline: {
+    position: 'relative',
+    borderRadius: 20,
   },
   title: {
     fontFamily: fonts.display,
