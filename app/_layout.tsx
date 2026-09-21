@@ -48,6 +48,7 @@ export default function RootLayout() {
         <Stack.Screen name="testing/[type]" />
         <Stack.Screen name="gate" />
         <Stack.Screen name="placement" />
+        <Stack.Screen name="editor" />
         <Stack.Screen name="unit/[id]" />
       </Stack>
       <StatusBar style="auto" />

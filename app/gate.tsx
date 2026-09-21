@@ -267,14 +267,18 @@ export default function Gate() {
             </Reveal>
           )}
 
-          {storedCode && (
-            <Pressable style={styles.continueRow} onPress={() => router.replace('/course')}>
-              <Text style={styles.linkText}>Continue as {storedCode}</Text>
-            </Pressable>
-          )}
-        </View>
+        {storedCode && (
+          <Pressable style={styles.continueRow} onPress={() => router.replace('/course')}>
+            <Text style={styles.linkText}>Continue as {storedCode}</Text>
+          </Pressable>
+        )}
+
+        <Pressable style={styles.teacherRow} onPress={() => router.push('/editor')} hitSlop={8}>
+          <Text style={styles.teacherText}>Teacher sign in</Text>
+        </Pressable>
       </View>
     </View>
+  </View>
   );
 }
 
@@ -470,6 +474,16 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
     alignItems: 'center',
     marginTop: 20,
+  },
+  teacherRow: {
+    alignSelf: 'stretch',
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  teacherText: {
+    fontFamily: fonts.body,
+    fontSize: 11,
+    color: colors.greyDark,
   },
   linkText: {
     fontFamily: fonts.body,
