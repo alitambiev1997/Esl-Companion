@@ -23,7 +23,7 @@ export function ContentImage({ url }: { url: string | null }) {
       {!loaded && <View style={styles.placeholder} />}
       <Image
         source={{ uri: url }}
-        style={[styles.image, !loaded && styles.imageLoading]}
+        style={styles.image}
         resizeMode="cover"
         onLoad={() => setLoaded(true)}
         onError={() => setFailed(true)}
@@ -35,7 +35,7 @@ export function ContentImage({ url }: { url: string | null }) {
 const styles = StyleSheet.create({
   wrap: {
     width: '100%',
-    maxHeight: 220,
+    height: 220,
     borderRadius: radius.card,
     overflow: 'hidden',
     backgroundColor: colors.grey,
@@ -43,10 +43,7 @@ const styles = StyleSheet.create({
   },
   image: {
     width: '100%',
-    maxHeight: 220,
-  },
-  imageLoading: {
-    height: 160,
+    height: 220,
   },
   placeholder: {
     ...StyleSheet.absoluteFillObject,
