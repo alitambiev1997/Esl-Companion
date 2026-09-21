@@ -362,6 +362,22 @@ export default function LessonPlayer() {
     }
   };
 
+  const leaveLesson = () => {
+    if (isWeb) {
+      if (unitId) {
+        router.replace({ pathname: '/unit/[id]', params: { id: unitId } });
+      } else {
+        router.replace('/course');
+      }
+      return;
+    }
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+    router.replace('/home');
+  };
+
   if (authLoading || loadState.status === 'loading') {
     return (
       <View style={styles.container}>
@@ -488,22 +504,6 @@ export default function LessonPlayer() {
     onContinue: handleContinue,
     onUngradedContinue: handleUngradedContinue,
   });
-
-  const leaveLesson = () => {
-    if (isWeb) {
-      if (unitId) {
-        router.replace({ pathname: '/unit/[id]', params: { id: unitId } });
-      } else {
-        router.replace('/course');
-      }
-      return;
-    }
-    if (router.canGoBack()) {
-      router.back();
-      return;
-    }
-    router.replace('/home');
-  };
 
   const bottomArea = () => {
     if (isPlaceholder || isUngraded) {
