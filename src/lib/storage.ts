@@ -7,7 +7,19 @@ const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
  */
 export function publicStorageUrl(bucket: string, path: string): string {
   if (/^https?:\/\//.test(path)) return path;
-  return `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${path}`;
+  const encoded = path
+    .split('/')
+    .map((segment) => {
+      let raw = segment;
+      try {
+        raw = decodeURIComponent(segment);
+      } catch {
+        raw = segment;
+      }
+      return encodeURIComponent(raw);
+    })
+    .join('/');
+  return `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${encoded}`;
 }
 
 export function contentImageUrl(path: string | null | undefined): string | null {

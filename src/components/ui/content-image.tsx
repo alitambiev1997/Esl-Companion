@@ -23,7 +23,7 @@ export function ContentImage({ url }: { url: string | null }) {
       {!loaded && <View style={styles.placeholder} />}
       <Image
         source={{ uri: url }}
-        style={styles.image}
+        style={[styles.image, !loaded && styles.imageLoading]}
         resizeMode="cover"
         onLoad={() => setLoaded(true)}
         onError={() => setFailed(true)}
@@ -44,6 +44,9 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     maxHeight: 220,
+  },
+  imageLoading: {
+    height: 160,
   },
   placeholder: {
     ...StyleSheet.absoluteFillObject,
