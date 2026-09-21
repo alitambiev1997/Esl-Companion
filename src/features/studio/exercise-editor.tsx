@@ -95,6 +95,7 @@ async function writeClipboard(text: string): Promise<boolean> {
 
 export function ExerciseEditor({
   lessonId,
+  lessonTitle,
   exercise,
   type,
   nextSortOrder,
@@ -102,6 +103,7 @@ export function ExerciseEditor({
   onCancel,
 }: {
   lessonId: string;
+  lessonTitle: string;
   exercise: ExerciseRow | null;
   type: StarterType;
   nextSortOrder: number;
@@ -188,7 +190,7 @@ export function ExerciseEditor({
   return (
     <View style={styles.editor}>
       <Pressable onPress={onCancel} hitSlop={8}>
-        <Text style={styles.backLink}>‹ Exercises</Text>
+        <Text style={styles.backLink}>‹ {lessonTitle}</Text>
       </Pressable>
       <View style={styles.headerRow}>
         <Text style={styles.title}>{exercise ? 'Edit exercise' : 'New exercise'}</Text>
@@ -414,7 +416,7 @@ const styles = StyleSheet.create({
     minHeight: 0,
   },
   previewColumn: {
-    width: 340,
+    width: 380,
     borderLeftWidth: 2,
     borderLeftColor: colors.grey,
     paddingLeft: 16,

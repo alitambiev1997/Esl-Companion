@@ -331,6 +331,7 @@ export function StudioBrowser() {
       {editor.mode === 'edit' && (
         <ExerciseEditor
           lessonId={activeLesson.id}
+          lessonTitle={activeLesson.title}
           exercise={editor.exercise}
           type={editor.type}
           nextSortOrder={nextSortOrder}
@@ -355,7 +356,7 @@ export function StudioBrowser() {
   return (
     <View style={styles.browserDesktop}>
       {editor.mode !== 'edit' && unitsPane}
-      {lessonsPane}
+      {editor.mode !== 'edit' && lessonsPane}
       {exercisesPane ?? (
         <View style={[styles.pane, styles.paneWide]}>
           <Text style={styles.emptyText}>

@@ -123,17 +123,16 @@ export default function Editor() {
       <TopBar
         title="Teacher studio"
         right={
-          <Pressable onPress={signOut} hitSlop={8}>
-            <Text style={styles.signOutText}>Sign out</Text>
-          </Pressable>
+          <View style={styles.headerLinks}>
+            <Pressable onPress={() => router.replace('/gate')} hitSlop={8}>
+              <Text style={styles.linkText}>Back to site</Text>
+            </Pressable>
+            <Pressable onPress={signOut} hitSlop={8}>
+              <Text style={styles.linkText}>Sign out</Text>
+            </Pressable>
+          </View>
         }
       />
-      <View style={styles.metaRow}>
-        <Text style={styles.metaText}>{session.user.email}</Text>
-        <Pressable onPress={() => router.replace('/gate')} hitSlop={8}>
-          <Text style={styles.linkText}>Back to site</Text>
-        </Pressable>
-      </View>
       <StudioBrowser />
     </View>
   );
@@ -144,25 +143,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.paper,
   },
-  metaRow: {
+  headerLinks: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingBottom: 8,
-  },
-  metaText: {
-    fontFamily: fonts.body,
-    fontSize: 12,
-    color: colors.ink,
-    opacity: 0.6,
-  },
-  signOutText: {
-    fontFamily: fonts.body,
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.sky,
-    textDecorationLine: 'underline',
+    gap: 16,
   },
   screen: {
     flex: 1,
