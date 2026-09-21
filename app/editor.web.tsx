@@ -10,6 +10,8 @@ import {
 } from 'react-native';
 import type { Session } from '@supabase/supabase-js';
 import { ParrotBadge } from '@/src/components/ParrotBadge';
+import { TopBar } from '@/src/components/ui/title-bar';
+import { StudioBrowser } from '@/src/features/studio/content-browser';
 import { supabase } from '@/src/lib/supabase';
 import { colors, fonts, radius } from '@/src/theme/tokens';
 
@@ -117,27 +119,51 @@ export default function Editor() {
   }
 
   return (
-    <View style={styles.screen}>
-      <View style={styles.card}>
-        <ParrotBadge size={72} />
-        <Text style={styles.title}>Teacher studio</Text>
-        <Text style={styles.caption}>Signed in as {session.user.email}</Text>
-        <Text style={styles.placeholder}>
-          The content editor lands here next: lesson picker, exercise forms, live preview,
-          validation, and save-to-database.
-        </Text>
-        <Pressable style={styles.button} onPress={signOut}>
-          <Text style={styles.buttonText}>Sign out</Text>
-        </Pressable>
+    <View style={styles.studioScreen}>
+      <TopBar
+        title="Teacher studio"
+        right={
+          <Pressable onPress={signOut} hitSlop={8}>
+            <Text style={styles.signOutText}>Sign out</Text>
+          </Pressable>
+        }
+      />
+      <View style={styles.metaRow}>
+        <Text style={styles.metaText}>{session.user.email}</Text>
         <Pressable onPress={() => router.replace('/gate')} hitSlop={8}>
           <Text style={styles.linkText}>Back to site</Text>
         </Pressable>
       </View>
+      <StudioBrowser />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  studioScreen: {
+    flex: 1,
+    backgroundColor: colors.paper,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+  },
+  metaText: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    color: colors.ink,
+    opacity: 0.6,
+  },
+  signOutText: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.sky,
+    textDecorationLine: 'underline',
+  },
   screen: {
     flex: 1,
     backgroundColor: colors.paper,
