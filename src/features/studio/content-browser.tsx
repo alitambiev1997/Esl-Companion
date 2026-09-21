@@ -323,7 +323,13 @@ export function StudioBrowser() {
       {lessonsPane}
       {exercisesPane ?? (
         <View style={[styles.pane, styles.paneWide]}>
-          <Text style={styles.emptyText}>Select a unit to see its lessons.</Text>
+          <Text style={styles.emptyText}>
+            {!activeUnit
+              ? 'Select a unit to see its lessons.'
+              : unitLessons.length === 0
+                ? 'This unit has no lessons yet.'
+                : 'Select a lesson to see its exercises.'}
+          </Text>
         </View>
       )}
     </View>
