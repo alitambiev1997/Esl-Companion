@@ -118,7 +118,7 @@ export function StudioBrowser() {
   const lessonExercises = exercises.filter((e) => e.lesson_id === activeLesson?.id);
 
   const unitsPane = (
-    <View style={[styles.pane, isDesktop && styles.paneFixed]}>
+    <View style={[styles.pane, isDesktop ? styles.paneFixed : styles.paneWide]}>
       <Text style={styles.paneTitle}>Units</Text>
       <ScrollView contentContainerStyle={styles.paneContent}>
         {levels.map((level) => {
@@ -164,7 +164,7 @@ export function StudioBrowser() {
   );
 
   const lessonsPane = activeUnit ? (
-    <View style={[styles.pane, isDesktop && styles.paneFixed]}>
+    <View style={[styles.pane, isDesktop ? styles.paneFixed : styles.paneWide]}>
       {!isDesktop && (
         <Pressable onPress={() => setUnitId(null)} hitSlop={8}>
           <Text style={styles.backLink}>‹ Units</Text>
@@ -299,15 +299,19 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
   },
   pane: {
-    flex: 1,
     minWidth: 0,
+    flexShrink: 1,
   },
   paneFixed: {
     width: 300,
-    flex: 0,
+    flexGrow: 0,
+    flexShrink: 0,
+    flexBasis: 'auto',
   },
   paneWide: {
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 0,
   },
   paneTitle: {
     fontFamily: fonts.display,
