@@ -1,3 +1,11 @@
+import { ParrotBadge } from '@/src/components/ParrotBadge';
+import { useIsDesktop } from '@/src/hooks/useIsDesktop';
+import { useUiScale } from '@/src/hooks/useUiScale';
+import { getClassCode, saveClassCode, saveClassLevelId } from '@/src/lib/class-code';
+import { supabase } from '@/src/lib/supabase';
+import { hoverStyle } from '@/src/lib/web-hover';
+import { colors, fonts, radius } from '@/src/theme/tokens';
+import type { Level } from '@/src/types/content';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
@@ -10,14 +18,6 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { ParrotBadge } from '@/src/components/ParrotBadge';
-import { useIsDesktop } from '@/src/hooks/useIsDesktop';
-import { useUiScale } from '@/src/hooks/useUiScale';
-import { getClassCode, saveClassCode, saveClassLevelId } from '@/src/lib/class-code';
-import { supabase } from '@/src/lib/supabase';
-import { hoverStyle } from '@/src/lib/web-hover';
-import { colors, fonts, radius } from '@/src/theme/tokens';
-import type { Level } from '@/src/types/content';
 
 type LevelsState =
   | { status: 'idle' }
@@ -121,11 +121,11 @@ export default function Gate() {
           <View style={styles.brandPanel}>
             <ParrotBadge size={uiScale.parrot} />
             <Text style={[styles.appName, styles.appNameDesktop]}>AQAP English</Text>
-            <Text style={styles.tagline}>Practice English with your class.</Text>
+            <Text style={styles.tagline}>Revise and practice your special AQAP course.</Text>
             <View style={styles.captionList}>
-              <Text style={styles.captionLine}>Real situations</Text>
-              <Text style={styles.captionLine}>21 activity types</Text>
-              <Text style={styles.captionLine}>No account needed</Text>
+              <Text style={styles.captionLine}>Practical English</Text>
+              <Text style={styles.captionLine}>Fun activities</Text>
+              <Text style={styles.captionLine}>Practice speaking, reading and spelling </Text>
             </View>
           </View>
         )}
@@ -144,7 +144,7 @@ export default function Gate() {
               onPress={() => router.replace('/placement')}
             >
               <Text style={styles.choiceTitle}>Test your level</Text>
-              <Text style={styles.choiceCaption}>Find out where to start</Text>
+              <Text style={styles.choiceCaption}>Find out which course is best for you </Text>
             </Pressable>
 
             <Pressable

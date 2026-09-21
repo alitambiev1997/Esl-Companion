@@ -1,7 +1,7 @@
-import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { ParrotBadge } from '@/src/components/ParrotBadge';
 import { colors, fonts, radius } from '@/src/theme/tokens';
+import { useRouter } from 'expo-router';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 export default function Placement() {
   const router = useRouter();
@@ -13,7 +13,7 @@ export default function Placement() {
         <Text style={styles.title}>Coming soon</Text>
         <Text style={styles.caption}>The level test is on the way.</Text>
         <Pressable style={styles.button} onPress={() => router.replace('/gate')}>
-          <Text style={styles.buttonText}>Back to landing</Text>
+          <Text style={styles.buttonText}>Back to Home</Text>
         </Pressable>
       </View>
     </View>
