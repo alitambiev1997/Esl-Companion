@@ -32,6 +32,11 @@ function validate(draft: Draft): string[] {
   if (draft.type === 'fill_blank' && draft.accepted.filter((a) => a.trim()).length === 0) {
     errors.push('At least one accepted answer is required.');
   }
+  if (draft.type === 'fill_blank') {
+    const blanks = draft.prompt.split('___').length - 1;
+    if (blanks === 0) errors.push('Add ___ in the sentence where the blank goes.');
+    else if (blanks > 1) errors.push('Use only one ___ blank.');
+  }
   if (draft.type === 'word_order' && draft.sequence.filter((w) => w.trim()).length < 2) {
     errors.push('At least 2 words are required.');
   }
@@ -207,6 +212,14 @@ export function ExerciseEditor({
             value={draft.prompt}
             onChangeText={(text) => update({ prompt: text })}
             placeholder="What is this?"
+          />
+        ) : draft.type === 'fill_blank' ? (
+          <TextField
+            label="Sentence (with a gap)"
+            hint="Put ___ exactly where the blank goes, e.g. I like to eat ___ and bananas."
+            value={draft.prompt}
+            onChangeText={(text) => update({ prompt: text })}
+            placeholder="I like to eat ___ and bananas."
           />
         ) : (
           <TextField

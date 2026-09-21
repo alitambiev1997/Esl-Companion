@@ -39,7 +39,11 @@ export const FillBlankRenderer = forwardRef<ExerciseRendererHandle, ExerciseRend
       <>
         <Text style={styles.sentence}>
           {parts[0]}
-          {parts.length > 1 && <Text style={styles.gap}>___</Text>}
+          {parts.length > 1 && (
+            <Text style={[styles.gap, checked && styles.gapRevealed]}>
+              {checked && content.correct_answers[0] ? content.correct_answers[0] : '___'}
+            </Text>
+          )}
           {parts.slice(1).join('')}
         </Text>
         <TextInput
@@ -68,6 +72,9 @@ const styles = StyleSheet.create({
   gap: {
     textDecorationLine: 'underline',
     fontWeight: '700',
+  },
+  gapRevealed: {
+    color: colors.leaf,
   },
   input: {
     fontSize: 20,
