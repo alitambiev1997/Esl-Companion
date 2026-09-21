@@ -120,7 +120,7 @@ export function StudioBrowser() {
   const unitsPane = (
     <View style={[styles.pane, isDesktop ? styles.paneFixed : styles.paneWide]}>
       <Text style={styles.paneTitle}>Units</Text>
-      <ScrollView contentContainerStyle={styles.paneContent}>
+      <ScrollView style={styles.paneScroll} contentContainerStyle={styles.paneContent}>
         {levels.map((level) => {
           const levelUnits = units.filter((u) => u.level_id === level.id);
           if (levelUnits.length === 0) return null;
@@ -173,7 +173,7 @@ export function StudioBrowser() {
       <Text style={styles.paneTitle} numberOfLines={1}>
         {activeUnit.title}
       </Text>
-      <ScrollView contentContainerStyle={styles.paneContent}>
+      <ScrollView style={styles.paneScroll} contentContainerStyle={styles.paneContent}>
         {unitLessons.map((lesson) => {
           const count = exercises.filter((e) => e.lesson_id === lesson.id).length;
           const selected = lesson.id === activeLesson?.id;
@@ -212,7 +212,7 @@ export function StudioBrowser() {
       <Text style={styles.paneTitle} numberOfLines={1}>
         {activeLesson.title}
       </Text>
-      <ScrollView contentContainerStyle={styles.paneContent}>
+      <ScrollView style={styles.paneScroll} contentContainerStyle={styles.paneContent}>
         {lessonExercises.map((exercise) => (
           <View key={exercise.id} style={styles.exerciseRow}>
             <Text style={styles.exerciseIndex}>{exercise.sort_order}</Text>
@@ -313,6 +313,12 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     flexBasis: 0,
   },
+  paneScroll: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 0,
+    minHeight: 0,
+  },
   paneTitle: {
     fontFamily: fonts.display,
     fontSize: 20,
@@ -323,6 +329,7 @@ const styles = StyleSheet.create({
   paneContent: {
     gap: 8,
     paddingBottom: 24,
+    paddingRight: 10,
   },
   levelGroup: {
     gap: 8,
