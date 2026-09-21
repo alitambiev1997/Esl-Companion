@@ -6,6 +6,8 @@ import { colors, fonts, radius } from '@/src/theme/tokens';
 export function ContentImage({ url }: { url: string | null }) {
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [aspect, setAspect] = useState<number | null>(null);
+  const [boxWidth, setBoxWidth] = useState(0);
 
   if (!url) return null;
 
@@ -18,14 +20,27 @@ export function ContentImage({ url }: { url: string | null }) {
     );
   }
 
+  const ratio = aspect && aspect > 0 ? aspect : 1.5;
+  const height =
+    boxWidth > 0 ? Math.round(Math.min(380, Math.max(140, boxWidth / ratio))) : 220;
+
   return (
-    <View style={styles.wrap}>
+    <View
+      style={[styles.wrap, { height }]}
+      onLayout={(e) => setBoxWidth(e.nativeEvent.layout.width)}
+    >
       {!loaded && <View style={styles.placeholder} />}
       <Image
         source={{ uri: url }}
         style={styles.image}
-        resizeMode="cover"
-        onLoad={() => setLoaded(true)}
+        resizeMode="contain"
+        onLoad={(e) => {
+          setLoaded(true);
+          const source = e.nativeEvent?.source;
+          if (source?.width && source?.height) {
+            setAspect(source.width / source.height);
+          }
+        }}
         onError={() => setFailed(true)}
       />
     </View>
@@ -35,7 +50,6 @@ export function ContentImage({ url }: { url: string | null }) {
 const styles = StyleSheet.create({
   wrap: {
     width: '100%',
-    height: 220,
     borderRadius: radius.card,
     overflow: 'hidden',
     backgroundColor: colors.grey,
@@ -43,7 +57,7 @@ const styles = StyleSheet.create({
   },
   image: {
     width: '100%',
-    height: 220,
+    height: '100%',
   },
   placeholder: {
     ...StyleSheet.absoluteFillObject,
