@@ -363,16 +363,16 @@ export default function LessonPlayer() {
   };
 
   const leaveLesson = () => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
     if (isWeb) {
       if (unitId) {
         router.replace({ pathname: '/unit/[id]', params: { id: unitId } });
       } else {
         router.replace('/course');
       }
-      return;
-    }
-    if (router.canGoBack()) {
-      router.back();
       return;
     }
     router.replace('/home');
