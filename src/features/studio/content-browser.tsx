@@ -1,18 +1,19 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ExerciseEditor } from '@/src/features/studio/exercise-editor';
+import {
+  STARTER_TYPES,
+  typeLabel,
+  type ExerciseRow,
+  type LessonRow,
+  type LevelRow,
+  type StarterType,
+  type UnitRow,
+} from '@/src/features/studio/types';
 import { useIsDesktop } from '@/src/hooks/useIsDesktop';
 import { supabase } from '@/src/lib/supabase';
 import { hoverStyle } from '@/src/lib/web-hover';
 import { colors, fonts, radius } from '@/src/theme/tokens';
-import type { Exercise, Lesson, Level, Unit } from '@/src/types/content';
-
-type LevelRow = Pick<Level, 'id' | 'title' | 'cefr_level' | 'is_published' | 'sort_order'>;
-type UnitRow = Pick<Unit, 'id' | 'level_id' | 'title' | 'is_published' | 'sort_order'>;
-type LessonRow = Pick<Lesson, 'id' | 'unit_id' | 'title' | 'is_published' | 'sort_order'>;
-type ExerciseRow = Pick<
-  Exercise,
-  'id' | 'lesson_id' | 'type' | 'prompt' | 'is_required' | 'sort_order'
->;
 
 type ContentState =
   | { status: 'loading' }
@@ -25,12 +26,12 @@ type ContentState =
       exercises: ExerciseRow[];
     };
 
-function typeLabel(type: string): string {
-  const words = type.split('_');
-  return words.map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-}
+type EditorState =
+  | { mode: 'closed' }
+  | { mode: 'picker' }
+  | { mode: 'edit'; exercise: ExerciseRow | null; type: StarterType };
 
-function bySortOrder(a: { sort_order: number; title?: string | null }, b: { sort_order: number }) {
+function bySortOrder(a: { sort_order: number }, b: { sort_order: number }) {
   return a.sort_order - b.sort_order;
 }
 
@@ -39,38 +40,37 @@ export function StudioBrowser() {
   const [state, setState] = useState<ContentState>({ status: 'loading' });
   const [unitId, setUnitId] = useState<string | null>(null);
   const [lessonId, setLessonId] = useState<string | null>(null);
+  const [editor, setEditor] = useState<EditorState>({ mode: 'closed' });
+
+  const loadContent = useCallback(async (showLoading: boolean) => {
+    if (showLoading) setState({ status: 'loading' });
+    const [levelsRes, unitsRes, lessonsRes, exercisesRes] = await Promise.all([
+      supabase.from('levels').select('id,title,cefr_level,is_published,sort_order').order('sort_order'),
+      supabase.from('units').select('id,level_id,title,is_published,sort_order').order('sort_order'),
+      supabase.from('lessons').select('id,unit_id,title,is_published,sort_order').order('sort_order'),
+      supabase
+        .from('exercises')
+        .select('id,lesson_id,type,prompt,is_required,sort_order,content')
+        .order('sort_order'),
+    ]);
+    const error =
+      levelsRes.error ?? unitsRes.error ?? lessonsRes.error ?? exercisesRes.error ?? null;
+    if (error) {
+      setState({ status: 'error', message: error.message });
+      return;
+    }
+    setState({
+      status: 'ready',
+      levels: ((levelsRes.data ?? []) as LevelRow[]).slice().sort(bySortOrder),
+      units: ((unitsRes.data ?? []) as UnitRow[]).slice().sort(bySortOrder),
+      lessons: ((lessonsRes.data ?? []) as LessonRow[]).slice().sort(bySortOrder),
+      exercises: ((exercisesRes.data ?? []) as ExerciseRow[]).slice().sort(bySortOrder),
+    });
+  }, []);
 
   useEffect(() => {
-    let mounted = true;
-    (async () => {
-      const [levelsRes, unitsRes, lessonsRes, exercisesRes] = await Promise.all([
-        supabase.from('levels').select('id,title,cefr_level,is_published,sort_order').order('sort_order'),
-        supabase.from('units').select('id,level_id,title,is_published,sort_order').order('sort_order'),
-        supabase.from('lessons').select('id,unit_id,title,is_published,sort_order').order('sort_order'),
-        supabase
-          .from('exercises')
-          .select('id,lesson_id,type,prompt,is_required,sort_order')
-          .order('sort_order'),
-      ]);
-      if (!mounted) return;
-      const error =
-        levelsRes.error ?? unitsRes.error ?? lessonsRes.error ?? exercisesRes.error ?? null;
-      if (error) {
-        setState({ status: 'error', message: error.message });
-        return;
-      }
-      setState({
-        status: 'ready',
-        levels: ((levelsRes.data ?? []) as LevelRow[]).slice().sort(bySortOrder),
-        units: ((unitsRes.data ?? []) as UnitRow[]).slice().sort(bySortOrder),
-        lessons: ((lessonsRes.data ?? []) as LessonRow[]).slice().sort(bySortOrder),
-        exercises: ((exercisesRes.data ?? []) as ExerciseRow[]).slice().sort(bySortOrder),
-      });
-    })();
-    return () => {
-      mounted = false;
-    };
-  }, []);
+    loadContent(true);
+  }, [loadContent]);
 
   useEffect(() => {
     if (state.status !== 'ready' || !isDesktop) return;
@@ -116,6 +116,9 @@ export function StudioBrowser() {
   const unitLessons = lessons.filter((l) => l.unit_id === activeUnit?.id);
   const activeLesson = unitLessons.find((l) => l.id === lessonId) ?? null;
   const lessonExercises = exercises.filter((e) => e.lesson_id === activeLesson?.id);
+  const nextSortOrder = lessonExercises.length
+    ? Math.max(...lessonExercises.map((e) => e.sort_order)) + 1
+    : 1;
 
   const unitsPane = (
     <View style={[styles.pane, isDesktop ? styles.paneFixed : styles.paneWide]}>
@@ -143,7 +146,10 @@ export function StudioBrowser() {
                       selected && styles.rowCardSelected,
                       hoverStyle(hovered),
                     ]}
-                    onPress={() => setUnitId(unit.id)}
+                    onPress={() => {
+                      setUnitId(unit.id);
+                      setEditor({ mode: 'closed' });
+                    }}
                   >
                     <View style={styles.rowMain}>
                       <Text style={[styles.rowTitle, selected && styles.rowTitleSelected]}>
@@ -185,7 +191,10 @@ export function StudioBrowser() {
                 selected && styles.rowCardSelected,
                 hoverStyle(hovered),
               ]}
-              onPress={() => setLessonId(lesson.id)}
+              onPress={() => {
+                setLessonId(lesson.id);
+                setEditor({ mode: 'closed' });
+              }}
             >
               <View style={styles.rowMain}>
                 <Text style={[styles.rowTitle, selected && styles.rowTitleSelected]}>
@@ -204,33 +213,99 @@ export function StudioBrowser() {
 
   const exercisesPane = activeLesson ? (
     <View style={[styles.pane, styles.paneWide]}>
-      {!isDesktop && (
-        <Pressable onPress={() => setLessonId(null)} hitSlop={8}>
-          <Text style={styles.backLink}>‹ Lessons</Text>
-        </Pressable>
-      )}
-      <Text style={styles.paneTitle} numberOfLines={1}>
-        {activeLesson.title}
-      </Text>
-      <ScrollView style={styles.paneScroll} contentContainerStyle={styles.paneContent}>
-        {lessonExercises.map((exercise) => (
-          <View key={exercise.id} style={styles.exerciseRow}>
-            <Text style={styles.exerciseIndex}>{exercise.sort_order}</Text>
-            <View style={styles.rowMain}>
-              <View style={styles.exerciseChips}>
-                <Text style={styles.typeChip}>{typeLabel(exercise.type)}</Text>
-                {exercise.is_required === false && (
-                  <Text style={styles.optionalChip}>optional</Text>
-                )}
-              </View>
-              <Text style={styles.exercisePrompt} numberOfLines={2}>
-                {exercise.prompt}
-              </Text>
-            </View>
+      {editor.mode === 'closed' && (
+        <>
+          {!isDesktop && (
+            <Pressable onPress={() => setLessonId(null)} hitSlop={8}>
+              <Text style={styles.backLink}>‹ Lessons</Text>
+            </Pressable>
+          )}
+          <View style={styles.paneHeaderRow}>
+            <Text style={styles.paneTitle} numberOfLines={1}>
+              {activeLesson.title}
+            </Text>
+            <Pressable
+              style={({ hovered }) => [styles.newButton, hoverStyle(hovered)]}
+              onPress={() => setEditor({ mode: 'picker' })}
+            >
+              <Text style={styles.newButtonText}>+ New exercise</Text>
+            </Pressable>
           </View>
-        ))}
-        {lessonExercises.length === 0 && <Text style={styles.emptyText}>No exercises yet.</Text>}
-      </ScrollView>
+          <ScrollView style={styles.paneScroll} contentContainerStyle={styles.paneContent}>
+            {lessonExercises.map((exercise) => (
+              <Pressable
+                key={exercise.id}
+                style={({ hovered }) => [styles.exerciseRow, hoverStyle(hovered)]}
+                onPress={() =>
+                  setEditor({ mode: 'edit', exercise, type: exercise.type as StarterType })
+                }
+              >
+                <Text style={styles.exerciseIndex}>{exercise.sort_order}</Text>
+                <View style={styles.rowMain}>
+                  <View style={styles.exerciseChips}>
+                    <Text style={styles.typeChip}>{typeLabel(exercise.type)}</Text>
+                    {exercise.is_required === false && (
+                      <Text style={styles.optionalChip}>optional</Text>
+                    )}
+                  </View>
+                  <Text style={styles.exercisePrompt} numberOfLines={2}>
+                    {exercise.prompt}
+                  </Text>
+                </View>
+                <Text style={styles.chevron}>›</Text>
+              </Pressable>
+            ))}
+            {lessonExercises.length === 0 && (
+              <Text style={styles.emptyText}>No exercises yet.</Text>
+            )}
+          </ScrollView>
+        </>
+      )}
+
+      {editor.mode === 'picker' && (
+        <>
+          <Pressable onPress={() => setEditor({ mode: 'closed' })} hitSlop={8}>
+            <Text style={styles.backLink}>‹ Exercises</Text>
+          </Pressable>
+          <Text style={styles.paneTitle}>New exercise</Text>
+          <ScrollView style={styles.paneScroll} contentContainerStyle={styles.paneContent}>
+            <Text style={styles.emptyText}>Choose the exercise type</Text>
+            {STARTER_TYPES.map((starter) => (
+              <Pressable
+                key={starter.type}
+                style={({ hovered }) => [styles.rowCard, hoverStyle(hovered)]}
+                onPress={() =>
+                  setEditor({ mode: 'edit', exercise: null, type: starter.type })
+                }
+              >
+                <View style={styles.rowMain}>
+                  <Text style={styles.rowTitle}>{starter.label}</Text>
+                  <Text style={styles.rowMeta}>{starter.hint}</Text>
+                </View>
+                <Text style={styles.chevron}>›</Text>
+              </Pressable>
+            ))}
+            <Text style={styles.pickerNote}>
+              More types coming as the editor grows — the rest of the 21 land in the next
+              ticket.
+            </Text>
+          </ScrollView>
+        </>
+      )}
+
+      {editor.mode === 'edit' && (
+        <ExerciseEditor
+          lessonId={activeLesson.id}
+          exercise={editor.exercise}
+          type={editor.type}
+          nextSortOrder={nextSortOrder}
+          onSaved={() => {
+            setEditor({ mode: 'closed' });
+            loadContent(false);
+          }}
+          onCancel={() => setEditor({ mode: 'closed' })}
+        />
+      )}
     </View>
   ) : null;
 
@@ -324,6 +399,39 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: colors.ink,
     marginBottom: 8,
+    marginTop: 8,
+    flexShrink: 1,
+  },
+  paneHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  newButton: {
+    backgroundColor: colors.sun,
+    borderRadius: radius.button,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    marginTop: 8,
+  },
+  newButtonText: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.ink,
+  },
+  chevron: {
+    fontFamily: fonts.body,
+    fontSize: 20,
+    color: colors.greyDark,
+    paddingHorizontal: 4,
+  },
+  pickerNote: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    color: colors.ink,
+    opacity: 0.5,
     marginTop: 8,
   },
   paneContent: {
