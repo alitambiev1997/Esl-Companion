@@ -354,7 +354,7 @@ export function StudioBrowser() {
 
   return (
     <View style={styles.browserDesktop}>
-      {unitsPane}
+      {editor.mode !== 'edit' && unitsPane}
       {lessonsPane}
       {exercisesPane ?? (
         <View style={[styles.pane, styles.paneWide]}>

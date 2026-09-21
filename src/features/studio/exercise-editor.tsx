@@ -1,101 +1,22 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { ContentImage } from '@/src/components/ui/content-image';
+import {
+  buildContent,
+  draftFromExercise,
+  isDraftEmpty,
+  newDraft,
+  type Draft,
+} from '@/src/features/studio/draft';
+import { ExercisePreview } from '@/src/features/studio/exercise-preview';
 import { Field, styles as fieldBase, StringListField, TextField } from '@/src/features/studio/fields';
-import type { ExerciseRow, StarterType, } from '@/src/features/studio/types';
+import type { ExerciseRow, StarterType } from '@/src/features/studio/types';
 import { typeLabel } from '@/src/features/studio/types';
 import { contentImageUrl } from '@/src/lib/storage';
 import { supabase } from '@/src/lib/supabase';
 import { hoverStyle } from '@/src/lib/web-hover';
 import { colors, fonts, radius } from '@/src/theme/tokens';
-
-interface Draft {
-  type: StarterType;
-  prompt: string;
-  isRequired: boolean;
-  sortOrder: number;
-  options: string[];
-  correctIndex: number;
-  explanation: string;
-  accepted: string[];
-  sequence: string[];
-  imageUrl: string;
-  textToSpeak: string;
-}
-
-function strArr(value: unknown): string[] {
-  return Array.isArray(value) ? value.map(String) : [];
-}
-
-function draftFromExercise(exercise: ExerciseRow): Draft {
-  const content = (exercise.content ?? {}) as Record<string, unknown>;
-  const options = strArr(content.options);
-  const accepted = strArr(content.correct_answers);
-  const contentPrompt =
-    exercise.type === 'image_choice' && typeof content.prompt === 'string' && content.prompt
-      ? content.prompt
-      : exercise.prompt;
-  return {
-    type: exercise.type as StarterType,
-    prompt: contentPrompt,
-    isRequired: exercise.is_required !== false,
-    sortOrder: exercise.sort_order,
-    options: options.length >= 2 ? options : [...options, '', ''].slice(0, 2),
-    correctIndex: typeof content.correct_index === 'number' ? content.correct_index : 0,
-    explanation: typeof content.explanation === 'string' ? content.explanation : '',
-    accepted: accepted.length > 0 ? accepted : [''],
-    sequence: strArr(content.correct_sequence),
-    imageUrl: typeof content.image_url === 'string' ? content.image_url : '',
-    textToSpeak: typeof content.text_to_speak === 'string' ? content.text_to_speak : '',
-  };
-}
-
-function newDraft(type: StarterType, sortOrder: number): Draft {
-  return {
-    type,
-    prompt: '',
-    isRequired: true,
-    sortOrder,
-    options: ['', ''],
-    correctIndex: 0,
-    explanation: '',
-    accepted: [''],
-    sequence: [],
-    imageUrl: '',
-    textToSpeak: '',
-  };
-}
-
-function buildContent(draft: Draft): Record<string, unknown> {
-  const explanation = draft.explanation.trim() ? draft.explanation.trim() : null;
-  switch (draft.type) {
-    case 'multiple_choice':
-      return {
-        options: draft.options.map((o) => o.trim()),
-        correct_index: draft.correctIndex,
-        explanation,
-      };
-    case 'fill_blank':
-      return {
-        correct_answers: draft.accepted.map((a) => a.trim()).filter(Boolean),
-        explanation,
-      };
-    case 'word_order':
-      return {
-        correct_sequence: draft.sequence.map((w) => w.trim()).filter(Boolean),
-        explanation,
-      };
-    case 'image_choice':
-      return {
-        image_url: draft.imageUrl.trim() || null,
-        text_to_speak: draft.textToSpeak.trim() || null,
-        prompt: draft.prompt.trim() || null,
-        options: draft.options.map((o) => o.trim()),
-        correct_index: draft.correctIndex,
-        explanation,
-      };
-  }
-}
+import type { Exercise } from '@/src/types/content';
 
 function validate(draft: Draft): string[] {
   const errors: string[] = [];
@@ -252,6 +173,18 @@ export function ExerciseEditor({
     }
   };
 
+  const previewExercise: Exercise = {
+    id: exercise?.id ?? 'preview',
+    lesson_id: lessonId,
+    type: draft.type,
+    prompt: draft.prompt,
+    content: buildContent(draft),
+    is_required: draft.isRequired,
+    sort_order: draft.sortOrder,
+    created_at: '',
+  };
+  const previewEmpty = isDraftEmpty(draft);
+
   return (
     <View style={styles.editor}>
       <Pressable onPress={onCancel} hitSlop={8}>
@@ -262,7 +195,9 @@ export function ExerciseEditor({
         <Text style={styles.typeChip}>{typeLabel(draft.type)}</Text>
       </View>
 
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.form}>
+      <View style={styles.body}>
+        <View style={styles.formColumn}>
+          <ScrollView style={styles.scroll} contentContainerStyle={styles.form}>
         {draft.type === 'image_choice' ? (
           <TextField
             label="Question under the picture"
@@ -436,6 +371,21 @@ export function ExerciseEditor({
             <Text style={styles.dangerButtonText}>Delete</Text>
           </Pressable>
         )}
+          </View>
+        </View>
+
+        <View style={styles.previewColumn}>
+          <Text style={styles.previewTitle}>Student preview</Text>
+          <ScrollView style={styles.previewScroll} contentContainerStyle={styles.previewContent}>
+            {previewEmpty ? (
+              <Text style={styles.previewHint}>
+                Start filling the form - the preview updates live.
+              </Text>
+            ) : (
+              <ExercisePreview exercise={previewExercise} />
+            )}
+          </ScrollView>
+        </View>
       </View>
     </View>
   );
@@ -447,6 +397,49 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     flexBasis: 0,
     minHeight: 0,
+  },
+  body: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 0,
+    minHeight: 0,
+    flexDirection: 'row',
+    gap: 16,
+  },
+  formColumn: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 0,
+    minWidth: 0,
+    minHeight: 0,
+  },
+  previewColumn: {
+    width: 340,
+    borderLeftWidth: 2,
+    borderLeftColor: colors.grey,
+    paddingLeft: 16,
+  },
+  previewTitle: {
+    fontFamily: fonts.display,
+    fontSize: 18,
+    color: colors.ink,
+    marginBottom: 8,
+  },
+  previewScroll: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 0,
+    minHeight: 0,
+  },
+  previewContent: {
+    paddingBottom: 24,
+    paddingRight: 8,
+  },
+  previewHint: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: colors.ink,
+    opacity: 0.5,
   },
   backLink: {
     fontFamily: fonts.body,
