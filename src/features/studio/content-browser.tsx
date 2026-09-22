@@ -179,6 +179,66 @@ export function StudioBrowser() {
     }
   };
 
+  const toggleUnitPublished = async (unit: UnitRow) => {
+    if (busy) return;
+    const next = !unit.is_published;
+    let publishLessons = false;
+    if (next) {
+      const draftCount = lessons.filter((l) => l.unit_id === unit.id && !l.is_published).length;
+      if (draftCount > 0) {
+        publishLessons = window.confirm(
+          `Publish this unit and its ${draftCount} draft lesson(s)? Students will see them immediately.`
+        );
+      }
+    }
+    setBusy(true);
+    setActionError(null);
+    const { error } = await supabase
+      .from('units')
+      .update({ is_published: next })
+      .eq('id', unit.id);
+    if (!error && next && publishLessons) {
+      const draftIds = lessons
+        .filter((l) => l.unit_id === unit.id && !l.is_published)
+        .map((l) => l.id);
+      if (draftIds.length > 0) {
+        await supabase.from('lessons').update({ is_published: true }).in('id', draftIds);
+      }
+    }
+    setBusy(false);
+    if (error) {
+      setActionError(errorHint(error.message));
+      return;
+    }
+    loadContent(false);
+  };
+
+  const toggleLessonPublished = async (lesson: LessonRow) => {
+    if (busy) return;
+    const next = !lesson.is_published;
+    let publishUnit = false;
+    if (next && activeUnit && !activeUnit.is_published) {
+      publishUnit = window.confirm(
+        'This lesson belongs to a draft unit, so students cannot see it yet. Publish the unit too?'
+      );
+    }
+    setBusy(true);
+    setActionError(null);
+    const { error } = await supabase
+      .from('lessons')
+      .update({ is_published: next })
+      .eq('id', lesson.id);
+    if (!error && publishUnit && activeUnit) {
+      await supabase.from('units').update({ is_published: true }).eq('id', activeUnit.id);
+    }
+    setBusy(false);
+    if (error) {
+      setActionError(errorHint(error.message));
+      return;
+    }
+    loadContent(false);
+  };
+
   const deleteUnit = async (unit: UnitRow) => {
     if (busy) return;
     const lessonCount = lessons.filter((l) => l.unit_id === unit.id).length;
@@ -357,7 +417,22 @@ export function StudioBrowser() {
                         </Text>
                         <Text style={styles.rowMeta}>{count} lessons</Text>
                       </View>
-                      {!unit.is_published && <Text style={styles.draftChip}>draft</Text>}
+                      <Pressable
+                        style={[
+                          styles.publishChip,
+                          unit.is_published ? styles.publishChipLive : styles.publishChipDraft,
+                        ]}
+                        onPress={() => toggleUnitPublished(unit)}
+                      >
+                        <Text
+                          style={[
+                            styles.publishChipText,
+                            unit.is_published && styles.publishChipTextLive,
+                          ]}
+                        >
+                          {unit.is_published ? 'live' : 'draft'}
+                        </Text>
+                      </Pressable>
                     </Pressable>
                     <Pressable
                       style={styles.rowDelete}
@@ -448,7 +523,22 @@ export function StudioBrowser() {
                   </Text>
                   <Text style={styles.rowMeta}>{count} exercises</Text>
                 </View>
-                {!lesson.is_published && <Text style={styles.draftChip}>draft</Text>}
+                <Pressable
+                  style={[
+                    styles.publishChip,
+                    lesson.is_published ? styles.publishChipLive : styles.publishChipDraft,
+                  ]}
+                  onPress={() => toggleLessonPublished(lesson)}
+                >
+                  <Text
+                    style={[
+                      styles.publishChipText,
+                      lesson.is_published && styles.publishChipTextLive,
+                    ]}
+                  >
+                    {lesson.is_published ? 'live' : 'draft'}
+                  </Text>
+                </Pressable>
               </Pressable>
               <Pressable
                 style={styles.rowDelete}
@@ -929,6 +1019,29 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 1,
     overflow: 'hidden',
+  },
+  publishChip: {
+    borderRadius: 10,
+    borderWidth: 2,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  publishChipDraft: {
+    borderColor: colors.greyDark,
+    backgroundColor: colors.white,
+  },
+  publishChipLive: {
+    borderColor: colors.leaf,
+    backgroundColor: colors.leafTint,
+  },
+  publishChipText: {
+    fontFamily: fonts.body,
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.greyDark,
+  },
+  publishChipTextLive: {
+    color: colors.leaf,
   },
   backLink: {
     fontFamily: fonts.body,
