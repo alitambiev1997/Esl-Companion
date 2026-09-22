@@ -1,5 +1,4 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { ContentImage } from '@/src/components/ui/content-image';
 import {
   objList,
   strField,
@@ -12,7 +11,7 @@ import {
   StringListField,
   TextField,
 } from '@/src/features/studio/fields';
-import { contentImageUrl } from '@/src/lib/storage';
+import { ImagePathField } from '@/src/features/studio/image-field';
 import { colors, fonts } from '@/src/theme/tokens';
 
 interface FormProps {
@@ -180,17 +179,14 @@ export function ReadingComprehensionForm({ content, patch }: FormProps) {
 }
 
 export function ImageChoiceForm({ content, patch }: FormProps) {
-  const imageUrl = strField(content.image_url);
   return (
     <>
-      <TextField
-        label="Image path"
-        hint="Path inside the content bucket, e.g. Book1/Unit 2_To be/003.jpg"
-        value={imageUrl}
-        onChangeText={(text) => patch({ image_url: text })}
-        placeholder="Book1/Unit 2_To be/003.jpg"
+      <ImagePathField
+        label="Image"
+        hint="Upload a picture or paste its path inside the content bucket"
+        value={strField(content.image_url)}
+        onChange={(path) => patch({ image_url: path })}
       />
-      {imageUrl.trim() ? <ContentImage url={contentImageUrl(imageUrl.trim())} /> : null}
       <OptionListEditor
         label="Options"
         hint="Tap the circle to mark the correct one"

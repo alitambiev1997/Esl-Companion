@@ -1,5 +1,4 @@
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { ContentImage } from '@/src/components/ui/content-image';
 import {
   objList,
   strField,
@@ -16,7 +15,7 @@ import {
   styles as fieldBase,
   type StudioPair,
 } from '@/src/features/studio/fields';
-import { contentImageUrl } from '@/src/lib/storage';
+import { ImagePathField } from '@/src/features/studio/image-field';
 import { colors, fonts, radius } from '@/src/theme/tokens';
 
 interface FormProps {
@@ -224,18 +223,15 @@ export function FormFillForm({ content, patch }: FormProps) {
 }
 
 export function DocumentReaderForm({ content, patch }: FormProps) {
-  const imageUrl = strField(content.image_url);
   const questions = objList(content.questions);
   return (
     <>
-      <TextField
-        label="Image path (optional)"
-        hint="Path inside the content bucket, if the document is a picture"
-        value={imageUrl}
-        onChangeText={(text) => patch({ image_url: text })}
-        placeholder="Book1/Documents/menu.jpg"
+      <ImagePathField
+        label="Document image (optional)"
+        hint="Upload a picture of the document, or paste its path"
+        value={strField(content.image_url)}
+        onChange={(path) => patch({ image_url: path })}
       />
-      {imageUrl.trim() ? <ContentImage url={contentImageUrl(imageUrl.trim())} /> : null}
       <StringListField
         label="Document lines (optional)"
         hint="Text version of the document — use this if there is no picture"
