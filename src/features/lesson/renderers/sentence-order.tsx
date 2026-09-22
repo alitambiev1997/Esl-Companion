@@ -16,9 +16,10 @@ function shuffle<T>(items: T[]): T[] {
   return result;
 }
 
-function shuffledSequence(seq: string[]): string[] {
-  const result = shuffle(seq);
-  if (result.every((w, i) => w === seq[i]) && result.length > 1) {
+function shuffledIndexes(count: number): number[] {
+  const base = Array.from({ length: count }, (_, i) => i);
+  const result = shuffle(base);
+  if (result.every((v, i) => v === base[i]) && result.length > 1) {
     [result[0], result[1]] = [result[1], result[0]];
   }
   return result;
@@ -27,7 +28,15 @@ function shuffledSequence(seq: string[]): string[] {
 export const SentenceOrderRenderer = forwardRef<ExerciseRendererHandle, ExerciseRendererProps>(
   function SentenceOrderRenderer({ exercise, checked, onCheck, onCanCheckChange }, ref) {
     const content = exercise.content as unknown as SentenceOrderContent;
-    const [order] = useState(() => shuffledSequence(content.correct_sequence));
+    const items = content.correct_sequence;
+    const [bankState, setBankState] = useState(() => ({
+      length: items.length,
+      order: shuffledIndexes(items.length),
+    }));
+    if (bankState.length !== items.length) {
+      setBankState({ length: items.length, order: shuffledIndexes(items.length) });
+    }
+    const bankOrder = bankState.order.map((index) => items[index]);
     const [answer, setAnswer] = useState<string[]>([]);
 
     useImperativeHandle(ref, () => ({
@@ -49,12 +58,12 @@ export const SentenceOrderRenderer = forwardRef<ExerciseRendererHandle, Exercise
     }));
 
     useEffect(() => {
-      onCanCheckChange(answer.length === order.length);
-    }, [answer, order, onCanCheckChange]);
+      onCanCheckChange(answer.length === bankOrder.length);
+    }, [answer, bankOrder, onCanCheckChange]);
 
     return (
       <TapAnswerBank
-        items={order}
+        items={bankOrder}
         answer={answer}
         checked={checked}
         stacked

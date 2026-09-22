@@ -1,100 +1,79 @@
-import type { ExerciseRow, StarterType } from '@/src/features/studio/types';
+import {
+  defaultContent,
+  displayPrompt,
+  objList,
+  strField,
+  strItems,
+  supportsExplanation,
+  validateContent,
+  type Content,
+} from '@/src/features/studio/content-model';
+import type { ExerciseRow } from '@/src/features/studio/types';
+import type { ExerciseType } from '@/src/types/content';
 
 export interface Draft {
-  type: StarterType;
+  type: ExerciseType;
   prompt: string;
   isRequired: boolean;
   sortOrder: number;
-  options: string[];
-  correctIndex: number;
-  explanation: string;
-  accepted: string[];
-  sequence: string[];
-  imageUrl: string;
-  textToSpeak: string;
+  content: Content;
 }
 
-function strArr(value: unknown): string[] {
-  return Array.isArray(value) ? value.map(String) : [];
+export function isUngradedType(type: ExerciseType): boolean {
+  return type === 'speaking_recording' || type === 'flashcard_flip';
 }
 
 export function draftFromExercise(exercise: ExerciseRow): Draft {
-  const content = (exercise.content ?? {}) as Record<string, unknown>;
-  const options = strArr(content.options);
-  const accepted = strArr(content.correct_answers);
-  const contentPrompt =
-    exercise.type === 'image_choice' && typeof content.prompt === 'string' && content.prompt
-      ? content.prompt
-      : exercise.prompt;
+  const content = exercise.content ?? {};
+  const normalized: Content = { ...defaultContent(exercise.type), ...content };
   return {
-    type: exercise.type as StarterType,
-    prompt: contentPrompt,
+    type: exercise.type,
+    prompt: displayPrompt(exercise.type, exercise.prompt, normalized),
     isRequired: exercise.is_required !== false,
     sortOrder: exercise.sort_order,
-    options: options.length >= 2 ? options : [...options, '', ''].slice(0, 2),
-    correctIndex: typeof content.correct_index === 'number' ? content.correct_index : 0,
-    explanation: typeof content.explanation === 'string' ? content.explanation : '',
-    accepted: accepted.length > 0 ? accepted : [''],
-    sequence: strArr(content.correct_sequence),
-    imageUrl: typeof content.image_url === 'string' ? content.image_url : '',
-    textToSpeak: typeof content.text_to_speak === 'string' ? content.text_to_speak : '',
+    content: normalized,
   };
 }
 
-export function newDraft(type: StarterType, sortOrder: number): Draft {
+export function newDraft(type: ExerciseType, sortOrder: number): Draft {
   return {
     type,
     prompt: '',
-    isRequired: true,
+    isRequired: !isUngradedType(type),
     sortOrder,
-    options: ['', ''],
-    correctIndex: 0,
-    explanation: '',
-    accepted: [''],
-    sequence: [],
-    imageUrl: '',
-    textToSpeak: '',
+    content: defaultContent(type),
   };
 }
 
-export function buildContent(draft: Draft): Record<string, unknown> {
-  const explanation = draft.explanation.trim() ? draft.explanation.trim() : null;
-  switch (draft.type) {
-    case 'multiple_choice':
-      return {
-        options: draft.options.map((o) => o.trim()),
-        correct_index: draft.correctIndex,
-        explanation,
-      };
-    case 'fill_blank':
-      return {
-        correct_answers: draft.accepted.map((a) => a.trim()).filter(Boolean),
-        explanation,
-      };
-    case 'word_order':
-      return {
-        correct_sequence: draft.sequence.map((w) => w.trim()).filter(Boolean),
-        explanation,
-      };
-    case 'image_choice':
-      return {
-        image_url: draft.imageUrl.trim() || null,
-        text_to_speak: draft.textToSpeak.trim() || null,
-        prompt: draft.prompt.trim() || null,
-        options: draft.options.map((o) => o.trim()),
-        correct_index: draft.correctIndex,
-        explanation,
-      };
+export function finalizeContent(draft: Draft): Content {
+  const content: Content = { ...draft.content };
+  if (supportsExplanation(draft.type)) {
+    content.explanation = strField(content.explanation).trim() || null;
   }
+  if (draft.type === 'best_reply') {
+    content.steps = objList(content.steps).map((step) => {
+      const options = strItems(step.options);
+      const index = typeof step.correct_index === 'number' ? step.correct_index : 0;
+      return { ...step, reply: options[index] ?? strField(step.reply) };
+    });
+  }
+  return content;
+}
+
+function contentHasText(value: unknown): boolean {
+  if (typeof value === 'string') return value.trim().length > 0;
+  if (Array.isArray(value)) return value.some(contentHasText);
+  if (value && typeof value === 'object') {
+    return Object.values(value as Content).some(contentHasText);
+  }
+  return false;
 }
 
 export function isDraftEmpty(draft: Draft): boolean {
   if (draft.prompt.trim()) return false;
-  if (draft.explanation.trim()) return false;
-  if (draft.options.some((o) => o.trim())) return false;
-  if (draft.accepted.some((a) => a.trim())) return false;
-  if (draft.sequence.some((w) => w.trim())) return false;
-  if (draft.imageUrl.trim()) return false;
-  if (draft.textToSpeak.trim()) return false;
-  return true;
+  return !contentHasText(draft.content);
+}
+
+export function validateDraft(draft: Draft): string[] {
+  return validateContent(draft.type, draft.prompt, draft.content);
 }

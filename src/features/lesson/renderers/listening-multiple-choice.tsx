@@ -14,12 +14,17 @@ export const ListeningMultipleChoiceRenderer = forwardRef<
   ExerciseRendererProps
 >(function ListeningMultipleChoiceRenderer({ exercise, checked, onCheck, onCanCheckChange }, ref) {
   const content = exercise.content as unknown as ListeningMultipleChoiceContent;
+  const options = content.options;
 
-  const [order] = useState(() => {
-    const options = shuffle(content.options);
-    const correct = options.indexOf(content.options[content.correct_index]);
-    return { options, correctIndex: correct === -1 ? content.correct_index : correct };
-  });
+  const [orderState, setOrderState] = useState(() => ({
+    length: options.length,
+    order: shuffledIndexes(options.length),
+  }));
+  if (orderState.length !== options.length) {
+    setOrderState({ length: options.length, order: shuffledIndexes(options.length) });
+  }
+  const ordered = orderState.order.map((index) => options[index]);
+  const correctIndex = orderState.order.indexOf(content.correct_index);
   const [selected, setSelected] = useState<number | null>(null);
 
   useEffect(() => {
@@ -32,14 +37,14 @@ export const ListeningMultipleChoiceRenderer = forwardRef<
   useImperativeHandle(ref, () => ({
     check: () => {
       if (selected === null) return;
-      const isCorrect = selected === order.correctIndex;
+      const isCorrect = selected === correctIndex;
       onCheck(
         { selected_index: selected },
         isCorrect,
         {
           correct: isCorrect,
           explanation: content.explanation ?? content.text_to_speak,
-          correctAnswer: order.options[order.correctIndex] ?? null,
+          correctAnswer: options[content.correct_index] ?? null,
         }
       );
     },
@@ -55,7 +60,7 @@ export const ListeningMultipleChoiceRenderer = forwardRef<
         <SpeakerButton onPress={() => speak(content.text_to_speak)} />
         <SlowButton onPress={() => speak(content.text_to_speak, 0.6)} />
       </View>
-      {order.options.map((option, i) => (
+      {ordered.map((option, i) => (
         <View key={i} style={styles.spacing}>
           <OptionCard
             label={option}
@@ -76,6 +81,15 @@ function shuffle<T>(items: T[]): T[] {
   for (let i = result.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
+function shuffledIndexes(count: number): number[] {
+  const base = Array.from({ length: count }, (_, i) => i);
+  const result = shuffle(base);
+  if (result.every((v, i) => v === base[i]) && result.length > 1) {
+    [result[0], result[1]] = [result[1], result[0]];
   }
   return result;
 }

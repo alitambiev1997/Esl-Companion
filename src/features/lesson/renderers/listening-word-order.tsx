@@ -19,9 +19,10 @@ function shuffle<T>(items: T[]): T[] {
   return result;
 }
 
-function shuffledSequence(seq: string[]): string[] {
-  const result = shuffle(seq);
-  if (result.every((w, i) => w === seq[i]) && result.length > 1) {
+function shuffledIndexes(count: number): number[] {
+  const base = Array.from({ length: count }, (_, i) => i);
+  const result = shuffle(base);
+  if (result.every((v, i) => v === base[i]) && result.length > 1) {
     [result[0], result[1]] = [result[1], result[0]];
   }
   return result;
@@ -32,7 +33,15 @@ export const ListeningWordOrderRenderer = forwardRef<
   ExerciseRendererProps
 >(function ListeningWordOrderRenderer({ exercise, checked, onCheck, onCanCheckChange }, ref) {
   const content = exercise.content as unknown as ListeningWordOrderContent;
-  const [bankOrder] = useState(() => shuffledSequence(content.correct_sequence));
+  const items = content.correct_sequence;
+  const [bankState, setBankState] = useState(() => ({
+    length: items.length,
+    order: shuffledIndexes(items.length),
+  }));
+  if (bankState.length !== items.length) {
+    setBankState({ length: items.length, order: shuffledIndexes(items.length) });
+  }
+  const bankOrder = bankState.order.map((index) => items[index]);
   const [answer, setAnswer] = useState<string[]>([]);
 
   useEffect(() => {

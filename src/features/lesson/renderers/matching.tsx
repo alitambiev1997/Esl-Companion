@@ -111,7 +111,15 @@ const PairPill = forwardRef<{ flashWith: (color: string) => void }, PairPillProp
 export const MatchingRenderer = forwardRef<ExerciseRendererHandle, ExerciseRendererProps>(
   function MatchingRenderer({ exercise, checked, onCheck, onProgressChange }, ref) {
     const content = exercise.content as unknown as MatchingContent;
-    const rightItems = useMemo(() => shuffle(content.pairs.map((p) => p.right)), [content]);
+    const rights = content.pairs.map((p) => p.right);
+    const [rightState, setRightState] = useState(() => ({
+      length: rights.length,
+      order: shuffle(rights.map((_, i) => i)),
+    }));
+    if (rightState.length !== rights.length) {
+      setRightState({ length: rights.length, order: shuffle(rights.map((_, i) => i)) });
+    }
+    const rightItems = rightState.order.map((index) => rights[index]);
     const anims = useMemo(() => {
       const map = new Map<string, PillAnims>();
       for (const pair of content.pairs) {

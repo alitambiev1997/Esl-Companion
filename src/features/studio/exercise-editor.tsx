@@ -1,55 +1,26 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { ContentImage } from '@/src/components/ui/content-image';
 import {
-  buildContent,
-  draftFromExercise,
-  isDraftEmpty,
-  newDraft,
-  type Draft,
-} from '@/src/features/studio/draft';
+  strField,
+  storedPrompt,
+  supportsExplanation,
+  type Content,
+} from '@/src/features/studio/content-model';
+import { draftFromExercise, finalizeContent, isDraftEmpty, newDraft, validateDraft, type Draft } from '@/src/features/studio/draft';
 import { ExercisePreview } from '@/src/features/studio/exercise-preview';
-import { Field, styles as fieldBase, StringListField, TextField } from '@/src/features/studio/fields';
+import { TextField } from '@/src/features/studio/fields';
+import { TypeForm } from '@/src/features/studio/forms';
 import type { ExerciseRow, StarterType } from '@/src/features/studio/types';
 import { typeLabel } from '@/src/features/studio/types';
-import { contentImageUrl } from '@/src/lib/storage';
 import { supabase } from '@/src/lib/supabase';
 import { hoverStyle } from '@/src/lib/web-hover';
 import { colors, fonts, radius } from '@/src/theme/tokens';
 import type { Exercise } from '@/src/types/content';
 
-function validate(draft: Draft): string[] {
-  const errors: string[] = [];
-  if (!draft.prompt.trim()) errors.push('Prompt is required.');
-  if (draft.type === 'multiple_choice' || draft.type === 'image_choice') {
-    const filled = draft.options.filter((o) => o.trim());
-    if (filled.length < 2) errors.push('At least 2 options are required.');
-    else if (filled.length !== draft.options.length) errors.push('Options cannot be empty.');
-    else if (draft.correctIndex < 0 || draft.correctIndex >= draft.options.length) {
-      errors.push('Mark the correct option.');
-    }
-  }
-  if (draft.type === 'fill_blank' && draft.accepted.filter((a) => a.trim()).length === 0) {
-    errors.push('At least one accepted answer is required.');
-  }
-  if (draft.type === 'fill_blank') {
-    const blanks = draft.prompt.split('___').length - 1;
-    if (blanks === 0) errors.push('Add ___ in the sentence where the blank goes.');
-    else if (blanks > 1) errors.push('Use only one ___ blank.');
-  }
-  if (draft.type === 'word_order' && draft.sequence.filter((w) => w.trim()).length < 2) {
-    errors.push('At least 2 words are required.');
-  }
-  if (!Number.isFinite(draft.sortOrder) || draft.sortOrder < 0) {
-    errors.push('Sort order must be a number.');
-  }
-  return errors;
-}
-
 function buildSql(draft: Draft, lessonId: string, exerciseId: string | null): string {
   const escape = (text: string) => text.replace(/'/g, "''");
-  const content = escape(JSON.stringify(buildContent(draft)));
-  const prompt = escape(draft.prompt.trim());
+  const content = escape(JSON.stringify(finalizeContent(draft)));
+  const prompt = escape(storedPrompt(draft.type, draft.prompt, draft.content));
   if (exerciseId) {
     return [
       'update public.exercises',
@@ -124,10 +95,11 @@ export function ExerciseEditor({
   const [copied, setCopied] = useState(false);
 
   const update = (patch: Partial<Draft>) => setDraft((current) => ({ ...current, ...patch }));
-  const hasOptions = draft.type === 'multiple_choice' || draft.type === 'image_choice';
+  const patchContent = (next: Content) =>
+    setDraft((current) => ({ ...current, content: { ...current.content, ...next } }));
 
   const save = async () => {
-    const problems = validate(draft);
+    const problems = validateDraft(draft);
     setErrors(problems);
     if (problems.length > 0) return;
     setSaving(true);
@@ -135,8 +107,8 @@ export function ExerciseEditor({
     const payload = {
       lesson_id: lessonId,
       type: draft.type,
-      prompt: draft.prompt.trim(),
-      content: buildContent(draft),
+      prompt: storedPrompt(draft.type, draft.prompt, draft.content),
+      content: finalizeContent(draft),
       is_required: draft.isRequired,
       sort_order: draft.sortOrder,
     };
@@ -184,13 +156,48 @@ export function ExerciseEditor({
     id: exercise?.id ?? 'preview',
     lesson_id: lessonId,
     type: draft.type,
-    prompt: draft.prompt,
-    content: buildContent(draft),
+    prompt: storedPrompt(draft.type, draft.prompt, draft.content),
+    content: finalizeContent(draft),
     is_required: draft.isRequired,
     sort_order: draft.sortOrder,
     created_at: '',
   };
   const previewEmpty = isDraftEmpty(draft);
+
+  const promptField = () => {
+    if (draft.type === 'listening_word_order') return null;
+    if (draft.type === 'image_choice') {
+      return (
+        <TextField
+          label="Question under the picture"
+          hint="Shown beneath the image, e.g. What is this?"
+          value={draft.prompt}
+          onChangeText={(text) => update({ prompt: text })}
+          placeholder="What is this?"
+        />
+      );
+    }
+    if (draft.type === 'fill_blank') {
+      return (
+        <TextField
+          label="Sentence (with a gap)"
+          hint="Put ___ exactly where the blank goes, e.g. I like to eat ___ and bananas."
+          value={draft.prompt}
+          onChangeText={(text) => update({ prompt: text })}
+          placeholder="I like to eat ___ and bananas."
+        />
+      );
+    }
+    return (
+      <TextField
+        label="Prompt"
+        hint="The task line shown above the exercise"
+        value={draft.prompt}
+        onChangeText={(text) => update({ prompt: text })}
+        placeholder="Choose the correct sentence."
+      />
+    );
+  };
 
   return (
     <View style={styles.editor}>
@@ -205,187 +212,78 @@ export function ExerciseEditor({
       <View style={styles.body}>
         <View style={styles.formColumn}>
           <ScrollView style={styles.scroll} contentContainerStyle={styles.form}>
-        {draft.type === 'image_choice' ? (
-          <TextField
-            label="Question under the picture"
-            hint="Shown beneath the image, e.g. What is this?"
-            value={draft.prompt}
-            onChangeText={(text) => update({ prompt: text })}
-            placeholder="What is this?"
-          />
-        ) : draft.type === 'fill_blank' ? (
-          <TextField
-            label="Sentence (with a gap)"
-            hint="Put ___ exactly where the blank goes, e.g. I like to eat ___ and bananas."
-            value={draft.prompt}
-            onChangeText={(text) => update({ prompt: text })}
-            placeholder="I like to eat ___ and bananas."
-          />
-        ) : (
-          <TextField
-            label="Prompt"
-            hint="The task line shown above the exercise"
-            value={draft.prompt}
-            onChangeText={(text) => update({ prompt: text })}
-            placeholder="Choose the correct sentence."
-          />
-        )}
+            {promptField()}
 
-        {hasOptions && (
-          <Field label="Options" hint="Tap the circle to mark the correct one">
-            {draft.options.map((option, i) => (
-              <View key={i} style={styles.optionRow}>
-                <Pressable
-                  style={[styles.radio, draft.correctIndex === i && styles.radioOn]}
-                  onPress={() => update({ correctIndex: i })}
-                />
+            <TypeForm type={draft.type} content={draft.content} patch={patchContent} />
+
+            {supportsExplanation(draft.type) && (
+              <TextField
+                label="Explanation"
+                hint="Shown after answering (optional)"
+                value={strField(draft.content.explanation)}
+                onChangeText={(text) => patchContent({ explanation: text })}
+                placeholder="Use 'would like to' + verb for polite requests."
+                multiline
+              />
+            )}
+
+            <View style={styles.metaRow}>
+              <Pressable
+                style={[styles.toggle, draft.isRequired && styles.toggleOn]}
+                onPress={() => update({ isRequired: !draft.isRequired })}
+              >
+                <Text style={[styles.toggleText, draft.isRequired && styles.toggleTextOn]}>
+                  {draft.isRequired ? 'Counts toward score' : 'Practice only (ungraded)'}
+                </Text>
+              </Pressable>
+              <View style={styles.sortRow}>
+                <Text style={styles.sortLabel}>Order</Text>
                 <TextInput
-                  style={[fieldBase.input, styles.optionInput]}
-                  value={option}
+                  style={styles.sortInput}
+                  value={String(draft.sortOrder)}
                   onChangeText={(text) => {
-                    const next = [...draft.options];
-                    next[i] = text;
-                    update({ options: next });
+                    const parsed = parseInt(text.replace(/[^0-9]/g, ''), 10);
+                    update({ sortOrder: Number.isNaN(parsed) ? 0 : parsed });
                   }}
-                  placeholder={`Option ${i + 1}`}
-                  placeholderTextColor={colors.greyDark}
                 />
-                <Pressable
-                  style={styles.removeButton}
-                  onPress={() =>
-                    update({
-                      options: draft.options.filter((_, index) => index !== i),
-                      correctIndex: Math.min(
-                        draft.correctIndex,
-                        Math.max(0, draft.options.length - 2)
-                      ),
-                    })
-                  }
-                  hitSlop={6}
-                >
-                  <Text style={styles.removeText}>×</Text>
-                </Pressable>
               </View>
+            </View>
+
+            {errors.map((message, i) => (
+              <Text key={i} style={styles.errorText}>
+                {message}
+              </Text>
             ))}
+            {saveError && <Text style={styles.errorText}>{saveError}</Text>}
+          </ScrollView>
+
+          <View style={styles.footer}>
             <Pressable
-              style={styles.addButton}
-              onPress={() => update({ options: [...draft.options, ''] })}
+              style={({ hovered }) => [
+                styles.primaryButton,
+                saving && styles.buttonDisabled,
+                hoverStyle(hovered),
+              ]}
+              onPress={save}
+              disabled={saving}
             >
-              <Text style={styles.addText}>+ Add option</Text>
+              <Text style={styles.primaryButtonText}>{saving ? 'Saving...' : 'Save'}</Text>
             </Pressable>
-          </Field>
-        )}
-
-        {draft.type === 'fill_blank' && (
-          <StringListField
-            label="Accepted answers"
-            hint="Every spelling you accept (compared ignoring case and punctuation)"
-            items={draft.accepted}
-            onChange={(items) => update({ accepted: items })}
-            placeholder="reservation"
-            addLabel="Add answer"
-          />
-        )}
-
-        {draft.type === 'word_order' && (
-          <StringListField
-            label="Words in the correct order"
-            hint="The app shuffles them into a chip bank for the student"
-            items={draft.sequence}
-            onChange={(items) => update({ sequence: items })}
-            placeholder="word"
-            addLabel="Add word"
-          />
-        )}
-
-        {draft.type === 'image_choice' && (
-          <>
-            <TextField
-              label="Image path"
-              hint="Path inside the content bucket, e.g. images/unit2/boy.png"
-              value={draft.imageUrl}
-              onChangeText={(text) => update({ imageUrl: text })}
-              placeholder="images/unit2/boy.png"
-            />
-            {draft.imageUrl.trim() ? (
-              <ContentImage url={contentImageUrl(draft.imageUrl.trim())} />
-            ) : null}
-            <TextField
-              label="Audio text (optional)"
-              hint="Read aloud when the student taps the speaker"
-              value={draft.textToSpeak}
-              onChangeText={(text) => update({ textToSpeak: text })}
-              placeholder="boy"
-            />
-          </>
-        )}
-
-        <TextField
-          label="Explanation"
-          hint="Shown after answering (optional)"
-          value={draft.explanation}
-          onChangeText={(text) => update({ explanation: text })}
-          placeholder="Use 'would like to' + verb for polite requests."
-          multiline
-        />
-
-        <View style={styles.metaRow}>
-          <Pressable
-            style={[styles.toggle, draft.isRequired && styles.toggleOn]}
-            onPress={() => update({ isRequired: !draft.isRequired })}
-          >
-            <Text style={[styles.toggleText, draft.isRequired && styles.toggleTextOn]}>
-              {draft.isRequired ? 'Counts toward score' : 'Practice only (ungraded)'}
-            </Text>
-          </Pressable>
-          <View style={styles.sortRow}>
-            <Text style={styles.sortLabel}>Order</Text>
-            <TextInput
-              style={styles.sortInput}
-              value={String(draft.sortOrder)}
-              onChangeText={(text) => {
-                const parsed = parseInt(text.replace(/[^0-9]/g, ''), 10);
-                update({ sortOrder: Number.isNaN(parsed) ? 0 : parsed });
-              }}
-            />
-          </View>
-        </View>
-
-        {errors.map((message, i) => (
-          <Text key={i} style={styles.errorText}>
-            {message}
-          </Text>
-        ))}
-        {saveError && <Text style={styles.errorText}>{saveError}</Text>}
-      </ScrollView>
-
-      <View style={styles.footer}>
-        <Pressable
-          style={({ hovered }) => [
-            styles.primaryButton,
-            saving && styles.buttonDisabled,
-            hoverStyle(hovered),
-          ]}
-          onPress={save}
-          disabled={saving}
-        >
-          <Text style={styles.primaryButtonText}>{saving ? 'Saving...' : 'Save'}</Text>
-        </Pressable>
-        <Pressable
-          style={({ hovered }) => [styles.secondaryButton, hoverStyle(hovered)]}
-          onPress={copySql}
-        >
-          <Text style={styles.secondaryButtonText}>{copied ? 'Copied!' : 'Copy SQL'}</Text>
-        </Pressable>
-        {exercise && (
-          <Pressable
-            style={({ hovered }) => [styles.dangerButton, hoverStyle(hovered)]}
-            onPress={remove}
-            disabled={saving}
-          >
-            <Text style={styles.dangerButtonText}>Delete</Text>
-          </Pressable>
-        )}
+            <Pressable
+              style={({ hovered }) => [styles.secondaryButton, hoverStyle(hovered)]}
+              onPress={copySql}
+            >
+              <Text style={styles.secondaryButtonText}>{copied ? 'Copied!' : 'Copy SQL'}</Text>
+            </Pressable>
+            {exercise && (
+              <Pressable
+                style={({ hovered }) => [styles.dangerButton, hoverStyle(hovered)]}
+                onPress={remove}
+                disabled={saving}
+              >
+                <Text style={styles.dangerButtonText}>Delete</Text>
+              </Pressable>
+            )}
           </View>
         </View>
 
@@ -412,49 +310,6 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     flexBasis: 0,
     minHeight: 0,
-  },
-  body: {
-    flexGrow: 1,
-    flexShrink: 1,
-    flexBasis: 0,
-    minHeight: 0,
-    flexDirection: 'row',
-    gap: 16,
-  },
-  formColumn: {
-    flexGrow: 1,
-    flexShrink: 1,
-    flexBasis: 0,
-    minWidth: 0,
-    minHeight: 0,
-  },
-  previewColumn: {
-    width: 380,
-    borderLeftWidth: 2,
-    borderLeftColor: colors.grey,
-    paddingLeft: 16,
-  },
-  previewTitle: {
-    fontFamily: fonts.display,
-    fontSize: 18,
-    color: colors.ink,
-    marginBottom: 8,
-  },
-  previewScroll: {
-    flexGrow: 1,
-    flexShrink: 1,
-    flexBasis: 0,
-    minHeight: 0,
-  },
-  previewContent: {
-    paddingBottom: 24,
-    paddingRight: 8,
-  },
-  previewHint: {
-    fontFamily: fonts.body,
-    fontSize: 13,
-    color: colors.ink,
-    opacity: 0.5,
   },
   backLink: {
     fontFamily: fonts.body,
@@ -486,6 +341,21 @@ const styles = StyleSheet.create({
     paddingVertical: 1,
     overflow: 'hidden',
   },
+  body: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 0,
+    minHeight: 0,
+    flexDirection: 'row',
+    gap: 16,
+  },
+  formColumn: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 0,
+    minWidth: 0,
+    minHeight: 0,
+  },
   scroll: {
     flexGrow: 1,
     flexShrink: 1,
@@ -497,46 +367,33 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     paddingRight: 10,
   },
-  optionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  previewColumn: {
+    width: 380,
+    borderLeftWidth: 2,
+    borderLeftColor: colors.grey,
+    paddingLeft: 16,
   },
-  radio: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: colors.greyDark,
-    backgroundColor: colors.white,
-  },
-  radioOn: {
-    borderColor: colors.leaf,
-    backgroundColor: colors.leaf,
-  },
-  optionInput: {
-    flex: 1,
-  },
-  removeButton: {
-    width: 28,
-    height: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  removeText: {
-    fontFamily: fonts.body,
+  previewTitle: {
+    fontFamily: fonts.display,
     fontSize: 18,
-    color: colors.coral,
+    color: colors.ink,
+    marginBottom: 8,
   },
-  addButton: {
-    alignSelf: 'flex-start',
-    paddingVertical: 2,
+  previewScroll: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 0,
+    minHeight: 0,
   },
-  addText: {
+  previewContent: {
+    paddingBottom: 24,
+    paddingRight: 8,
+  },
+  previewHint: {
     fontFamily: fonts.body,
     fontSize: 13,
-    fontWeight: '600',
-    color: colors.sky,
+    color: colors.ink,
+    opacity: 0.5,
   },
   metaRow: {
     flexDirection: 'row',

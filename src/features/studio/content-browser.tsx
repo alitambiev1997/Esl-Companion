@@ -1,5 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { ExerciseEditor } from '@/src/features/studio/exercise-editor';
 import {
   STARTER_TYPES,
@@ -44,6 +52,13 @@ export function StudioBrowser() {
   const [unitId, setUnitId] = useState<string | null>(null);
   const [lessonId, setLessonId] = useState<string | null>(null);
   const [editor, setEditor] = useState<EditorState>({ mode: 'closed' });
+  const [newUnitOpen, setNewUnitOpen] = useState(false);
+  const [newUnitTitle, setNewUnitTitle] = useState('');
+  const [newUnitLevelId, setNewUnitLevelId] = useState<string | null>(null);
+  const [newLessonOpen, setNewLessonOpen] = useState(false);
+  const [newLessonTitle, setNewLessonTitle] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const loadContent = useCallback(async (showLoading: boolean) => {
     if (showLoading) setState({ status: 'loading' });
@@ -123,9 +138,190 @@ export function StudioBrowser() {
     ? Math.max(...lessonExercises.map((e) => e.sort_order)) + 1
     : 1;
 
+  const errorHint = (message: string) =>
+    message.includes('row-level security') || message.includes('permission')
+      ? `${message} — run the Teacher Studio write policies in Supabase.`
+      : message;
+
+  const openNewUnit = () => {
+    setNewUnitOpen(true);
+    setNewUnitTitle('');
+    setActionError(null);
+    setNewUnitLevelId(activeUnit?.level_id ?? levels[0]?.id ?? null);
+  };
+
+  const createUnit = async () => {
+    const title = newUnitTitle.trim();
+    const levelId = newUnitLevelId ?? activeUnit?.level_id ?? levels[0]?.id ?? null;
+    if (!title || !levelId || busy) return;
+    setBusy(true);
+    setActionError(null);
+    const sortOrder =
+      units
+        .filter((u) => u.level_id === levelId)
+        .reduce((max, u) => Math.max(max, u.sort_order), 0) + 1;
+    const { data, error } = await supabase
+      .from('units')
+      .insert({ level_id: levelId, title, is_published: false, sort_order: sortOrder })
+      .select('id')
+      .single();
+    setBusy(false);
+    if (error) {
+      setActionError(errorHint(error.message));
+      return;
+    }
+    setNewUnitOpen(false);
+    setNewUnitTitle('');
+    await loadContent(false);
+    if (data?.id) {
+      setUnitId(data.id);
+      setLessonId(null);
+    }
+  };
+
+  const deleteUnit = async (unit: UnitRow) => {
+    if (busy) return;
+    const lessonCount = lessons.filter((l) => l.unit_id === unit.id).length;
+    if (
+      !window.confirm(
+        `Delete "${unit.title}" and its ${lessonCount} lesson(s)? Their exercises and student progress for them are removed too. This cannot be undone.`
+      )
+    ) {
+      return;
+    }
+    setBusy(true);
+    setActionError(null);
+    const { error } = await supabase.from('units').delete().eq('id', unit.id);
+    setBusy(false);
+    if (error) {
+      setActionError(errorHint(error.message));
+      return;
+    }
+    if (unitId === unit.id) {
+      setUnitId(null);
+      setLessonId(null);
+      setEditor({ mode: 'closed' });
+    }
+    loadContent(false);
+  };
+
+  const openNewLesson = () => {
+    setNewLessonOpen(true);
+    setNewLessonTitle('');
+    setActionError(null);
+  };
+
+  const createLesson = async () => {
+    if (!activeUnit || busy) return;
+    const title = newLessonTitle.trim();
+    if (!title) return;
+    setBusy(true);
+    setActionError(null);
+    const sortOrder =
+      lessons
+        .filter((l) => l.unit_id === activeUnit.id)
+        .reduce((max, l) => Math.max(max, l.sort_order), 0) + 1;
+    const { data, error } = await supabase
+      .from('lessons')
+      .insert({
+        unit_id: activeUnit.id,
+        title,
+        is_published: false,
+        sort_order: sortOrder,
+      })
+      .select('id')
+      .single();
+    setBusy(false);
+    if (error) {
+      setActionError(errorHint(error.message));
+      return;
+    }
+    setNewLessonOpen(false);
+    setNewLessonTitle('');
+    await loadContent(false);
+    if (data?.id) {
+      setLessonId(data.id);
+      setEditor({ mode: 'closed' });
+    }
+  };
+
+  const deleteLesson = async (lesson: LessonRow) => {
+    if (busy) return;
+    const exerciseCount = exercises.filter((e) => e.lesson_id === lesson.id).length;
+    if (
+      !window.confirm(
+        `Delete "${lesson.title}" and its ${exerciseCount} exercise(s)? This cannot be undone.`
+      )
+    ) {
+      return;
+    }
+    setBusy(true);
+    setActionError(null);
+    const { error } = await supabase.from('lessons').delete().eq('id', lesson.id);
+    setBusy(false);
+    if (error) {
+      setActionError(errorHint(error.message));
+      return;
+    }
+    if (lessonId === lesson.id) {
+      setLessonId(null);
+      setEditor({ mode: 'closed' });
+    }
+    loadContent(false);
+  };
+
   const unitsPane = (
     <View style={[styles.pane, isDesktop ? styles.paneFixed : styles.paneWide]}>
-      <Text style={styles.paneTitle}>Units</Text>
+      <View style={styles.paneHeaderRow}>
+        <Text style={styles.paneTitle}>Units</Text>
+        <Pressable
+          style={({ hovered }) => [styles.newButton, hoverStyle(hovered)]}
+          onPress={openNewUnit}
+        >
+          <Text style={styles.newButtonText}>+ New unit</Text>
+        </Pressable>
+      </View>
+      {newUnitOpen && (
+        <View style={styles.newCard}>
+          <TextInput
+            style={styles.newInput}
+            value={newUnitTitle}
+            onChangeText={setNewUnitTitle}
+            placeholder="Unit title"
+            placeholderTextColor={colors.greyDark}
+            autoFocus
+          />
+          <View style={styles.levelChipRow}>
+            {levels.map((level) => {
+              const on = newUnitLevelId === level.id;
+              return (
+                <Pressable
+                  key={level.id}
+                  style={[styles.levelPickChip, on && styles.levelPickChipOn]}
+                  onPress={() => setNewUnitLevelId(level.id)}
+                >
+                  <Text style={[styles.levelPickText, on && styles.levelPickTextOn]}>
+                    {level.cefr_level ?? level.title}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          <View style={styles.newActions}>
+            <Pressable
+              style={[styles.createButton, (busy || !newUnitTitle.trim()) && styles.buttonDisabled]}
+              onPress={createUnit}
+              disabled={busy || !newUnitTitle.trim()}
+            >
+              <Text style={styles.createButtonText}>{busy ? 'Creating...' : 'Create unit'}</Text>
+            </Pressable>
+            <Pressable onPress={() => setNewUnitOpen(false)} hitSlop={8}>
+              <Text style={styles.cancelText}>Cancel</Text>
+            </Pressable>
+          </View>
+        </View>
+      )}
+      {actionError && <Text style={styles.errorText}>{actionError}</Text>}
       <ScrollView style={styles.paneScroll} contentContainerStyle={styles.paneContent}>
         {levels.map((level) => {
           const levelUnits = units.filter((u) => u.level_id === level.id);
@@ -142,26 +338,35 @@ export function StudioBrowser() {
                 const count = lessons.filter((l) => l.unit_id === unit.id).length;
                 const selected = unit.id === activeUnit?.id;
                 return (
-                  <Pressable
-                    key={unit.id}
-                    style={({ hovered }) => [
-                      styles.rowCard,
-                      selected && styles.rowCardSelected,
-                      hoverStyle(hovered),
-                    ]}
-                    onPress={() => {
-                      setUnitId(unit.id);
-                      setEditor({ mode: 'closed' });
-                    }}
-                  >
-                    <View style={styles.rowMain}>
-                      <Text style={[styles.rowTitle, selected && styles.rowTitleSelected]}>
-                        {unit.title}
-                      </Text>
-                      <Text style={styles.rowMeta}>{count} lessons</Text>
-                    </View>
-                    {!unit.is_published && <Text style={styles.draftChip}>draft</Text>}
-                  </Pressable>
+                  <View key={unit.id} style={styles.rowWrap}>
+                    <Pressable
+                      style={({ hovered }) => [
+                        styles.rowCard,
+                        styles.rowCardFlex,
+                        selected && styles.rowCardSelected,
+                        hoverStyle(hovered),
+                      ]}
+                      onPress={() => {
+                        setUnitId(unit.id);
+                        setEditor({ mode: 'closed' });
+                      }}
+                    >
+                      <View style={styles.rowMain}>
+                        <Text style={[styles.rowTitle, selected && styles.rowTitleSelected]}>
+                          {unit.title}
+                        </Text>
+                        <Text style={styles.rowMeta}>{count} lessons</Text>
+                      </View>
+                      {!unit.is_published && <Text style={styles.draftChip}>draft</Text>}
+                    </Pressable>
+                    <Pressable
+                      style={styles.rowDelete}
+                      onPress={() => deleteUnit(unit)}
+                      hitSlop={6}
+                    >
+                      <Text style={styles.rowDeleteText}>×</Text>
+                    </Pressable>
+                  </View>
                 );
               })}
             </View>
@@ -179,34 +384,80 @@ export function StudioBrowser() {
           <Text style={styles.backLink}>‹ Units</Text>
         </Pressable>
       )}
-      <Text style={styles.paneTitle} numberOfLines={1}>
-        {activeUnit.title}
-      </Text>
+      <View style={styles.paneHeaderRow}>
+        <Text style={styles.paneTitle} numberOfLines={1}>
+          {activeUnit.title}
+        </Text>
+        <Pressable
+          style={({ hovered }) => [styles.newButton, hoverStyle(hovered)]}
+          onPress={openNewLesson}
+        >
+          <Text style={styles.newButtonText}>+ New lesson</Text>
+        </Pressable>
+      </View>
+      {newLessonOpen && (
+        <View style={styles.newCard}>
+          <TextInput
+            style={styles.newInput}
+            value={newLessonTitle}
+            onChangeText={setNewLessonTitle}
+            placeholder="Lesson title"
+            placeholderTextColor={colors.greyDark}
+            autoFocus
+          />
+          <View style={styles.newActions}>
+            <Pressable
+              style={[
+                styles.createButton,
+                (busy || !newLessonTitle.trim()) && styles.buttonDisabled,
+              ]}
+              onPress={createLesson}
+              disabled={busy || !newLessonTitle.trim()}
+            >
+              <Text style={styles.createButtonText}>
+                {busy ? 'Creating...' : 'Create lesson'}
+              </Text>
+            </Pressable>
+            <Pressable onPress={() => setNewLessonOpen(false)} hitSlop={8}>
+              <Text style={styles.cancelText}>Cancel</Text>
+            </Pressable>
+          </View>
+        </View>
+      )}
       <ScrollView style={styles.paneScroll} contentContainerStyle={styles.paneContent}>
         {unitLessons.map((lesson) => {
           const count = exercises.filter((e) => e.lesson_id === lesson.id).length;
           const selected = lesson.id === activeLesson?.id;
           return (
-            <Pressable
-              key={lesson.id}
-              style={({ hovered }) => [
-                styles.rowCard,
-                selected && styles.rowCardSelected,
-                hoverStyle(hovered),
-              ]}
-              onPress={() => {
-                setLessonId(lesson.id);
-                setEditor({ mode: 'closed' });
-              }}
-            >
-              <View style={styles.rowMain}>
-                <Text style={[styles.rowTitle, selected && styles.rowTitleSelected]}>
-                  {lesson.title}
-                </Text>
-                <Text style={styles.rowMeta}>{count} exercises</Text>
-              </View>
-              {!lesson.is_published && <Text style={styles.draftChip}>draft</Text>}
-            </Pressable>
+            <View key={lesson.id} style={styles.rowWrap}>
+              <Pressable
+                style={({ hovered }) => [
+                  styles.rowCard,
+                  styles.rowCardFlex,
+                  selected && styles.rowCardSelected,
+                  hoverStyle(hovered),
+                ]}
+                onPress={() => {
+                  setLessonId(lesson.id);
+                  setEditor({ mode: 'closed' });
+                }}
+              >
+                <View style={styles.rowMain}>
+                  <Text style={[styles.rowTitle, selected && styles.rowTitleSelected]}>
+                    {lesson.title}
+                  </Text>
+                  <Text style={styles.rowMeta}>{count} exercises</Text>
+                </View>
+                {!lesson.is_published && <Text style={styles.draftChip}>draft</Text>}
+              </Pressable>
+              <Pressable
+                style={styles.rowDelete}
+                onPress={() => deleteLesson(lesson)}
+                hitSlop={6}
+              >
+                <Text style={styles.rowDeleteText}>×</Text>
+              </Pressable>
+            </View>
           );
         })}
         {unitLessons.length === 0 && <Text style={styles.emptyText}>No lessons yet.</Text>}
@@ -298,8 +549,7 @@ export function StudioBrowser() {
               </Pressable>
             ))}
             <Text style={styles.pickerNote}>
-              More types coming as the editor grows — the rest of the 21 land in the next
-              ticket.
+              All 21 exercise types are ready to use.
             </Text>
           </ScrollView>
         </>
@@ -443,6 +693,110 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     marginTop: 8,
     flexShrink: 1,
+  },
+  rowWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  rowCardFlex: {
+    flex: 1,
+    minWidth: 0,
+  },
+  rowDelete: {
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rowDeleteText: {
+    fontFamily: fonts.body,
+    fontSize: 18,
+    color: colors.greyDark,
+  },
+  newCard: {
+    borderWidth: 2,
+    borderColor: colors.sky,
+    borderRadius: 14,
+    backgroundColor: colors.white,
+    padding: 10,
+    gap: 8,
+    marginBottom: 8,
+  },
+  newInput: {
+    backgroundColor: colors.white,
+    borderWidth: 2,
+    borderColor: colors.grey,
+    borderRadius: 10,
+    minHeight: 38,
+    paddingHorizontal: 10,
+    fontSize: 14,
+    fontFamily: fonts.body,
+    color: colors.ink,
+  },
+  levelChipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  levelPickChip: {
+    borderWidth: 2,
+    borderColor: colors.grey,
+    borderRadius: 10,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    backgroundColor: colors.white,
+  },
+  levelPickChipOn: {
+    borderColor: colors.sky,
+    backgroundColor: colors.skyTint,
+  },
+  levelPickText: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.ink,
+    opacity: 0.6,
+  },
+  levelPickTextOn: {
+    color: colors.sky,
+    opacity: 1,
+  },
+  newActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  createButton: {
+    backgroundColor: colors.sun,
+    borderRadius: radius.button,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    minHeight: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  createButtonText: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.ink,
+  },
+  cancelText: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.ink,
+    opacity: 0.6,
+  },
+  buttonDisabled: {
+    opacity: 0.5,
+  },
+  errorText: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    color: colors.coral,
+    marginBottom: 6,
   },
   paneHeaderRow: {
     flexDirection: 'row',
