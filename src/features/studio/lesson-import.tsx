@@ -87,6 +87,7 @@ export function LessonImport({
         type: exercise.type,
         prompt: exercise.prompt.trim(),
         content: exercise.content,
+        points: 10,
         is_required: exercise.is_required ?? !isUngradedType(exercise.type),
         sort_order: exerciseOrder++,
       }));
