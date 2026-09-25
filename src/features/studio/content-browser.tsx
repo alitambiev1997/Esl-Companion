@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native';
 import { ExerciseEditor } from '@/src/features/studio/exercise-editor';
+import { LessonImport } from '@/src/features/studio/lesson-import';
 import {
   STARTER_TYPES,
   typeLabel,
@@ -56,6 +57,7 @@ export function StudioBrowser() {
   const [newUnitTitle, setNewUnitTitle] = useState('');
   const [newUnitLevelId, setNewUnitLevelId] = useState<string | null>(null);
   const [newLessonOpen, setNewLessonOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [newLessonTitle, setNewLessonTitle] = useState('');
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -469,6 +471,15 @@ export function StudioBrowser() {
         >
           <Text style={styles.newButtonText}>+ New lesson</Text>
         </Pressable>
+        <Pressable
+          style={({ hovered }) => [styles.importButton, hoverStyle(hovered)]}
+          onPress={() => {
+            setImportOpen(true);
+            setEditor({ mode: 'closed' });
+          }}
+        >
+          <Text style={styles.importButtonText}>JSON</Text>
+        </Pressable>
       </View>
       {newLessonOpen && (
         <View style={styles.newCard}>
@@ -697,16 +708,37 @@ export function StudioBrowser() {
     <View style={styles.browserDesktop}>
       {editor.mode !== 'edit' && unitsPane}
       {editor.mode !== 'edit' && lessonsPane}
-      {exercisesPane ?? (
-        <View style={[styles.pane, styles.paneWide]}>
-          <Text style={styles.emptyText}>
-            {!activeUnit
-              ? 'Select a unit to see its lessons.'
-              : unitLessons.length === 0
-                ? 'This unit has no lessons yet.'
-                : 'Select a lesson to see its exercises.'}
-          </Text>
-        </View>
+      {importOpen && activeUnit ? (
+        <LessonImport
+          unitId={activeUnit.id}
+          unitTitle={activeUnit.title}
+          nextLessonSortOrder={
+            lessons
+              .filter((l) => l.unit_id === activeUnit.id)
+              .reduce((max, l) => Math.max(max, l.sort_order), 0) + 1
+          }
+          onCreated={(createdLessonId) => {
+            setImportOpen(false);
+            loadContent(false);
+            if (createdLessonId) {
+              setLessonId(createdLessonId);
+              setEditor({ mode: 'closed' });
+            }
+          }}
+          onCancel={() => setImportOpen(false)}
+        />
+      ) : (
+        exercisesPane ?? (
+          <View style={[styles.pane, styles.paneWide]}>
+            <Text style={styles.emptyText}>
+              {!activeUnit
+                ? 'Select a unit to see its lessons.'
+                : unitLessons.length === 0
+                  ? 'This unit has no lessons yet.'
+                  : 'Select a lesson to see its exercises.'}
+            </Text>
+          </View>
+        )
       )}
     </View>
   );
@@ -906,6 +938,21 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: colors.ink,
+  },
+  importButton: {
+    backgroundColor: colors.white,
+    borderWidth: 2,
+    borderColor: colors.sky,
+    borderRadius: radius.button,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    marginTop: 8,
+  },
+  importButtonText: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.sky,
   },
   chevron: {
     fontFamily: fonts.body,
