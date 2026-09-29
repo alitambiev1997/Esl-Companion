@@ -49,6 +49,17 @@ function bySortOrder(a: { sort_order: number }, b: { sort_order: number }) {
 
 type OrderTable = 'units' | 'lessons' | 'exercises';
 
+function writeProblem(
+  data: { id: string }[] | null,
+  error: { message: string } | null
+): string | null {
+  if (error) return error.message;
+  if (data !== null && data.length === 0) {
+    return 'Nothing was saved - the write was blocked. Run the Teacher Studio write policies in Supabase.';
+  }
+  return null;
+}
+
 async function persistOrder(
   table: OrderTable,
   ordered: { id: string; sort_order: number }[],
@@ -57,11 +68,13 @@ async function persistOrder(
   const previousMap = new Map(previous.map((row) => [row.id, row.sort_order]));
   for (const row of ordered) {
     if (previousMap.get(row.id) === row.sort_order) continue;
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from(table)
       .update({ sort_order: row.sort_order })
-      .eq('id', row.id);
-    if (error) return error.message;
+      .eq('id', row.id)
+      .select('id');
+    const problem = writeProblem(data, error);
+    if (problem) return problem;
   }
   return null;
 }
@@ -247,21 +260,27 @@ export function StudioBrowser() {
     }
     setBusy(true);
     setActionError(null);
-    const { error } = await supabase
+    const { data: unitData, error } = await supabase
       .from('units')
       .update({ is_published: next })
-      .eq('id', unit.id);
-    if (!error && next && publishLessons) {
+      .eq('id', unit.id)
+      .select('id');
+    const unitProblem = writeProblem(unitData, error);
+    if (!unitProblem && next && publishLessons) {
       const draftIds = lessons
         .filter((l) => l.unit_id === unit.id && !l.is_published)
         .map((l) => l.id);
       if (draftIds.length > 0) {
-        await supabase.from('lessons').update({ is_published: true }).in('id', draftIds);
+        await supabase
+          .from('lessons')
+          .update({ is_published: true })
+          .in('id', draftIds)
+          .select('id');
       }
     }
     setBusy(false);
-    if (error) {
-      setActionError(errorHint(error.message));
+    if (unitProblem) {
+      setActionError(errorHint(unitProblem));
       return;
     }
     loadContent(false);
@@ -278,16 +297,22 @@ export function StudioBrowser() {
     }
     setBusy(true);
     setActionError(null);
-    const { error } = await supabase
+    const { data: lessonData, error } = await supabase
       .from('lessons')
       .update({ is_published: next })
-      .eq('id', lesson.id);
-    if (!error && publishUnit && activeUnit) {
-      await supabase.from('units').update({ is_published: true }).eq('id', activeUnit.id);
+      .eq('id', lesson.id)
+      .select('id');
+    const lessonProblem = writeProblem(lessonData, error);
+    if (!lessonProblem && publishUnit && activeUnit) {
+      await supabase
+        .from('units')
+        .update({ is_published: true })
+        .eq('id', activeUnit.id)
+        .select('id');
     }
     setBusy(false);
-    if (error) {
-      setActionError(errorHint(error.message));
+    if (lessonProblem) {
+      setActionError(errorHint(lessonProblem));
       return;
     }
     loadContent(false);
@@ -380,10 +405,15 @@ export function StudioBrowser() {
     }
     setBusy(true);
     setActionError(null);
-    const { error } = await supabase.from('units').delete().eq('id', unit.id);
+    const { data: deleted, error } = await supabase
+      .from('units')
+      .delete()
+      .eq('id', unit.id)
+      .select('id');
+    const problem = writeProblem(deleted, error);
     setBusy(false);
-    if (error) {
-      setActionError(errorHint(error.message));
+    if (problem) {
+      setActionError(errorHint(problem));
       return;
     }
     if (unitId === unit.id) {
@@ -446,10 +476,15 @@ export function StudioBrowser() {
     }
     setBusy(true);
     setActionError(null);
-    const { error } = await supabase.from('lessons').delete().eq('id', lesson.id);
+    const { data: deleted, error } = await supabase
+      .from('lessons')
+      .delete()
+      .eq('id', lesson.id)
+      .select('id');
+    const problem = writeProblem(deleted, error);
     setBusy(false);
-    if (error) {
-      setActionError(errorHint(error.message));
+    if (problem) {
+      setActionError(errorHint(problem));
       return;
     }
     if (lessonId === lesson.id) {
