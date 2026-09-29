@@ -8,8 +8,10 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { ExerciseEditor } from '@/src/features/studio/exercise-editor';
 import { LessonImport } from '@/src/features/studio/lesson-import';
+import { findMissingImages } from '@/src/features/studio/media-check';
 import {
   STARTER_TYPES,
   typeLabel,
@@ -79,6 +81,22 @@ async function persistOrder(
   return null;
 }
 
+type MediaIssue = 'empty' | 'missing';
+
+function imagePathOf(exercise: ExerciseRow): string {
+  const content = exercise.content ?? {};
+  return typeof content.image_url === 'string' ? content.image_url.trim() : '';
+}
+
+function MediaFlag({ label }: { label: string }) {
+  return (
+    <View style={styles.mediaFlag}>
+      <Ionicons name="alert-circle" size={12} color={colors.coral} />
+      <Text style={styles.mediaFlagText}>{label}</Text>
+    </View>
+  );
+}
+
 function MoveButtons({
   onUp,
   onDown,
@@ -126,6 +144,7 @@ export function StudioBrowser() {
   const [newLessonTitle, setNewLessonTitle] = useState('');
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [mediaIssues, setMediaIssues] = useState<Record<string, MediaIssue>>({});
 
   const loadContent = useCallback(async (showLoading: boolean) => {
     if (showLoading) setState({ status: 'loading' });
@@ -144,14 +163,36 @@ export function StudioBrowser() {
       setState({ status: 'error', message: error.message });
       return;
     }
-    setState({
-      status: 'ready',
-      levels: ((levelsRes.data ?? []) as LevelRow[]).slice().sort(bySortOrder),
-      units: ((unitsRes.data ?? []) as UnitRow[]).slice().sort(bySortOrder),
-      lessons: ((lessonsRes.data ?? []) as LessonRow[]).slice().sort(bySortOrder),
-      exercises: ((exercisesRes.data ?? []) as ExerciseRow[]).slice().sort(bySortOrder),
-    });
-  }, []);
+      setState({
+        status: 'ready',
+        levels: ((levelsRes.data ?? []) as LevelRow[]).slice().sort(bySortOrder),
+        units: ((unitsRes.data ?? []) as UnitRow[]).slice().sort(bySortOrder),
+        lessons: ((lessonsRes.data ?? []) as LessonRow[]).slice().sort(bySortOrder),
+        exercises: ((exercisesRes.data ?? []) as ExerciseRow[]).slice().sort(bySortOrder),
+      });
+
+      const exerciseRows = (exercisesRes.data ?? []) as ExerciseRow[];
+      const emptyIds: string[] = [];
+      const paths: string[] = [];
+      for (const exercise of exerciseRows) {
+        if (exercise.type !== 'image_choice' && exercise.type !== 'document_reader') continue;
+        const path = imagePathOf(exercise);
+        if (!path) {
+          if (exercise.type === 'image_choice') emptyIds.push(exercise.id);
+          continue;
+        }
+        paths.push(path);
+      }
+      void findMissingImages(paths).then((missing) => {
+        const issues: Record<string, MediaIssue> = {};
+        for (const id of emptyIds) issues[id] = 'empty';
+        for (const exercise of exerciseRows) {
+          const path = imagePathOf(exercise);
+          if (path && missing.has(path)) issues[exercise.id] = 'missing';
+        }
+        setMediaIssues(issues);
+      });
+    }, []);
 
   useEffect(() => {
     loadContent(true);
@@ -687,6 +728,9 @@ export function StudioBrowser() {
       <ScrollView style={styles.paneScroll} contentContainerStyle={styles.paneContent}>
         {unitLessons.map((lesson, lessonIndex) => {
           const count = exercises.filter((e) => e.lesson_id === lesson.id).length;
+          const mediaCount = exercises.filter(
+            (e) => e.lesson_id === lesson.id && mediaIssues[e.id]
+          ).length;
           const selected = lesson.id === activeLesson?.id;
           return (
             <View key={lesson.id} style={styles.rowWrap}>
@@ -708,6 +752,7 @@ export function StudioBrowser() {
                   </Text>
                   <Text style={styles.rowMeta}>{count} exercises</Text>
                 </View>
+                {mediaCount > 0 && <MediaFlag label={String(mediaCount)} />}
                 <Pressable
                   style={[
                     styles.publishChip,
@@ -785,6 +830,13 @@ export function StudioBrowser() {
                         <Text style={styles.typeChip}>{typeLabel(exercise.type)}</Text>
                         {exercise.is_required === false && (
                           <Text style={styles.optionalChip}>optional</Text>
+                        )}
+                        {mediaIssues[exercise.id] && (
+                          <MediaFlag
+                            label={
+                              mediaIssues[exercise.id] === 'empty' ? 'no image' : 'image missing'
+                            }
+                          />
                         )}
                       </View>
                       <Text style={styles.exercisePrompt} numberOfLines={2}>
@@ -1042,6 +1094,17 @@ const styles = StyleSheet.create({
   },
   moveTextDisabled: {
     opacity: 0.2,
+  },
+  mediaFlag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
+  mediaFlagText: {
+    fontFamily: fonts.body,
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.coral,
   },
   newCard: {
     borderWidth: 2,

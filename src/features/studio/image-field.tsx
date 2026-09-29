@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { ContentImage } from '@/src/components/ui/content-image';
 import { Field } from '@/src/features/studio/fields';
 import { uploadContentImage } from '@/src/features/studio/image-upload';
+import { findMissingImages } from '@/src/features/studio/media-check';
 import { contentImageUrl } from '@/src/lib/storage';
 import { supabase } from '@/src/lib/supabase';
 import { colors, fonts, radius } from '@/src/theme/tokens';
@@ -21,7 +22,26 @@ export function ImagePathField({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [compress, setCompress] = useState(true);
+  const [missing, setMissing] = useState(false);
   const zoneRef = useRef<View>(null);
+
+  useEffect(() => {
+    const path = value.trim();
+    if (!path) {
+      setMissing(false);
+      return;
+    }
+    let active = true;
+    const timer = setTimeout(() => {
+      void findMissingImages([path]).then((result) => {
+        if (active) setMissing(result.has(path));
+      });
+    }, 600);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [value]);
 
   const handleFile = useCallback(
     async (file: File) => {
@@ -113,6 +133,11 @@ export function ImagePathField({
           </Pressable>
         </View>
         <Text style={styles.dropHint}>or drag and drop a picture here</Text>
+        {missing && (
+          <Text style={styles.missingText}>
+            File not found in the bucket - check the path or upload the picture.
+          </Text>
+        )}
         {error && <Text style={styles.errorText}>{error}</Text>}
       </View>
       {value.trim() ? <ContentImage url={contentImageUrl(value.trim())} /> : null}
@@ -195,6 +220,12 @@ const styles = StyleSheet.create({
   errorText: {
     fontFamily: fonts.body,
     fontSize: 12,
+    color: colors.coral,
+  },
+  missingText: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    fontWeight: '600',
     color: colors.coral,
   },
 });
