@@ -47,6 +47,58 @@ function bySortOrder(a: { sort_order: number }, b: { sort_order: number }) {
   return a.sort_order - b.sort_order;
 }
 
+type OrderTable = 'units' | 'lessons' | 'exercises';
+
+async function persistOrder(
+  table: OrderTable,
+  ordered: { id: string; sort_order: number }[],
+  previous: { id: string; sort_order: number }[]
+): Promise<string | null> {
+  const previousMap = new Map(previous.map((row) => [row.id, row.sort_order]));
+  for (const row of ordered) {
+    if (previousMap.get(row.id) === row.sort_order) continue;
+    const { error } = await supabase
+      .from(table)
+      .update({ sort_order: row.sort_order })
+      .eq('id', row.id);
+    if (error) return error.message;
+  }
+  return null;
+}
+
+function MoveButtons({
+  onUp,
+  onDown,
+  upDisabled,
+  downDisabled,
+}: {
+  onUp: () => void;
+  onDown: () => void;
+  upDisabled: boolean;
+  downDisabled: boolean;
+}) {
+  return (
+    <View style={styles.moveGroup}>
+      <Pressable
+        style={styles.moveButton}
+        onPress={onUp}
+        disabled={upDisabled}
+        hitSlop={4}
+      >
+        <Text style={[styles.moveText, upDisabled && styles.moveTextDisabled]}>▲</Text>
+      </Pressable>
+      <Pressable
+        style={styles.moveButton}
+        onPress={onDown}
+        disabled={downDisabled}
+        hitSlop={4}
+      >
+        <Text style={[styles.moveText, downDisabled && styles.moveTextDisabled]}>▼</Text>
+      </Pressable>
+    </View>
+  );
+}
+
 export function StudioBrowser() {
   const isDesktop = useIsDesktop();
   const [state, setState] = useState<ContentState>({ status: 'loading' });
@@ -241,6 +293,81 @@ export function StudioBrowser() {
     loadContent(false);
   };
 
+  const reorder = async (
+    table: OrderTable,
+    group: { id: string; sort_order: number }[],
+    index: number,
+    direction: -1 | 1,
+    applyList: (updates: Map<string, number>) => void
+  ) => {
+    if (busy) return;
+    const targetIndex = index + direction;
+    if (index < 0 || targetIndex < 0 || targetIndex >= group.length) return;
+    const swapped = [...group];
+    [swapped[index], swapped[targetIndex]] = [swapped[targetIndex], swapped[index]];
+    const next = swapped.map((row, i) => ({ id: row.id, sort_order: i + 1 }));
+    applyList(new Map(next.map((row) => [row.id, row.sort_order])));
+    setBusy(true);
+    setActionError(null);
+    const error = await persistOrder(table, next, group);
+    setBusy(false);
+    if (error) {
+      setActionError(errorHint(error));
+      loadContent(false);
+    }
+  };
+
+  const moveUnit = (unit: UnitRow, direction: -1 | 1) => {
+    const group = units.filter((u) => u.level_id === unit.level_id);
+    const index = group.findIndex((u) => u.id === unit.id);
+    reorder('units', group, index, direction, (updates) =>
+      setState((prev) =>
+        prev.status === 'ready'
+          ? {
+              ...prev,
+              units: prev.units.map((row) =>
+                updates.has(row.id) ? { ...row, sort_order: updates.get(row.id)! } : row
+              ),
+            }
+          : prev
+      )
+    );
+  };
+
+  const moveLesson = (lesson: LessonRow, direction: -1 | 1) => {
+    const group = unitLessons;
+    const index = group.findIndex((l) => l.id === lesson.id);
+    reorder('lessons', group, index, direction, (updates) =>
+      setState((prev) =>
+        prev.status === 'ready'
+          ? {
+              ...prev,
+              lessons: prev.lessons.map((row) =>
+                updates.has(row.id) ? { ...row, sort_order: updates.get(row.id)! } : row
+              ),
+            }
+          : prev
+      )
+    );
+  };
+
+  const moveExercise = (exercise: ExerciseRow, direction: -1 | 1) => {
+    const group = lessonExercises;
+    const index = group.findIndex((e) => e.id === exercise.id);
+    reorder('exercises', group, index, direction, (updates) =>
+      setState((prev) =>
+        prev.status === 'ready'
+          ? {
+              ...prev,
+              exercises: prev.exercises.map((row) =>
+                updates.has(row.id) ? { ...row, sort_order: updates.get(row.id)! } : row
+              ),
+            }
+          : prev
+      )
+    );
+  };
+
   const deleteUnit = async (unit: UnitRow) => {
     if (busy) return;
     const lessonCount = lessons.filter((l) => l.unit_id === unit.id).length;
@@ -396,7 +523,7 @@ export function StudioBrowser() {
                 </Text>
                 {!level.is_published && <Text style={styles.draftChip}>draft</Text>}
               </View>
-              {levelUnits.map((unit) => {
+              {levelUnits.map((unit, unitIndex) => {
                 const count = lessons.filter((l) => l.unit_id === unit.id).length;
                 const selected = unit.id === activeUnit?.id;
                 return (
@@ -436,6 +563,12 @@ export function StudioBrowser() {
                         </Text>
                       </Pressable>
                     </Pressable>
+                    <MoveButtons
+                      onUp={() => moveUnit(unit, -1)}
+                      onDown={() => moveUnit(unit, 1)}
+                      upDisabled={busy || unitIndex === 0}
+                      downDisabled={busy || unitIndex === levelUnits.length - 1}
+                    />
                     <Pressable
                       style={styles.rowDelete}
                       onPress={() => deleteUnit(unit)}
@@ -511,7 +644,7 @@ export function StudioBrowser() {
         </View>
       )}
       <ScrollView style={styles.paneScroll} contentContainerStyle={styles.paneContent}>
-        {unitLessons.map((lesson) => {
+        {unitLessons.map((lesson, lessonIndex) => {
           const count = exercises.filter((e) => e.lesson_id === lesson.id).length;
           const selected = lesson.id === activeLesson?.id;
           return (
@@ -551,6 +684,12 @@ export function StudioBrowser() {
                   </Text>
                 </Pressable>
               </Pressable>
+              <MoveButtons
+                onUp={() => moveLesson(lesson, -1)}
+                onDown={() => moveLesson(lesson, 1)}
+                upDisabled={busy || lessonIndex === 0}
+                downDisabled={busy || lessonIndex === unitLessons.length - 1}
+              />
               <Pressable
                 style={styles.rowDelete}
                 onPress={() => deleteLesson(lesson)}
@@ -587,36 +726,43 @@ export function StudioBrowser() {
             </Pressable>
           </View>
           <ScrollView style={styles.paneScroll} contentContainerStyle={styles.paneContent}>
-            {lessonExercises.map((exercise) => {
+            {lessonExercises.map((exercise, exerciseIndex) => {
               const editable = STARTER_TYPE_NAMES.includes(exercise.type as StarterType);
               return (
-                <Pressable
-                  key={exercise.id}
-                  style={({ hovered }) => [styles.exerciseRow, hoverStyle(hovered)]}
-                  onPress={() =>
-                    editable
-                      ? setEditor({ mode: 'edit', exercise, type: exercise.type as StarterType })
-                      : setEditor({ mode: 'unsupported', exercise })
-                  }
-                >
-                  <Text style={styles.exerciseIndex}>{exercise.sort_order}</Text>
-                  <View style={styles.rowMain}>
-                    <View style={styles.exerciseChips}>
-                      <Text style={styles.typeChip}>{typeLabel(exercise.type)}</Text>
-                      {exercise.is_required === false && (
-                        <Text style={styles.optionalChip}>optional</Text>
-                      )}
+                <View key={exercise.id} style={styles.rowWrap}>
+                  <Pressable
+                    style={({ hovered }) => [styles.exerciseRow, styles.rowCardFlex, hoverStyle(hovered)]}
+                    onPress={() =>
+                      editable
+                        ? setEditor({ mode: 'edit', exercise, type: exercise.type as StarterType })
+                        : setEditor({ mode: 'unsupported', exercise })
+                    }
+                  >
+                    <Text style={styles.exerciseIndex}>{exercise.sort_order}</Text>
+                    <View style={styles.rowMain}>
+                      <View style={styles.exerciseChips}>
+                        <Text style={styles.typeChip}>{typeLabel(exercise.type)}</Text>
+                        {exercise.is_required === false && (
+                          <Text style={styles.optionalChip}>optional</Text>
+                        )}
+                      </View>
+                      <Text style={styles.exercisePrompt} numberOfLines={2}>
+                        {exercise.prompt}
+                      </Text>
                     </View>
-                    <Text style={styles.exercisePrompt} numberOfLines={2}>
-                      {exercise.prompt}
-                    </Text>
-                  </View>
-                  {editable ? (
-                    <Text style={styles.chevron}>›</Text>
-                  ) : (
-                    <Text style={styles.soonText}>view</Text>
-                  )}
-                </Pressable>
+                    {editable ? (
+                      <Text style={styles.chevron}>›</Text>
+                    ) : (
+                      <Text style={styles.soonText}>view</Text>
+                    )}
+                  </Pressable>
+                  <MoveButtons
+                    onUp={() => moveExercise(exercise, -1)}
+                    onDown={() => moveExercise(exercise, 1)}
+                    upDisabled={busy || exerciseIndex === 0}
+                    downDisabled={busy || exerciseIndex === lessonExercises.length - 1}
+                  />
+                </View>
               );
             })}
             {lessonExercises.length === 0 && (
@@ -835,6 +981,26 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     fontSize: 18,
     color: colors.greyDark,
+  },
+  moveGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  moveButton: {
+    width: 22,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  moveText: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    color: colors.ink,
+    opacity: 0.75,
+  },
+  moveTextDisabled: {
+    opacity: 0.2,
   },
   newCard: {
     borderWidth: 2,
