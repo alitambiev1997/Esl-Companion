@@ -350,9 +350,11 @@ export function StudioBrowser() {
         prev.status === 'ready'
           ? {
               ...prev,
-              units: prev.units.map((row) =>
-                updates.has(row.id) ? { ...row, sort_order: updates.get(row.id)! } : row
-              ),
+              units: prev.units
+                .map((row) =>
+                  updates.has(row.id) ? { ...row, sort_order: updates.get(row.id)! } : row
+                )
+                .sort(bySortOrder),
             }
           : prev
       )
@@ -367,9 +369,11 @@ export function StudioBrowser() {
         prev.status === 'ready'
           ? {
               ...prev,
-              lessons: prev.lessons.map((row) =>
-                updates.has(row.id) ? { ...row, sort_order: updates.get(row.id)! } : row
-              ),
+              lessons: prev.lessons
+                .map((row) =>
+                  updates.has(row.id) ? { ...row, sort_order: updates.get(row.id)! } : row
+                )
+                .sort(bySortOrder),
             }
           : prev
       )
@@ -384,9 +388,11 @@ export function StudioBrowser() {
         prev.status === 'ready'
           ? {
               ...prev,
-              exercises: prev.exercises.map((row) =>
-                updates.has(row.id) ? { ...row, sort_order: updates.get(row.id)! } : row
-              ),
+              exercises: prev.exercises
+                .map((row) =>
+                  updates.has(row.id) ? { ...row, sort_order: updates.get(row.id)! } : row
+                )
+                .sort(bySortOrder),
             }
           : prev
       )
