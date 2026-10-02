@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { ExerciseEditor } from '@/src/features/studio/exercise-editor';
 import { LessonImport } from '@/src/features/studio/lesson-import';
 import { findMissingImages } from '@/src/features/studio/media-check';
+import { UnitRecordingField } from '@/src/features/studio/unit-recording-field';
 import {
   STARTER_TYPES,
   typeLabel,
@@ -150,7 +151,7 @@ export function StudioBrowser() {
     if (showLoading) setState({ status: 'loading' });
     const [levelsRes, unitsRes, lessonsRes, exercisesRes] = await Promise.all([
       supabase.from('levels').select('id,title,cefr_level,is_published,sort_order').order('sort_order'),
-      supabase.from('units').select('id,level_id,title,is_published,sort_order').order('sort_order'),
+      supabase.from('units').select('id,level_id,title,is_published,sort_order,audio_path').order('sort_order'),
       supabase.from('lessons').select('id,unit_id,title,is_published,sort_order').order('sort_order'),
       supabase
         .from('exercises')
@@ -693,9 +694,10 @@ export function StudioBrowser() {
             setEditor({ mode: 'closed' });
           }}
         >
-          <Text style={styles.importButtonText}>JSON</Text>
+<Text style={styles.importButtonText}>JSON</Text>
         </Pressable>
       </View>
+      <UnitRecordingField unit={activeUnit} onChanged={() => loadContent(false)} />
       {newLessonOpen && (
         <View style={styles.newCard}>
           <TextInput

@@ -2,6 +2,7 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { PathMap, type ProgressMap } from '@/src/components/PathMap';
+import { UnitRecording } from '@/src/features/audio/unit-recording.web';
 import { TopBar } from '@/src/components/ui/title-bar';
 import { getClassCode, getClassLevelId } from '@/src/lib/class-code';
 import { supabase } from '@/src/lib/supabase';
@@ -150,7 +151,16 @@ export default function UnitMap() {
 
   return (
     <View style={styles.screen}>
-      <TopBar title={loadState.unit.title} showBack onBack={goBack} />
+<TopBar title={loadState.unit.title} showBack onBack={goBack} />
+      {loadState.unit.audio_path ? (
+        <View style={styles.recordingWrap}>
+          <UnitRecording
+            unitId={loadState.unit.id}
+            title={loadState.unit.title}
+            path={loadState.unit.audio_path}
+          />
+        </View>
+      ) : null}
       <ScrollView contentContainerStyle={styles.content}>
         <PathMap
           units={[loadState.unit]}
@@ -175,10 +185,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.paper,
   },
-  content: {
+content: {
     paddingHorizontal: 16,
     paddingVertical: 24,
     paddingBottom: 48,
+  },
+  recordingWrap: {
+    paddingHorizontal: 16,
+    paddingBottom: 12,
   },
   stateText: {
     fontFamily: fonts.body,

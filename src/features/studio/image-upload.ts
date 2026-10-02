@@ -70,3 +70,22 @@ export async function uploadContentImage(
   if (error) return { error };
   return { path };
 }
+
+export async function uploadContentAudio(
+  file: File,
+  upload: (path: string, blob: Blob, contentType: string) => Promise<string | null>
+): Promise<UploadResult> {
+  if (fileSizeMB(file) > 10) {
+    const size = fileSizeMB(file).toFixed(1);
+    const proceed = window.confirm(
+      `This audio is ${size} MB. Large files use up the free bandwidth quickly. Upload anyway?`
+    );
+    if (!proceed) return { error: 'Upload cancelled - the audio is larger than 10 MB.' };
+  }
+  const extension =
+    file.name.includes('.') ? file.name.split('.').pop()?.toLowerCase() ?? 'mp3' : 'mp3';
+  const path = `audio/${sanitizeName(file.name)}-${Date.now()}.${extension}`;
+  const error = await upload(path, file, file.type || 'audio/mpeg');
+  if (error) return { error };
+  return { path };
+}

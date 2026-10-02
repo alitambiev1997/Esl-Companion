@@ -1,7 +1,10 @@
 import type { Exercise, ExerciseType, Lesson, Level, Unit } from '@/src/types/content';
 
 export type LevelRow = Pick<Level, 'id' | 'title' | 'cefr_level' | 'is_published' | 'sort_order'>;
-export type UnitRow = Pick<Unit, 'id' | 'level_id' | 'title' | 'is_published' | 'sort_order'>;
+export type UnitRow = Pick<
+  Unit,
+  'id' | 'level_id' | 'title' | 'is_published' | 'sort_order' | 'audio_path'
+>;
 export type LessonRow = Pick<Lesson, 'id' | 'unit_id' | 'title' | 'is_published' | 'sort_order'>;
 export type ExerciseRow = Pick<
   Exercise,

@@ -48,6 +48,7 @@ export interface Unit {
   description: string | null;
   is_published: boolean;
   sort_order: number;
+  audio_path?: string | null;
   created_at: string;
 }
 
