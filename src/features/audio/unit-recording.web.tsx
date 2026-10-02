@@ -30,6 +30,10 @@ export function UnitRecording({
   const [duration, setDuration] = useState(0);
   const [rate, setRate] = useState(1);
   const [trackWidth, setTrackWidth] = useState(0);
+  const [volume, setVolume] = useState(
+    () => Number(localStorage.getItem('aqap_vol') ?? '1') || 1
+  );
+  const [volumeTrackWidth, setVolumeTrackWidth] = useState(0);
 
   const ensureAudio = () => {
     if (!audioRef.current) {
@@ -51,6 +55,7 @@ export function UnitRecording({
         localStorage.removeItem(resumeKey);
       };
       audioRef.current = audio;
+      audio.volume = volume;
 
       if ('mediaSession' in navigator) {
         navigator.mediaSession.metadata = new MediaMetadata({
@@ -108,6 +113,10 @@ export function UnitRecording({
     document.body.removeChild(anchor);
   };
 
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.volume = volume;
+  }, [volume]);
+
   useEffect(
     () => () => {
       audioRef.current?.pause();
@@ -115,6 +124,13 @@ export function UnitRecording({
     },
     []
   );
+
+  const changeVolume = (fraction: number) => {
+    const next = Math.max(0, Math.min(1, fraction));
+    setVolume(next);
+    localStorage.setItem('aqap_vol', String(next));
+    if (audioRef.current) audioRef.current.volume = next;
+  };
 
   const progress = duration > 0 ? Math.min(100, (current / duration) * 100) : 0;
 
@@ -145,6 +161,24 @@ export function UnitRecording({
           style={styles.trackHit}
           onPress={(e) => seek(e.nativeEvent.locationX / Math.max(trackWidth, 1))}
         />
+      </View>
+      <View style={styles.volumeRow}>
+        <Text style={styles.volumeLabel}>Vol</Text>
+        <View
+          style={styles.volumeWrap}
+          onLayout={(e) => setVolumeTrackWidth(e.nativeEvent.layout.width)}
+        >
+          <View style={styles.track}>
+            <View style={[styles.fill, { width: `${Math.round(volume * 100)}%` }]} />
+          </View>
+          <Pressable
+            style={styles.trackHit}
+            onPress={(e) =>
+              changeVolume(e.nativeEvent.locationX / Math.max(volumeTrackWidth, 1))
+            }
+          />
+        </View>
+        <Text style={styles.volumeValue}>{Math.round(volume * 100)}%</Text>
       </View>
       <Pressable style={styles.downloadButton} onPress={download} hitSlop={8}>
         <Text style={styles.downloadText}>Download</Text>
@@ -242,5 +276,31 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.sky,
     textDecorationLine: 'underline',
+  },
+  volumeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  volumeLabel: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.ink,
+    opacity: 0.7,
+    width: 30,
+  },
+  volumeWrap: {
+    flex: 1,
+    height: 14,
+    justifyContent: 'center',
+  },
+  volumeValue: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    color: colors.ink,
+    opacity: 0.6,
+    width: 40,
+    textAlign: 'right',
   },
 });
