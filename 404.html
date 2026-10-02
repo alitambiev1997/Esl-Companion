@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>AQAP English</title>
+    <script>
+      (function () {
+        var base = '/Esl-Companion';
+        var path = location.pathname;
+        if (path.indexOf(base) === 0 && path !== base && path !== base + '/') {
+          try {
+            sessionStorage.setItem('spa-redirect', path + location.search + location.hash);
+          } catch (e) {}
+        }
+        location.replace(base + '/');
+      })();
+    </script>
+  </head>
+  <body>
+    <p>Redirecting...</p>
+  </body>
+</html>
