@@ -174,6 +174,7 @@ export default function LessonPlayer() {
     isCorrect: boolean,
     info: FeedbackBannerInfo
   ) => {
+    if (phase === 'checked') return;
     if (isWeb) {
       console.log('[web] attempt', {
         exerciseId: exercise.id,

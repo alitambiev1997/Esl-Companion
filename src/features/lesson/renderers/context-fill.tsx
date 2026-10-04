@@ -44,7 +44,7 @@ export const ContextFillRenderer = forwardRef<ExerciseRendererHandle, ExerciseRe
     }, [selected, onCanCheckChange]);
 
     const renderLine = (line: ChatLine, index: number) => {
-      if (index !== blankIndex) {
+      if (index !== blankIndex || !line.text.includes('___')) {
         return <Text style={styles.text}>{line.text}</Text>;
       }
       const parts = line.text.split('___');
@@ -56,7 +56,7 @@ export const ContextFillRenderer = forwardRef<ExerciseRendererHandle, ExerciseRe
           <Text style={[styles.slot, { color: fillColor }]}>
             {lastCorrect === null
               ? '___'
-              : content.options[content.correct_index]}
+              : content.options[content.correct_index] ?? '___'}
           </Text>
           {parts.slice(1).join('')}
         </Text>
