@@ -24,28 +24,46 @@ export function UnitRecording({
   const url = publicStorageUrl('content', path);
   const resumeKey = `aqap_rec_${unitId}`;
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const trackRef = useRef<View>(null);
   const lastSave = useRef(0);
+  const pendingSeek = useRef<number | null>(null);
   const [playing, setPlaying] = useState(false);
   const [current, setCurrent] = useState(0);
   const [duration, setDuration] = useState(0);
   const [rate, setRate] = useState(1);
-  const [trackWidth, setTrackWidth] = useState(0);
-  const [volume, setVolume] = useState(
-    () => Number(localStorage.getItem('aqap_vol') ?? '1') || 1
-  );
-  const [volumeTrackWidth, setVolumeTrackWidth] = useState(0);
 
   const ensureAudio = () => {
     if (!audioRef.current) {
       const audio = new Audio(url);
       audio.preload = 'metadata';
-      audio.onloadedmetadata = () => setDuration(audio.duration || 0);
+      audio.onloadedmetadata = () => {
+        setDuration(audio.duration || 0);
+        if (pendingSeek.current !== null) {
+          try {
+            audio.currentTime = pendingSeek.current;
+          } catch {
+            // seek will apply once ready
+          }
+          pendingSeek.current = null;
+        }
+      };
       audio.ontimeupdate = () => {
         setCurrent(audio.currentTime);
         const now = Date.now();
         if (now - lastSave.current > 3000) {
           localStorage.setItem(resumeKey, String(audio.currentTime));
           lastSave.current = now;
+        }
+        if ('mediaSession' in navigator && audio.duration) {
+          try {
+            navigator.mediaSession.setPositionState({
+              duration: audio.duration,
+              playbackRate: audio.playbackRate,
+              position: audio.currentTime,
+            });
+          } catch {
+            // position state unsupported
+          }
         }
       };
       audio.onplay = () => setPlaying(true);
@@ -55,7 +73,6 @@ export function UnitRecording({
         localStorage.removeItem(resumeKey);
       };
       audioRef.current = audio;
-      audio.volume = volume;
 
       if ('mediaSession' in navigator) {
         navigator.mediaSession.metadata = new MediaMetadata({
@@ -67,6 +84,15 @@ export function UnitRecording({
         });
         navigator.mediaSession.setActionHandler('pause', () => {
           audio.pause();
+        });
+        navigator.mediaSession.setActionHandler('seekto', (details) => {
+          if (details.seekTime != null) audio.currentTime = details.seekTime;
+        });
+        navigator.mediaSession.setActionHandler('seekbackward', () => {
+          audio.currentTime = Math.max(0, audio.currentTime - 15);
+        });
+        navigator.mediaSession.setActionHandler('seekforward', () => {
+          audio.currentTime = Math.min(audio.duration || audio.currentTime + 15, audio.currentTime + 15);
         });
       }
     }
@@ -91,18 +117,53 @@ export function UnitRecording({
   };
 
   const cycleRate = () => {
-    const next = ensureAudio();
+    const audio = ensureAudio();
     const index = SPEEDS.indexOf(rate);
     const nextRate = SPEEDS[(index + 1) % SPEEDS.length];
     setRate(nextRate);
-    next.playbackRate = nextRate;
+    audio.playbackRate = nextRate;
+    if ('mediaSession' in navigator) {
+      try {
+        navigator.mediaSession.setPositionState({
+          duration: audio.duration || 0,
+          playbackRate: nextRate,
+          position: audio.currentTime,
+        });
+      } catch {
+        // position state unsupported
+      }
+    }
   };
 
-  const seek = (fraction: number) => {
+  const seekToRef = useRef<(seconds: number) => void>(() => {});
+  seekToRef.current = (seconds: number) => {
     const audio = ensureAudio();
-    const target = Math.max(0, Math.min(duration || 0, fraction * (duration || 0)));
-    if (duration > 0) audio.currentTime = target;
+    if (audio.duration) {
+      audio.currentTime = Math.max(0, Math.min(audio.duration, seconds));
+    } else {
+      pendingSeek.current = Math.max(0, seconds);
+    }
   };
+
+  useEffect(() => {
+    const node = trackRef.current as unknown as HTMLElement | null;
+    if (!node) return;
+    const onClick = (event: MouseEvent) => {
+      const rect = node.getBoundingClientRect();
+      if (rect.width <= 0) return;
+      const fraction = (event.clientX - rect.left) / rect.width;
+      const audio = ensureAudio();
+      seekToRef.current(fraction * (audio.duration || 0));
+    };
+    node.addEventListener('click', onClick);
+    return () => node.removeEventListener('click', onClick);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    ensureAudio();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const download = () => {
     const anchor = document.createElement('a');
@@ -113,10 +174,6 @@ export function UnitRecording({
     document.body.removeChild(anchor);
   };
 
-  useEffect(() => {
-    if (audioRef.current) audioRef.current.volume = volume;
-  }, [volume]);
-
   useEffect(
     () => () => {
       audioRef.current?.pause();
@@ -124,13 +181,6 @@ export function UnitRecording({
     },
     []
   );
-
-  const changeVolume = (fraction: number) => {
-    const next = Math.max(0, Math.min(1, fraction));
-    setVolume(next);
-    localStorage.setItem('aqap_vol', String(next));
-    if (audioRef.current) audioRef.current.volume = next;
-  };
 
   const progress = duration > 0 ? Math.min(100, (current / duration) * 100) : 0;
 
@@ -153,32 +203,22 @@ export function UnitRecording({
           <Text style={styles.speedText}>{rate}×</Text>
         </Pressable>
       </View>
-      <View style={styles.trackWrap} onLayout={(e) => setTrackWidth(e.nativeEvent.layout.width)}>
+      <View ref={trackRef} style={styles.trackWrap}>
         <View style={styles.track}>
           <View style={[styles.fill, { width: `${progress}%` }]} />
         </View>
         <Pressable
           style={styles.trackHit}
-          onPress={(e) => seek(e.nativeEvent.locationX / Math.max(trackWidth, 1))}
-        />
-      </View>
-      <View style={styles.volumeRow}>
-        <Text style={styles.volumeLabel}>Vol</Text>
-        <View
-          style={styles.volumeWrap}
-          onLayout={(e) => setVolumeTrackWidth(e.nativeEvent.layout.width)}
-        >
-          <View style={styles.track}>
-            <View style={[styles.fill, { width: `${Math.round(volume * 100)}%` }]} />
-          </View>
-          <Pressable
-            style={styles.trackHit}
-            onPress={(e) =>
-              changeVolume(e.nativeEvent.locationX / Math.max(volumeTrackWidth, 1))
+          onPress={(event) => {
+            const node = trackRef.current as unknown as HTMLElement | null;
+            const rect = node?.getBoundingClientRect();
+            const pageX = event.nativeEvent.pageX ?? 0;
+            if (rect && rect.width > 0) {
+              const fraction = (pageX - rect.left) / rect.width;
+              seekToRef.current(fraction * duration);
             }
-          />
-        </View>
-        <Text style={styles.volumeValue}>{Math.round(volume * 100)}%</Text>
+          }}
+        />
       </View>
       <Pressable style={styles.downloadButton} onPress={download} hitSlop={8}>
         <Text style={styles.downloadText}>Download</Text>
@@ -251,8 +291,12 @@ const styles = StyleSheet.create({
     color: colors.sky,
   },
   trackWrap: {
-    height: 14,
+    height: 24,
     justifyContent: 'center',
+    cursor: 'pointer',
+  },
+  trackHit: {
+    ...StyleSheet.absoluteFillObject,
   },
   track: {
     height: 6,
@@ -264,9 +308,6 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: colors.sky,
   },
-  trackHit: {
-    ...StyleSheet.absoluteFillObject,
-  },
   downloadButton: {
     alignSelf: 'flex-start',
   },
@@ -276,31 +317,5 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.sky,
     textDecorationLine: 'underline',
-  },
-  volumeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  volumeLabel: {
-    fontFamily: fonts.body,
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.ink,
-    opacity: 0.7,
-    width: 30,
-  },
-  volumeWrap: {
-    flex: 1,
-    height: 14,
-    justifyContent: 'center',
-  },
-  volumeValue: {
-    fontFamily: fonts.body,
-    fontSize: 12,
-    color: colors.ink,
-    opacity: 0.6,
-    width: 40,
-    textAlign: 'right',
   },
 });
