@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Dimensions, Pressable, StyleSheet, Text, View } from 'react-native';
 import { StaggerIn } from '@/src/components/ui/stagger-in';
@@ -7,7 +6,7 @@ import { colors, fonts, radius } from '@/src/theme/tokens';
 import Svg, { Path } from 'react-native-svg';
 import type { Lesson, Unit } from '@/src/types/content';
 
-export type LessonStatus = 'completed' | 'current' | 'unlocked' | 'locked';
+export type LessonStatus = 'completed' | 'current' | 'unlocked';
 
 export interface LessonRow extends Lesson {
   status: LessonStatus;
@@ -43,7 +42,6 @@ function CourseNode({
   onPress: () => void;
 }) {
   const pulse = useRef(new Animated.Value(1)).current;
-  const locked = lesson.status === 'locked';
   const completed = lesson.status === 'completed';
   const ringColor = completed ? (lesson.medalColor ?? colors.leaf) : colors.sky;
 
@@ -60,7 +58,7 @@ function CourseNode({
   }, [isCurrent, pulse]);
 
   return (
-    <Pressable onPress={onPress} disabled={locked} style={styles.nodeSlot}>
+    <Pressable onPress={onPress} style={styles.nodeSlot}>
       <Animated.View
         style={[
           styles.nodeCircle,
@@ -68,11 +66,9 @@ function CourseNode({
           lesson.status === 'unlocked' && styles.nodeCircleUnlocked,
           isCurrent && styles.nodeCircleCurrent,
           isCurrent && { transform: [{ scale: pulse }] },
-          locked && styles.nodeCircleLocked,
         ]}
       >
         {completed && <View style={[styles.medalDot, { backgroundColor: ringColor }]} />}
-        {locked && <Ionicons name="lock-closed" size={22} color={colors.white} />}
       </Animated.View>
       <Text style={styles.nodeTitle} numberOfLines={2}>
         {lesson.title}
@@ -100,30 +96,21 @@ export function PathMap({ units, lessons, progressMap, onLessonPress }: PathMapP
   const unitRows: UnitRow[] = units.map((unit) => {
     const unitLessons = lessons
       .filter((lesson) => lesson.unit_id === unit.id)
-      .map((lesson) => ({ ...lesson, status: 'locked' as LessonStatus, medalColor: null }));
+      .map((lesson) => ({ ...lesson, status: 'unlocked' as LessonStatus, medalColor: null }));
 
-    let prevCompleted = true;
     const rows = unitLessons.map((lesson) => {
       const isCompleted = completed.has(lesson.id);
-      const unlocked = prevCompleted;
-      if (isCompleted) {
-        prevCompleted = true;
-      } else {
-        prevCompleted = false;
-      }
 
       let status: LessonStatus;
       let medal: string | null = null;
       if (isCompleted) {
         status = 'completed';
         medal = medalColor(medalForScore(scoreByLesson.get(lesson.id) ?? 0)) ?? colors.leaf;
-      } else if (unlocked && !currentAssigned) {
+      } else if (!currentAssigned) {
         status = 'current';
         currentAssigned = true;
-      } else if (unlocked) {
-        status = 'unlocked';
       } else {
-        status = 'locked';
+        status = 'unlocked';
       }
 
       return { ...lesson, status, medalColor: medal };
@@ -272,10 +259,6 @@ const styles = StyleSheet.create({
   nodeCircleCurrent: {
     backgroundColor: colors.sun,
     borderColor: colors.sun,
-  },
-  nodeCircleLocked: {
-    backgroundColor: colors.grey,
-    borderColor: colors.grey,
   },
   medalDot: {
     width: 16,
